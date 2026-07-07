@@ -1324,7 +1324,7 @@ cat <<EOF
       },
       "transport": {
         "type": "http",
-        "host": ["$ym_vl_re"],
+        "host": "$ym_vl_re",
         "path": "/$uuid-xh"
       }
     },
@@ -1340,7 +1340,9 @@ cat <<EOF
   server: $server_ip
   port: $port_xh
   uuid: $uuid
+  encryption: none
   network: xhttp
+  udp: true
   flow: xtls-rprx-vision
   tls: true
   servername: $ym_vl_re
@@ -1384,7 +1386,7 @@ cat <<EOF
       "flow": "xtls-rprx-vision",
       "transport": {
         "type": "http",
-        "host": ["$server_ip"],
+        "host": "$server_ip",
         "path": "/$uuid-vx"
       }
     },
@@ -1400,7 +1402,9 @@ cat <<EOF
   server: $server_ip
   port: $port_vx
   uuid: $uuid
+  encryption: none
   network: xhttp
+  udp: true
   flow: xtls-rprx-vision
   xhttp-opts:
     path: /$uuid-vx
