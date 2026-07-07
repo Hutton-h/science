@@ -3,750 +3,667 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Science小钢炮 - 控制面板</title>
+<title>Science 小钢炮 · 控制面板</title>
 <style>
 :root {
-  --bg:#0b1020; --card:#121831; --ink:#e9edf7; --sub:#b7c1d9; --line:#263255;
-  --acc:#4f7cff; --ok:#22c55e; --warn:#f59e0b; --err:#ef4444;
-  --input-bg:#0d1430; --btn1:#1a2346; --btn2:#121a39;
-  --accent2:#00d4aa;
-}
-.light-mode {
-  --bg:#fff; --card:#fff; --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0;
-  --acc:#4f7cff; --ok:#22c55e; --warn:#f59e0b; --err:#ef4444;
-  --input-bg:#fff; --btn1:#e2e8f0; --btn2:#f0f4f9;
-  --accent2:#00d4aa;
+  --bg: #0a0f1e; --card: #111827; --hover: #1a2236;
+  --ink: #e2e8f0; --sub: #94a3b8; --muted: #64748b;
+  --line: #1e293b; --acc: #6366f1; --acc2: #818cf8;
+  --ok: #22c55e; --warn: #f59e0b; --err: #ef4444;
+  --info: #0ea5e9; --radius: 12px;
 }
 * { box-sizing:border-box; margin:0; padding:0; }
 body {
-  background:linear-gradient(180deg, var(--bg) 0%, #0e1530 100%);
-  color:var(--ink); font:16px/1.4 system-ui,-apple-system,sans-serif;
-  min-height:100vh; transition:background .3s,color .3s;
+  background: var(--bg); color: var(--ink);
+  font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  min-height: 100vh;
 }
-.wrap { max-width:1450px; margin:0 auto; padding:20px; }
-header { text-align:center; margin-bottom:20px; position:relative; }
-header h1 { font-size:28px; margin-bottom:4px; }
-header h1 span { color:var(--acc); }
-header p { font-size:13px; color:var(--sub); }
-header a { color:var(--acc); text-decoration:none; }
-.theme-switch { position:absolute; top:0; right:0; cursor:pointer; font-size:22px; }
+.wrap { max-width: 1280px; margin: 0 auto; padding: 16px 20px; }
 
-/* tabs */
-.tabs { display:flex; gap:0; background:var(--card); border-radius:12px; overflow:hidden;
-  margin-bottom:20px; border:1px solid var(--line); }
-.tab { flex:1; padding:14px 20px; cursor:pointer; text-align:center; color:var(--sub);
-  border:none; background:none; font-size:15px; font-weight:600; transition:.2s; }
-.tab.active { background:var(--acc); color:#fff; }
-.tab:hover:not(.active) { color:var(--ink); }
+/* Header */
+header { text-align: center; padding: 20px 0 12px; }
+header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+header h1 span { background: linear-gradient(135deg, var(--acc), var(--acc2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+header .meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+header .meta a { color: var(--acc2); text-decoration: none; }
 
-/* panels */
-.panel { display:none; }
-.panel.active { display:block; }
+/* Status bar */
+.status-bar {
+  display: flex; align-items: center; gap: 12px; justify-content: center;
+  padding: 8px 16px; background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius); margin-bottom: 16px; font-size: 13px;
+}
+.status-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.status-dot.online { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+.status-dot.offline { background: var(--err); }
 
-/* grid */
-.grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-@media(max-width:1100px){ .grid{grid-template-columns:1fr;} }
-.grid-full { grid-column:1/-1; }
-.grid-3 { grid-template-columns:1fr 1fr 1fr; }
-@media(max-width:900px){ .grid-3{grid-template-columns:1fr;} }
+/* Tabs */
+.tabs { display: flex; gap: 4px; margin-bottom: 16px; background: var(--card); border-radius: var(--radius); padding: 4px; border: 1px solid var(--line); }
+.tab { flex: 1; padding: 10px 16px; cursor: pointer; text-align: center; color: var(--sub); border: none; background: none; font-size: 13px; font-weight: 600; border-radius: 10px; transition: .2s; }
+.tab.active { background: var(--acc); color: #fff; }
+.tab:hover:not(.active) { color: var(--ink); background: var(--hover); }
 
-/* cards */
+/* Panels */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* Grid */
+.grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 900px) { .grid, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+
+/* Cards */
 .card {
-  background:rgba(255,255,255,.04); backdrop-filter:blur(6px);
-  border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:12px;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 16px; margin-bottom: 12px;
 }
-.card h2 { font-size:18px; margin-bottom:10px; }
-.card h3 { font-size:14px; margin-bottom:8px; color:var(--acc); }
+.card h3 { font-size: 14px; color: var(--sub); margin-bottom: 12px; font-weight: 600; }
+.card h2 { font-size: 18px; margin-bottom: 12px; }
 
-/* dashboard stat cards */
-.stat-card {
-  text-align:center; padding:16px; border-radius:12px;
-  background:rgba(255,255,255,.03); border:1px solid var(--line);
-}
-.stat-card .value { font-size:32px; font-weight:700; margin:6px 0; }
-.stat-card .label { font-size:11px; color:var(--sub); text-transform:uppercase; letter-spacing:1px; }
-.stat-card .value.online { color:var(--ok); }
-.stat-card .value.offline { color:var(--err); }
-.stat-card .value.warn { color:var(--warn); }
+/* Stats */
+.stat-row { display: flex; gap: 12px; margin-bottom: 12px; }
+.stat-item { flex: 1; text-align: center; padding: 12px 8px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); }
+.stat-item .value { font-size: 24px; font-weight: 700; margin: 4px 0; }
+.stat-item .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.on { color: var(--ok); }
+.off { color: var(--err); }
 
-/* status dots */
-.status-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:5px; }
-.status-dot.online { background:var(--ok); box-shadow:0 0 6px var(--ok); }
-.status-dot.offline { background:var(--err); }
-.status-dot.unknown { background:var(--warn); }
+/* Progress */
+.progress-label { display: flex; justify-content: space-between; font-size: 12px; margin: 6px 0 3px; color: var(--sub); }
+.progress-bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.progress-bar .fill { height: 100%; border-radius: 3px; transition: width .5s; }
+.fill.cpu { background: linear-gradient(90deg, var(--acc), var(--acc2)); }
+.fill.mem { background: linear-gradient(90deg, var(--ok), #4ade80); }
+.fill.down { background: linear-gradient(90deg, var(--info), #38bdf8); }
+.fill.up { background: linear-gradient(90deg, var(--warn), var(--err)); }
 
-/* traffic bar */
-.traffic-bar { display:flex; gap:12px; margin:8px 0; }
-.traffic-item { flex:1; }
-.traffic-item .label { font-size:11px; color:var(--sub); }
-.traffic-item .bar-bg { height:8px; background:var(--line); border-radius:4px; margin:4px 0; overflow:hidden; }
-.traffic-item .bar { height:100%; border-radius:4px; transition:width .5s; }
-.traffic-item .bar.rx { background:linear-gradient(90deg,var(--acc),var(--accent2)); }
-.traffic-item .bar.tx { background:linear-gradient(90deg,var(--warn),var(--err)); }
-
-/* protocol grid */
-.proto-grid { display:grid; grid-template-columns:auto 1fr; gap:8px 14px; align-items:center; }
-.proto-item { display:flex; align-items:center; gap:8px; }
-.proto-item label { display:flex; align-items:center; gap:6px; white-space:nowrap; cursor:pointer; }
-.proto-item input[type="text"] { flex:1; min-width:80px; }
-
-/* form elements */
+/* Form elements */
 input[type="text"], input[type="number"], select {
-  width:100%; padding:9px 11px; border:1px solid var(--line); border-radius:8px;
-  background:var(--input-bg); color:var(--ink); outline:none; font-size:13px;
-  transition:background .3s,border .3s,color .3s;
+  width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--bg); color: var(--ink); outline: none; font-size: 13px;
 }
-input:focus, select:focus { border-color:var(--acc); }
-input:disabled { opacity:.5; }
-label { display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; }
-input[type="checkbox"] { accent-color:var(--acc); width:auto; }
+input:focus, select:focus { border-color: var(--acc); }
+input:disabled { opacity: 0.4; }
+input[type="checkbox"] { accent-color: var(--acc); }
 
-.row { display:grid; grid-template-columns:200px 1fr; gap:10px; align-items:center; margin:6px 0; }
-@media(max-width:600px){ .row{grid-template-columns:1fr;} }
+.row { display: grid; grid-template-columns: 160px 1fr; gap: 8px; align-items: center; margin: 5px 0; }
+@media (max-width: 500px) { .row { grid-template-columns: 1fr; } }
 
-.pill { display:inline-block; font-size:11px; padding:1px 6px; border:1px solid var(--line);
-  border-radius:99px; color:var(--sub); margin-left:4px; }
-.pill.green { border-color:var(--ok); color:var(--ok); }
-.pill.blue { border-color:var(--acc); color:var(--acc); }
-
-/* buttons */
+/* Buttons */
 button {
-  cursor:pointer; border:1px solid var(--line); padding:9px 14px; border-radius:10px;
-  background:linear-gradient(180deg,var(--btn1),var(--btn2)); color:var(--ink);
-  font-size:13px; transition:.2s; font-weight:500;
+  cursor: pointer; border: 1px solid var(--line); padding: 8px 14px; border-radius: 8px;
+  background: var(--hover); color: var(--ink); font-size: 13px; font-weight: 500; transition: .2s;
 }
-button.primary { background:linear-gradient(180deg,#4f7cff,#385fdf); border-color:#476de2; color:#fff; }
-button.sm { padding:5px 10px; font-size:12px; }
-button:hover { opacity:.85; }
-.actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+button:hover { background: var(--line); }
+button.primary { background: var(--acc); border-color: var(--acc); color: #fff; }
+button.primary:hover { background: var(--acc2); }
+button.sm { padding: 4px 10px; font-size: 12px; }
+button.danger { background: rgba(239,68,68,.15); border-color: var(--err); color: var(--err); }
+button.danger:hover { background: rgba(239,68,68,.25); }
 
-/* cmd box */
-.cmd-box { background:#0a1128; color:#dbeafe; border:1px dashed #3752a6; border-radius:10px;
-  padding:12px; font-family:monospace; font-size:12px; word-break:break-all;
-  min-height:50px; white-space:pre-wrap; max-height:180px; overflow-y:auto; }
-.sub-url { background:#0a1128; color:var(--acc); border:1px solid var(--line); border-radius:8px;
-  padding:10px; font-family:monospace; font-size:12px; word-break:break-all; margin:6px 0; }
+/* Command box */
+.cmd-box {
+  background: #0a0f1e; border: 1px dashed #374151; border-radius: 10px;
+  padding: 12px; font-family: "SF Mono", "Cascadia Code", "Fira Code", monospace;
+  font-size: 12px; word-break: break-all; white-space: pre-wrap; color: #a5b4fc;
+  max-height: 200px; overflow-y: auto; line-height: 1.6;
+}
+.sub-url {
+  background: #0a0f1e; border: 1px solid var(--line); border-radius: 8px;
+  padding: 10px; font-family: monospace; font-size: 12px; word-break: break-all;
+  margin: 6px 0; color: var(--acc2);
+}
 
-/* protocol tags */
-.ptag { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; margin:2px; font-weight:600; }
-.ptag.xray { background:rgba(255,71,87,.15); color:var(--err); }
-.ptag.sb { background:rgba(0,212,170,.15); color:var(--ok); }
-.ptag.argo { background:rgba(52,152,219,.15); color:var(--acc); }
+/* Tags */
+.ptag { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 10px; margin: 2px; font-weight: 600; }
+.ptag.xray { background: rgba(239,68,68,.15); color: var(--err); }
+.ptag.sb { background: rgba(34,197,94,.15); color: var(--ok); }
+.ptag.argo { background: rgba(14,165,233,.15); color: var(--info); }
 
-.alert { background:rgba(245,158,11,.1); border:1px solid var(--warn); color:var(--warn);
-  padding:8px 12px; border-radius:8px; font-size:12px; margin:8px 0; }
+/* Alert */
+.alert { padding: 10px 14px; border-radius: 8px; font-size: 12px; margin: 8px 0; }
+.alert.warn { background: rgba(245,158,11,.1); border: 1px solid var(--warn); color: var(--warn); }
+.alert.info { background: rgba(99,102,241,.1); border: 1px solid var(--acc); color: var(--acc2); }
+.alert.ok { background: rgba(34,197,94,.1); border: 1px solid var(--ok); color: var(--ok); }
 
-.qr-wrap { display:inline-block; padding:12px; background:#fff; border-radius:8px; margin:8px; }
-.qr-wrap canvas { display:block; }
+/* Node list */
+.node-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 12px; }
+.node-item .proto { font-weight: 600; min-width: 80px; }
+.node-item .url { flex: 1; word-break: break-all; color: var(--sub); font-family: monospace; font-size: 11px; }
+.node-item .copy-btn { flex-shrink: 0; }
 
-/* refresh indicator */
-.refresh-indicator { font-size:11px; color:var(--sub); display:flex; align-items:center; gap:6px; }
-.refresh-indicator .spinner { width:12px; height:12px; border:3px solid var(--line); border-top-color:var(--acc);
-  border-radius:50%; animation:spin 1s linear infinite; display:none; }
-.refresh-indicator .spinner.active { display:inline-block; }
-@keyframes spin { to{transform:rotate(360deg);} }
+/* Refresh spinner */
+.spinner { width: 14px; height: 14px; border: 2px solid var(--line); border-top-color: var(--acc); border-radius: 50%; animation: spin .8s linear infinite; display: none; }
+.spinner.on { display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-/* progress bar */
-.progress-bar { height:6px; background:var(--line); border-radius:3px; overflow:hidden; margin:4px 0; }
-.progress-bar .fill { height:100%; border-radius:3px; transition:width .5s; }
-.progress-bar .fill.green { background:var(--ok); }
-.progress-bar .fill.blue { background:var(--acc); }
-.progress-bar .fill.orange { background:var(--warn); }
+/* One-click preset */
+.preset { background: rgba(99,102,241,.06); border: 1px solid rgba(99,102,241,.25); border-radius: 10px; padding: 12px; margin: 8px 0; }
+.preset code { color: var(--acc2); font-size: 11px; word-break: break-all; display: block; margin: 4px 0; }
 
-/* node list */
-.node-item { display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--line); }
-.node-item .proto-name { font-weight:600; min-width:100px; }
-.node-item .node-url { flex:1; font-size:11px; word-break:break-all; color:var(--sub); }
-.node-item .node-status { font-size:11px; }
+/* HTTPS note */
+.https-note { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; line-height: 1.5; }
+.https-note .icon { font-size: 18px; flex-shrink: 0; }
 
-/* one-click preset */
-.preset-box { background:rgba(79,124,255,.08); border:1px solid var(--acc); border-radius:10px; padding:12px; margin:8px 0; }
-.preset-box code { color:var(--accent2); font-size:12px; word-break:break-all; }
+/* Divider */
+hr { border: none; border-top: 1px solid var(--line); margin: 12px 0; }
+
+/* Proto grid */
+.proto-grid { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: center; }
+.proto-grid label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; white-space: nowrap; }
+.pill { display: inline-block; font-size: 10px; padding: 1px 6px; border: 1px solid var(--line); border-radius: 99px; color: var(--muted); }
+
+/* Footer */
+footer { text-align: center; padding: 20px; font-size: 11px; color: var(--muted); }
+footer a { color: var(--acc2); text-decoration: none; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="theme-switch" onclick="toggleTheme()" title="切换主题">🌓</div>
-    <h1><span>Science</span> 小钢炮控制面板 💣</h1>
-    <p>
+    <h1><span>Science</span> 小钢炮控制面板</h1>
+    <div class="meta">
       <a href="https://github.com/Hutton-h/science" target="_blank">github.com/Hutton-h/science</a>
-      &nbsp;|&nbsp; V26.5.10
-      &nbsp;|&nbsp; <span id="headerStatus" style="color:var(--warn);">未连接</span>
-    </p>
+      &nbsp;·&nbsp; V26.5.10
+    </div>
   </header>
 
+  <!-- Status Bar -->
+  <div class="status-bar" id="statusBar">
+    <span class="status-dot offline" id="statusDot"></span>
+    <span id="statusText" style="color: var(--err);">等待连接服务器…</span>
+    <span style="margin-left: auto; font-size: 11px; color: var(--muted);" id="refreshTime"></span>
+  </div>
+
+  <!-- Tabs -->
   <div class="tabs">
     <button class="tab active" onclick="switchTab('dashboard')">📊 仪表盘</button>
     <button class="tab" onclick="switchTab('generator')">🔧 命令生成器</button>
-    <button class="tab" onclick="switchTab('subscription')">📡 订阅链接</button>
-    <button class="tab" onclick="switchTab('nodes')">📋 节点列表</button>
+    <button class="tab" onclick="switchTab('subscription')">📡 订阅 & 节点</button>
+    <button class="tab" onclick="switchTab('security')">🔒 安全说明</button>
   </div>
 
-  <!-- ==================== TAB 1: 仪表盘 ==================== -->
+  <!-- ============ TAB 1: 仪表盘 ============ -->
   <div class="panel active" id="panel-dashboard">
-    <div class="card grid-full">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-        <h2 style="margin:0;">服务器实时状态</h2>
-        <div class="refresh-indicator">
-          <span class="spinner" id="refreshSpinner"></span>
-          <span id="lastRefresh">等待连接…</span>
-          <button class="sm" onclick="refreshDashboard()">刷新</button>
-        </div>
-      </div>
-    </div>
-
     <!-- 内核状态 -->
     <div class="grid grid-3">
-      <div class="stat-card">
-        <div class="label">Xray 内核</div>
-        <div class="value" id="xrayStatus">—</div>
-        <div class="label" id="xrayInfo"></div>
-      </div>
-      <div class="stat-card">
-        <div class="label">Sing-box 内核</div>
-        <div class="value" id="sboxStatus">—</div>
-        <div class="label" id="sboxInfo"></div>
-      </div>
-      <div class="stat-card">
-        <div class="label">Argo 隧道</div>
-        <div class="value" id="argoStatus">—</div>
-        <div class="label" id="argoInfo"></div>
-      </div>
+      <div class="stat-item"><div class="label">Xray 内核</div><div class="value" id="xrayV">—</div><div class="label" id="xrayL"></div></div>
+      <div class="stat-item"><div class="label">Sing-box 内核</div><div class="value" id="sboxV">—</div><div class="label" id="sboxL"></div></div>
+      <div class="stat-item"><div class="label">Argo 隧道</div><div class="value" id="argoV">—</div><div class="label" id="argoL"></div></div>
     </div>
 
-    <!-- 节点数 + 流量 -->
+    <!-- 节点 + 资源 -->
     <div class="grid">
       <div class="card">
         <h3>节点统计</h3>
-        <div style="display:flex;gap:16px;align-items:center;">
-          <div class="stat-card" style="flex:1;">
-            <div class="label">活跃节点</div>
-            <div class="value" id="nodeCount">—</div>
-          </div>
-          <div class="stat-card" style="flex:1;">
-            <div class="label">最近更新</div>
-            <div class="value" style="font-size:14px;" id="lastUpdate">—</div>
-          </div>
+        <div class="stat-row">
+          <div class="stat-item"><div class="label">活跃节点</div><div class="value" id="nodeCount">—</div></div>
+          <div class="stat-item"><div class="label">最后更新</div><div class="value" style="font-size: 14px;" id="lastUpdate">—</div></div>
         </div>
       </div>
       <div class="card">
         <h3>VPS 资源</h3>
-        <div style="font-size:13px;">
-          <div style="display:flex;justify-content:space-between;margin:4px 0;">
-            <span>CPU</span><span id="cpuUsage">—</span>
-          </div>
-          <div class="progress-bar"><div class="fill blue" id="cpuBar" style="width:0%"></div></div>
-          <div style="display:flex;justify-content:space-between;margin:4px 0;">
-            <span>内存</span><span id="memUsage">—</span>
-          </div>
-          <div class="progress-bar"><div class="fill green" id="memBar" style="width:0%"></div></div>
-          <div style="display:flex;justify-content:space-between;margin:4px 0;">
-            <span>主机名</span><span id="hostname">—</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;margin:4px 0;">
-            <span>运行时间</span><span id="uptime">—</span>
-          </div>
-        </div>
+        <div class="progress-label"><span>CPU</span><span id="cpuText">—</span></div>
+        <div class="progress-bar"><div class="fill cpu" id="cpuBar" style="width:0%"></div></div>
+        <div class="progress-label"><span>内存</span><span id="memText">—</span></div>
+        <div class="progress-bar"><div class="fill mem" id="memBar" style="width:0%"></div></div>
+        <div class="progress-label"><span>主机名</span><span id="hostname">—</span></div>
+        <div class="progress-label"><span>运行时间</span><span id="uptime">—</span></div>
       </div>
     </div>
 
     <!-- 流量 -->
     <div class="card">
       <h3>网络流量</h3>
-      <div class="traffic-bar">
-        <div class="traffic-item">
-          <div class="label">下载 <span id="rxText">—</span></div>
-          <div class="bar-bg"><div class="bar rx" id="rxBar" style="width:0%"></div></div>
-        </div>
-        <div class="traffic-item">
-          <div class="label">上传 <span id="txText">—</span></div>
-          <div class="bar-bg"><div class="bar tx" id="txBar" style="width:0%"></div></div>
-        </div>
-      </div>
+      <div class="progress-label"><span>下载</span><span id="downText">—</span></div>
+      <div class="progress-bar"><div class="fill down" id="downBar" style="width:0%"></div></div>
+      <div class="progress-label"><span>上传</span><span id="upText">—</span></div>
+      <div class="progress-bar"><div class="fill up" id="upBar" style="width:0%"></div></div>
     </div>
 
-    <!-- 一键全协议 -->
+    <!-- 一键部署 -->
     <div class="card">
       <h3>一键部署命令</h3>
-      <div class="preset-box">
-        <div style="font-size:13px;margin-bottom:4px;color:var(--sub);">纯IP版（无需域名，9协议+订阅）：</div>
-        <code id="oneClickCmd">all=y sub=y bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)</code>
-        <div style="font-size:12px;margin-top:6px;color:var(--sub);">域名版（隐藏IP，需DNS解析）：</div>
-        <code id="oneClickCmdDnym">all=y dnym="你的域名" sub=y bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)</code>
-        <div style="font-size:12px;margin-top:6px;color:var(--sub);">域名+Argo固定隧道：</div>
-        <code id="oneClickCmdArgo" style="font-size:11px;">all=y dnym="你的域名" argo=vmpt agn="cf.你的域名.com" agk="ey..." sub=y bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)</code>
-        <div class="actions" style="margin-top:8px;">
-          <button class="primary sm" onclick="copyOneClick()">复制IP版</button>
-          <button class="sm" onclick="copyOneClickDnym()">复制域名版</button>
-          <button class="sm" onclick="copyOneClickArgo()">复制+Argo</button>
+      <div class="preset">
+        <div style="font-size: 12px; color: var(--sub);">纯IP版（9协议+订阅）：</div>
+        <code id="oneClickIP">all=y sub=y bash &lt;(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)</code>
+        <div style="font-size: 12px; color: var(--sub); margin-top: 6px;">域名版（隐藏IP）：</div>
+        <code id="oneClickDnym">all=y dnym="你的域名" sub=y bash &lt;(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)</code>
+        <div style="font-size: 12px; color: var(--sub); margin-top: 6px;">域名+Argo固定隧道：</div>
+        <code id="oneClickArgo" style="font-size: 11px;">all=y dnym="你的域名" argo=vmpt agn="cf.你的域名.com" agk="ey..." sub=y bash &lt;(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)</code>
+        <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
+          <button class="primary sm" onclick="copyEl('oneClickIP',this)">复制IP版</button>
+          <button class="sm" onclick="copyEl('oneClickDnym',this)">复制域名版</button>
+          <button class="sm" onclick="copyEl('oneClickArgo',this)">复制Argo版</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ==================== TAB 2: 命令生成器 ==================== -->
+  <!-- ============ TAB 2: 命令生成器 ============ -->
   <div class="panel" id="panel-generator">
     <div class="grid">
-      <div class="card" style="grid-row:1/4;">
-        <h2>必选：内核协议 &amp; 端口</h2>
-        <div style="margin-bottom:12px; padding-bottom:10px; border-bottom:1px dotted var(--line);">
-          <h3>Xray 协议</h3>
-          <div class="proto-grid">
-            <label><input type="checkbox" data-var="vlpt"> VLESS-TCP-Reality <span class="pill">vlpt</span></label><input type="text" data-port="vlpt" placeholder="留空随机端口">
-            <label><input type="checkbox" data-var="xhpt"> VLESS-XHTTP-Reality <span class="pill">xhpt</span></label><input type="text" data-port="xhpt" placeholder="留空随机端口">
-            <label><input type="checkbox" data-var="vxpt"> VLESS-XHTTP-ENC <span class="pill">vxpt</span></label><input type="text" data-port="vxpt" placeholder="留空随机（支持CDN）">
-            <label><input type="checkbox" data-var="vwpt"> VLESS-WS-ENC <span class="pill">vwpt</span></label><input type="text" data-port="vwpt" placeholder="留空随机（支持CDN）">
-          </div>
-        </div>
-        <div style="margin-bottom:12px; padding-bottom:10px; border-bottom:1px dotted var(--line);">
-          <h3>Sing-box 协议</h3>
-          <div class="proto-grid">
-            <label><input type="checkbox" data-var="hypt"> Hysteria2 <span class="pill">hypt</span></label><input type="text" data-port="hypt" placeholder="留空随机端口">
-            <label><input type="checkbox" data-var="tupt"> Tuic <span class="pill">tupt</span></label><input type="text" data-port="tupt" placeholder="留空随机端口">
-            <label><input type="checkbox" data-var="anpt"> AnyTLS <span class="pill">anpt</span></label><input type="text" data-port="anpt" placeholder="留空随机端口">
-            <label><input type="checkbox" data-var="arpt"> Any-Reality <span class="pill">arpt</span></label><input type="text" data-port="arpt" placeholder="留空随机端口">
-            <label><input type="checkbox" data-var="sspt"> Shadowsocks-2022 <span class="pill">sspt</span></label><input type="text" data-port="sspt" placeholder="留空随机端口">
-          </div>
-        </div>
-        <div>
-          <h3>自动（Xray优先）</h3>
-          <div class="proto-grid">
-            <label><input type="checkbox" data-var="vmpt"> VMess-WS <span class="pill">vmpt</span></label><input type="text" data-port="vmpt" placeholder="留空随机（支持CDN）">
-            <label><input type="checkbox" data-var="sopt"> SOCKS5 <span class="pill">sopt</span></label><input type="text" data-port="sopt" placeholder="留空随机端口">
-          </div>
-        </div>
-        <div style="margin-top:8px;padding-top:8px;border-top:1px dotted var(--line);">
-          <button class="primary sm" onclick="selectAll()">全选9协议</button>
-          <button class="sm" onclick="clearAll()">清空</button>
-        </div>
-      </div>
-
+      <!-- 协议选择 -->
       <div class="card">
-        <h2>全局配置</h2>
-        <div class="row"><label>UUID <span class="pill">uuid</span></label>
-          <div style="display:flex;gap:8px;"><input id="uuid" type="text" placeholder="留空随机生成"><button class="primary sm" onclick="genUUID()">生成UUID</button></div>
-        </div>
-        <div class="row"><label>服务器域名 <span class="pill">dnym</span></label><input id="dnym" type="text" placeholder="有域名则填，节点链接用域名代替IP，保护IP不暴露"></div>
-        <div class="row"><label>Reality域名 <span class="pill">reym</span></label><input id="reym" type="text" placeholder="仅Reality协议可用，默认apple.com"></div>
-        <div class="row"><label>CDN域名 <span class="pill">cdnym</span></label><input id="cdnym" type="text" placeholder="WS/XHTTP协议启用80系CDN或回源CDN时使用"></div>
-        <div class="row"><label>WARP出站 <span class="pill">warp</span></label>
-          <select id="warp">
-            <option value="">默认 本地IP出站</option>
-            <option value="s">1、Singbox WARP v4+v6</option>
-            <option value="s4">2、Singbox WARP v4</option>
-            <option value="s6">3、Singbox WARP v6</option>
-            <option value="x">4、Xray WARP v4+v6</option>
-            <option value="x4">5、Xray WARP v4</option>
-            <option value="x6">6、Xray WARP v6</option>
-            <option value="s4x4">7、双WARP v4</option>
-            <option value="s4x6">8、S-v4 X-v6</option>
-            <option value="s6x4">9、S-v6 X-v4</option>
-            <option value="s6x6">10、双WARP v6</option>
-            <option value="sx4">11、S-v4+v6 X-v4</option>
-            <option value="sx6">12、S-v4+v6 X-v6</option>
-            <option value="s4x">13、S-v4 X-v4+v6</option>
-            <option value="s6x">14、S-v6 X-v4+v6</option>
-            <option value="sx">15、双WARP v4+v6</option>
-          </select>
-        </div>
-        <div class="row"><label>IP版本 <span class="pill">ippz</span></label>
-          <select id="ippz"><option value="">自动</option><option value="4">IPv4</option><option value="6">IPv6</option></select>
-        </div>
-        <div class="row"><label>节点名称前缀 <span class="pill">name</span></label><input id="name" type="text" placeholder="留空默认协议名前缀"></div>
-        <div class="row"><label>开放所有端口 <span class="pill">oap</span></label>
-          <select id="oap"><option value="">关闭</option><option value="y">开启（执行一次即关闭）</option></select>
+        <h3>Xray 协议</h3>
+        <div class="proto-grid">
+          <label><input type="checkbox" data-var="vlpt"> VLESS-TCP-Reality <span class="pill">vlpt</span></label><input type="text" data-port="vlpt" placeholder="留空=随机">
+          <label><input type="checkbox" data-var="xhpt"> VLESS-XHTTP-Reality <span class="pill">xhpt</span></label><input type="text" data-port="xhpt" placeholder="留空=随机">
+          <label><input type="checkbox" data-var="vxpt"> VLESS-XHTTP-ENC <span class="pill">vxpt</span></label><input type="text" data-port="vxpt" placeholder="支持CDN">
+          <label><input type="checkbox" data-var="vwpt"> VLESS-WS-ENC <span class="pill">vwpt</span></label><input type="text" data-port="vwpt" placeholder="支持CDN">
         </div>
       </div>
-
       <div class="card">
-        <h2>订阅链接设置</h2>
-        <div class="row"><label>启用订阅 <span class="pill">sub</span></label>
-          <select id="sub"><option value="">关闭</option><option value="y">开启</option></select>
+        <h3>Sing-box 协议</h3>
+        <div class="proto-grid">
+          <label><input type="checkbox" data-var="hypt"> Hysteria2 <span class="pill">hypt</span></label><input type="text" data-port="hypt" placeholder="留空=随机">
+          <label><input type="checkbox" data-var="tupt"> Tuic <span class="pill">tupt</span></label><input type="text" data-port="tupt" placeholder="留空=随机">
+          <label><input type="checkbox" data-var="anpt"> AnyTLS <span class="pill">anpt</span></label><input type="text" data-port="anpt" placeholder="留空=随机">
+          <label><input type="checkbox" data-var="arpt"> Any-Reality <span class="pill">arpt</span></label><input type="text" data-port="arpt" placeholder="留空=随机">
+          <label><input type="checkbox" data-var="sspt"> Shadowsocks-2022 <span class="pill">sspt</span></label><input type="text" data-port="sspt" placeholder="留空=随机">
         </div>
-        <div class="row"><label>订阅密码 <span class="pill">subid</span></label><input id="subid" type="text" placeholder="留空=UUID"></div>
-        <div class="row"><label>订阅端口 <span class="pill">subpt</span></label><input id="subpt" type="text" placeholder="留空随机"></div>
-        <div class="row"><label>Hysteria2端口跳跃 <span class="pill">hyjpt</span></label><input id="hyjpt" type="text" placeholder="例：10000:20000 30000"></div>
       </div>
-
+      <!-- 自动协议 -->
       <div class="card">
-        <h2>Argo隧道（CDN优选）</h2>
-        <div class="row"><label>Argo <span class="pill">argo</span></label>
-          <select id="argo"><option value="">关闭</option><option value="vmpt">VMess-WS隧道</option><option value="vwpt">VLESS-WS隧道</option></select>
+        <h3>自动分配</h3>
+        <div class="proto-grid">
+          <label><input type="checkbox" data-var="vmpt"> VMess-WS <span class="pill">vmpt</span></label><input type="text" data-port="vmpt" placeholder="支持CDN">
+          <label><input type="checkbox" data-var="sopt"> SOCKS5 <span class="pill">sopt</span></label><input type="text" data-port="sopt" placeholder="留空=随机">
         </div>
-        <div class="row"><label>固定隧道域名 <span class="pill">agn</span></label><input id="agn" type="text" placeholder="CF上托管的域名"></div>
-        <div class="row"><label>固定隧道Token <span class="pill">agk</span></label><input id="agk" type="text" placeholder="ey开头的token"></div>
-        <div class="row"><label>优选IP域名 <span class="pill">cfip</span></label><input id="cfip" type="text" placeholder="IPv4或[IPv6]或域名，最多2个空格隔开"></div>
-      </div>
-
-      <div class="card grid-full">
-        <h2>生成的命令</h2>
-        <div class="cmd-box" id="cmdBox">点击"生成命令"按钮</div>
-        <div class="actions">
-          <button class="primary" onclick="generateCmd()">生成命令</button>
-          <button onclick="copyCmd()">复制命令</button>
-          <button onclick="copyCurl()">复制curl命令</button>
+        <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="primary sm" onclick="selectAllProto()">全选11协议</button>
+          <button class="sm" onclick="clearAllProto()">清空</button>
         </div>
       </div>
+      <!-- 高级参数 -->
+      <div class="card">
+        <h3>高级参数</h3>
+        <div class="row"><label>UUID</label><input type="text" id="uuid" placeholder="留空=随机生成"><button class="sm" onclick="genUUID()" style="margin-left: 4px;">生成</button></div>
+        <div class="row"><label>域名(dnym)</label><input type="text" id="dnym" placeholder="隐藏IP用"></div>
+        <div class="row"><label>Reality域名(reym)</label><input type="text" id="reym" placeholder="默认 apple.com"></div>
+        <div class="row"><label>CDN域名(cdnym)</label><input type="text" id="cdnym" placeholder="80系CDN回源域名"></div>
+        <div class="row"><label>WARP模式</label><input type="text" id="warp" placeholder="s/x/sx/s4/s6/x4/x6/s4x4..."></div>
+        <div class="row"><label>IP版本(ippz)</label><input type="text" id="ippz" placeholder="4或6"></div>
+        <div class="row"><label>节点前缀(name)</label><input type="text" id="name" placeholder="自定义前缀"></div>
+        <div class="row"><label>Hysteria2跳跃端口(hyjpt)</label><input type="text" id="hyjpt" placeholder="10000:20000"></div>
+        <div class="row"><label>Argo模式(argo)</label><input type="text" id="argo" placeholder="vmpt或vwpt"></div>
+        <div class="row"><label>Argo域名(agn)</label><input type="text" id="agn" placeholder="CF解析域名"></div>
+        <div class="row"><label>Argo Token(agk)</label><input type="text" id="agk" placeholder="ey开头token"></div>
+        <div class="row"><label>优选IP(cfip)</label><input type="text" id="cfip" placeholder="最多两个IP/域名"></div>
+        <div class="row"><label>开启订阅</label><input type="text" id="sub" placeholder="y=开启"></div>
+        <div class="row"><label>订阅密码(subid)</label><input type="text" id="subid" placeholder="默认=uuid"></div>
+        <div class="row"><label>订阅端口(subpt)</label><input type="text" id="subpt" placeholder="留空=随机"></div>
+        <div class="row"><label>开放防火墙(oap)</label><input type="text" id="oap" placeholder="y=开放所有端口"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top: 12px;">
+      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+        <button class="primary" onclick="generateCmd()">生成命令</button>
+        <button onclick="copyCmd()">复制命令</button>
+        <button class="sm" onclick="copyCurl()">复制curl</button>
+      </div>
+      <div class="cmd-box" id="cmdBox" style="margin-top: 10px;">点击"生成命令"按钮</div>
     </div>
   </div>
 
-  <!-- ==================== TAB 3: 订阅链接 ==================== -->
+  <!-- ============ TAB 3: 订阅 & 节点 ============ -->
   <div class="panel" id="panel-subscription">
-    <div class="grid">
-      <div class="card grid-full">
-        <h2>服务器连接</h2>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <input type="text" id="subServer" placeholder="服务器地址 (如 1.2.3.4 或 your.domain.com)" style="flex:1;min-width:200px;">
-          <input type="text" id="subPort" placeholder="订阅端口" style="max-width:100px;">
-          <input type="text" id="subToken" placeholder="订阅Token" style="max-width:250px;">
-          <button class="primary" onclick="loadSubscriptions()">加载订阅</button>
-        </div>
-        <div class="alert" style="margin-top:8px;">
-          提示：服务器需开启 <code>sub=y</code>。订阅面板地址：<code>http://服务器IP:端口/Token/index.html</code>
-        </div>
-        <div id="serverStatus" style="font-size:13px;color:var(--sub);margin-top:6px;">未连接服务器</div>
-      </div>
-
-      <div class="card">
-        <h3>Clash Meta 订阅</h3>
-        <div class="sub-url" id="clashUrl">请先连接服务器</div>
-        <div class="actions">
-          <button class="sm" onclick="copyText('clashUrl')">复制</button>
-          <button class="sm" onclick="showQR('clashUrl')">二维码</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>Sing-Box 订阅</h3>
-        <div class="sub-url" id="singboxUrl">请先连接服务器</div>
-        <div class="actions">
-          <button class="sm" onclick="copyText('singboxUrl')">复制</button>
-          <button class="sm" onclick="showQR('singboxUrl')">二维码</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>聚合协议列表</h3>
-        <div class="sub-url" id="allUrl">请先连接服务器</div>
-        <div class="actions">
-          <button class="sm" onclick="copyText('allUrl')">复制</button>
-        </div>
-      </div>
-
-      <div class="card grid-full" id="qrCard" style="display:none;">
-        <h3>二维码</h3>
-        <div class="qr-wrap" id="qrDisplay"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== TAB 4: 节点列表 ==================== -->
-  <div class="panel" id="panel-nodes">
     <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h2>当前节点列表</h2>
-        <button class="sm" onclick="fetchNodeList(currentServer,currentPort,currentToken)">刷新节点</button>
+      <h3>订阅链接</h3>
+      <div class="row">
+        <label>服务器地址</label><input type="text" id="subServer" placeholder="服务器IP或域名">
       </div>
-      <div id="nodeList" style="font-size:13px;color:var(--sub);">请先在订阅面板连接服务器</div>
+      <div class="row">
+        <label>订阅端口</label><input type="text" id="subPort" placeholder="订阅端口号">
+      </div>
+      <div class="row">
+        <label>订阅Token</label><input type="text" id="subToken" placeholder="UUID">
+      </div>
+      <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
+        <button class="primary sm" onclick="loadSubscriptions()">连接服务器</button>
+        <button class="sm" onclick="refreshDashboard()">刷新仪表盘</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Clash Meta 订阅</h3>
+      <div class="sub-url" id="clashUrl">请先连接服务器</div>
+      <button class="sm" onclick="copyEl('clashUrl',this)">复制</button>
+    </div>
+    <div class="card">
+      <h3>Sing-box 订阅</h3>
+      <div class="sub-url" id="singboxUrl">请先连接服务器</div>
+      <button class="sm" onclick="copyEl('singboxUrl',this)">复制</button>
+    </div>
+    <div class="card">
+      <h3>聚合协议订阅</h3>
+      <div class="sub-url" id="allUrl">请先连接服务器</div>
+      <button class="sm" onclick="copyEl('allUrl',this)">复制</button>
+    </div>
+    <div class="card">
+      <h3>节点列表</h3>
+      <div id="nodeList" style="max-height: 500px; overflow-y: auto;">
+        <span style="color: var(--muted);">请先连接服务器</span>
+      </div>
     </div>
   </div>
+
+  <!-- ============ TAB 4: 安全说明 ============ -->
+  <div class="panel" id="panel-security">
+    <div class="card">
+      <h3>为什么浏览器提示"不安全"？</h3>
+      <div class="https-note">
+        <div class="icon">🔒</div>
+        <div>
+          <p style="margin-bottom: 8px;">面板使用 busybox httpd 提供 HTTP 服务，没有内置 TLS/SSL 支持，浏览器会标记为"不安全"。<strong>这不影响代理节点本身的安全性</strong>——所有代理协议（VLESS、VMess、Hysteria2 等）都有独立的加密层。</p>
+          <p style="margin-bottom: 8px;">面板仅用于查看节点信息和订阅链接，不传输敏感数据。</p>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>方案一：Cloudflare 代理（推荐）</h3>
+      <div class="alert info">
+        <strong>最简单的方式：</strong>在 Cloudflare DNS 中将订阅域名设为🟠橙色云朵（代理模式），Cloudflare 会自动提供 HTTPS。浏览器通过 HTTPS 访问 Cloudflare，Cloudflare 通过 HTTP 回源到你的服务器。
+        <div style="margin-top: 8px; font-size: 12px; color: var(--sub);">
+          前提：订阅面板地址用的是域名（如 http://你的域名:端口/token/index.html），且域名已解析到服务器 IP。
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>方案二：Nginx/Caddy 反向代理</h3>
+      <div class="alert info">
+        在服务器上安装 Nginx 或 Caddy，配置反向代理 + Let's Encrypt 自动 HTTPS 证书：
+        <div class="cmd-box" style="margin-top: 8px; font-size: 11px;">
+# Caddy 示例（最简单）
+sudo apt install -y caddy
+echo "你的域名 { reverse_proxy localhost:订阅端口 }" > /etc/caddy/Caddyfile
+sudo systemctl restart caddy
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>方案三：Cloudflare Tunnel</h3>
+      <div class="alert info">
+        使用 cloudflared tunnel 创建安全隧道，无需开放端口，自动获得 HTTPS。Argo 固定隧道本身就是这个原理。
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <a href="https://github.com/Hutton-h/science" target="_blank">github.com/Hutton-h/science</a>
+    · Science 小钢炮 V26.5.10
+  </footer>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
-// ========== GLOBAL STATE ==========
-let currentServer='', currentPort='', currentToken='';
+// ============ GLOBAL STATE ============
+let currentServer = '', currentPort = '', currentToken = '';
 let dashboardTimer = null;
 
-// ========== AUTO-DETECT SERVER FROM URL ==========
-(function autoDetect(){
+// ============ AUTO-DETECT ============
+(function autoDetect() {
   let path = window.location.pathname;
-  let parts = path.split('/').filter(p=>p);
-  if(parts.length >= 2 && parts[parts.length-1] === 'index.html'){
-    currentToken = parts[parts.length-2];
+  let parts = path.split('/').filter(p => p);
+  if (parts.length >= 2 && parts[parts.length - 1] === 'index.html') {
+    currentToken = parts[parts.length - 2];
     currentServer = window.location.hostname;
     currentPort = window.location.port || '80';
-    let srv=document.getElementById('subServer');
-    let prt=document.getElementById('subPort');
-    let tok=document.getElementById('subToken');
-    if(srv) srv.value = currentServer;
-    if(prt) prt.value = currentPort;
-    if(tok) tok.value = currentToken;
-    let base='http://'+currentServer+':'+currentPort+'/'+currentToken+'/';
-    document.getElementById('clashUrl').textContent=base+'clmi.yaml';
-    document.getElementById('singboxUrl').textContent=base+'sbox.json';
-    document.getElementById('allUrl').textContent=base+'jhsub.txt';
-    document.getElementById('serverStatus').innerHTML='<span class="status-dot online"></span>已自动连接: '+currentServer+':'+currentPort;
-    document.getElementById('headerStatus').innerHTML='<span class="status-dot online"></span>'+currentServer+':'+currentPort;
-    document.getElementById('headerStatus').style.color='var(--ok)';
-    fetchNodeList();
-    fetchDashboard();
+    let srv = document.getElementById('subServer');
+    let prt = document.getElementById('subPort');
+    let tok = document.getElementById('subToken');
+    if (srv) srv.value = currentServer;
+    if (prt) prt.value = currentPort;
+    if (tok) tok.value = currentToken;
+    let base = 'http://' + currentServer + ':' + currentPort + '/' + currentToken + '/';
+    document.getElementById('clashUrl').textContent = base + 'clmi.yaml';
+    document.getElementById('singboxUrl').textContent = base + 'sbox.json';
+    document.getElementById('allUrl').textContent = base + 'jhsub.txt';
+    updateStatus(currentServer + ':' + currentPort, true);
+    fetchServerStatus();
     startDashboardAutoRefresh();
   }
 })();
 
-// ========== THEME ==========
-function toggleTheme(){ document.body.classList.toggle('light-mode'); }
-
-// ========== TAB SWITCH ==========
-function switchTab(name){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelector('.tab[onclick*="'+name+'"]').classList.add('active');
-  document.getElementById('panel-'+name).classList.add('active');
-  if(name==='dashboard') startDashboardAutoRefresh();
-  else stopDashboardAutoRefresh();
+// ============ TAB SWITCH ============
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  let tab = document.querySelector('.tab[onclick*="' + name + '"]');
+  if (tab) tab.classList.add('active');
+  let panel = document.getElementById('panel-' + name);
+  if (panel) panel.classList.add('active');
+  if (name === 'dashboard') { startDashboardAutoRefresh(); } else { stopDashboardAutoRefresh(); }
 }
 
-// ========== UUID ==========
-function genUUID(){
-  if(window.crypto&&crypto.randomUUID){
-    document.getElementById('uuid').value=crypto.randomUUID();
-  }else{
-    document.getElementById('uuid').value='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){var r=Math.random()*16|0,v=c==='x'?r:(r&0x3|0x8);return v.toString(16);});
-  }
-}
-
-// ========== PROTOCOL SELECT ==========
-function selectAll(){
-  ['vlpt','xhpt','vxpt','hypt','tupt','sspt','vmpt','sopt'].forEach(v=>{
-    let cb=document.querySelector('input[data-var="'+v+'"]');
-    if(cb) cb.checked=true;
+// ============ UUID ============
+function genUUID() {
+  let u = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    let r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
   });
-  document.getElementById('sub').value='y';
-}
-function clearAll(){
-  document.querySelectorAll('input[data-var]').forEach(cb=>cb.checked=false);
-  document.getElementById('sub').value='';
-  document.getElementById('argo').value='';
+  document.getElementById('uuid').value = u;
 }
 
-// ========== COMMAND GENERATOR ==========
-function generateCmd(){
-  let vars=[];
-  document.querySelectorAll('input[data-var]').forEach(cb=>{ if(cb.checked) vars.push(cb.dataset.var+'=""'); });
-  if(vars.length===0){ alert('请至少选择一个协议，或点击"全选9协议"'); return; }
-  let extras=['uuid','dnym','reym','cdnym','warp','ippz','name','oap','sub','subid','subpt','hyjpt','argo','agn','agk','cfip'];
-  extras.forEach(id=>{
-    let el=document.getElementById(id);
-    if(el&&el.value) vars.push(id+'="'+el.value.replace(/"/g,'\\"')+'"');
+// ============ PROTO SELECT ============
+function selectAllProto() {
+  document.querySelectorAll('input[data-var]').forEach(cb => cb.checked = true);
+  document.getElementById('sub').value = 'y';
+}
+function clearAllProto() {
+  document.querySelectorAll('input[data-var]').forEach(cb => cb.checked = false);
+  document.getElementById('sub').value = '';
+}
+
+// ============ COMMAND GENERATOR ============
+function generateCmd() {
+  let vars = [];
+  document.querySelectorAll('input[data-var]').forEach(cb => {
+    if (cb.checked) {
+      let portEl = document.querySelector('input[data-port="' + cb.dataset.var + '"]');
+      let portVal = portEl ? portEl.value.trim() : '';
+      vars.push(cb.dataset.var + '="' + portVal + '"');
+    }
   });
-  let cmd=vars.join(' ')+' bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)';
-  document.getElementById('cmdBox').textContent=cmd;
-}
-
-function doCopy(el,text,origText){
-  if(!text||text==='点击"生成命令"按钮'||text==='请先连接服务器') return;
-  navigator.clipboard.writeText(text).then(function(){
-    el.textContent='已复制!';
-    setTimeout(function(){ el.textContent=origText; },1500);
-  }).catch(function(){
-    // fallback: select text manually
-    var ta=document.createElement('textarea');
-    ta.value=text; ta.style.position='fixed'; ta.style.left='-9999px';
-    document.body.appendChild(ta); ta.select();
-    try{document.execCommand('copy')}catch(e){}
-    document.body.removeChild(ta);
-    el.textContent='已复制!';
-    setTimeout(function(){ el.textContent=origText; },1500);
+  if (vars.length === 0) { alert('请至少选择一个协议！'); return; }
+  let extras = ['uuid', 'dnym', 'reym', 'cdnym', 'warp', 'ippz', 'name', 'oap', 'sub', 'subid', 'subpt', 'hyjpt', 'argo', 'agn', 'agk', 'cfip'];
+  extras.forEach(id => {
+    let el = document.getElementById(id);
+    if (el && el.value.trim()) vars.push(id + '="' + el.value.trim().replace(/"/g, '\\"') + '"');
   });
+  let cmd = vars.join(' ') + ' bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)';
+  document.getElementById('cmdBox').textContent = cmd;
 }
 
-function copyCmd(){
-  var el=document.querySelector('#panel-generator button[onclick="copyCmd()"]');
-  doCopy(el,document.getElementById('cmdBox').textContent,'复制命令');
+function copyCmd() {
+  let text = document.getElementById('cmdBox').textContent;
+  if (text === '点击"生成命令"按钮') return;
+  copyToClipboard(text, document.querySelector('#panel-generator button[onclick="copyCmd()"]'));
 }
-function copyCurl(){
-  var el=document.querySelector('#panel-generator button[onclick="copyCurl()"]');
-  doCopy(el,document.getElementById('cmdBox').textContent,'复制curl命令');
-}
-function copyOneClick(){
-  var el=document.querySelector('button[onclick="copyOneClick()"]');
-  doCopy(el,document.getElementById('oneClickCmd').textContent,'复制IP版');
-}
-function copyOneClickDnym(){
-  var el=document.querySelector('button[onclick="copyOneClickDnym()"]');
-  doCopy(el,document.getElementById('oneClickCmdDnym').textContent,'复制域名版');
-}
-function copyOneClickArgo(){
-  var el=document.querySelector('button[onclick="copyOneClickArgo()"]');
-  doCopy(el,document.getElementById('oneClickCmdArgo').textContent,'复制+Argo命令');
+function copyCurl() {
+  let text = document.getElementById('cmdBox').textContent;
+  if (text === '点击"生成命令"按钮') return;
+  copyToClipboard(text, document.querySelector('#panel-generator button[onclick="copyCurl()"]'));
 }
 
-// ========== SUBSCRIPTION ==========
-function loadSubscriptions(){
-  var s=document.getElementById('subServer').value.trim();
-  var p=document.getElementById('subPort').value.trim();
-  var t=document.getElementById('subToken').value.trim();
-  if(!s){ alert('请输入服务器地址'); return; }
-  if(!p){ alert('请输入订阅端口'); return; }
-  if(!t){ alert('请输入订阅Token'); return; }
-  s=s.replace(/\/$/,'');
-  currentServer=s; currentPort=p; currentToken=t;
-  var base='http://'+s+':'+p+'/'+t+'/';
-  document.getElementById('clashUrl').textContent=base+'clmi.yaml';
-  document.getElementById('singboxUrl').textContent=base+'sbox.json';
-  document.getElementById('allUrl').textContent=base+'jhsub.txt';
-  document.getElementById('serverStatus').innerHTML='<span class="status-dot online"></span>已连接: '+s+':'+p;
-  document.getElementById('headerStatus').innerHTML='<span class="status-dot online"></span>'+s+':'+p;
-  document.getElementById('headerStatus').style.color='var(--ok)';
-  fetchNodeList();
-  fetchDashboard();
+// ============ SUBSCRIPTION LOAD ============
+function loadSubscriptions() {
+  let s = document.getElementById('subServer').value.trim();
+  let p = document.getElementById('subPort').value.trim();
+  let t = document.getElementById('subToken').value.trim();
+  if (!s || !p || !t) { alert('请填写服务器地址、端口和Token'); return; }
+  s = s.replace(/\/$/, '');
+  currentServer = s; currentPort = p; currentToken = t;
+  let base = 'http://' + s + ':' + p + '/' + t + '/';
+  document.getElementById('clashUrl').textContent = base + 'clmi.yaml';
+  document.getElementById('singboxUrl').textContent = base + 'sbox.json';
+  document.getElementById('allUrl').textContent = base + 'jhsub.txt';
+  updateStatus(s + ':' + p, true);
+  fetchServerStatus();
   startDashboardAutoRefresh();
 }
 
-// ========== DASHBOARD ==========
-function fetchDashboard(){
-  if(!currentServer||!currentPort||!currentToken) return;
-  var spinner=document.getElementById('refreshSpinner');
-  if(spinner) spinner.classList.add('active');
-  fetch('http://'+currentServer+':'+currentPort+'/'+currentToken+'/status.json')
-    .then(function(r){ return r.json(); })
-    .then(function(data){
+// ============ DASHBOARD ============
+function fetchServerStatus() {
+  if (!currentServer || !currentPort || !currentToken) return;
+  fetch('http://' + currentServer + ':' + currentPort + '/' + currentToken + '/status.json')
+    .then(r => r.json())
+    .then(data => {
       updateDashboard(data);
-      document.getElementById('lastRefresh').textContent='更新于 '+data.last_update;
-      if(spinner) spinner.classList.remove('active');
+      updateStatus(currentServer + ':' + currentPort, true);
+      document.getElementById('refreshTime').textContent = '更新于 ' + (data.last_update || '刚刚');
     })
-    .catch(function(){
-      document.getElementById('lastRefresh').textContent='获取状态失败（请确保已运行 science panel 命令）';
-      if(spinner) spinner.classList.remove('active');
+    .catch(() => {
+      updateStatus(currentServer + ':' + currentPort, false);
+      document.getElementById('refreshTime').textContent = '获取失败';
     });
 }
 
-function updateDashboard(data){
-  var kmap={xray:'xray',singbox:'sbox',argo:'argo'};
-   for(var k in kmap){
-     var status=data.kernels[k];
-     var el=document.getElementById(kmap[k]+'Status');
-     var infoEl=document.getElementById(kmap[k]+'Info');
-    if(!el||!infoEl) continue;
-    if(status==='running'){
-      el.textContent='运行中'; el.className='value online';
-      infoEl.innerHTML='<span class="status-dot online"></span>正常';
-    }else{
-      el.textContent='已停止'; el.className='value offline';
-      infoEl.innerHTML='<span class="status-dot offline"></span>停止';
+function updateDashboard(data) {
+  if (!data) return;
+  // Kernels
+  let kmap = { xray: 'xray', singbox: 'sbox', argo: 'argo' };
+  for (let k in kmap) {
+    let status = data.kernels ? data.kernels[k] : 'stopped';
+    let vEl = document.getElementById(kmap[k] + 'V');
+    let lEl = document.getElementById(kmap[k] + 'L');
+    if (!vEl || !lEl) continue;
+    if (status === 'running') {
+      vEl.textContent = '运行中'; vEl.className = 'value on';
+      lEl.innerHTML = '● 正常'; lEl.style.color = 'var(--ok)';
+    } else {
+      vEl.textContent = '已停止'; vEl.className = 'value off';
+      lEl.innerHTML = '● 停止'; lEl.style.color = 'var(--err)';
     }
   }
-  document.getElementById('nodeCount').textContent=data.node_count||0;
-  document.getElementById('lastUpdate').textContent=data.last_update||'—';
-  document.getElementById('hostname').textContent=data.hostname||'—';
-  var uptimeSec=parseInt(data.uptime)||0;
-  var days=Math.floor(uptimeSec/86400);
-  var hrs=Math.floor((uptimeSec%86400)/3600);
-  var mins=Math.floor((uptimeSec%3600)/60);
-  document.getElementById('uptime').textContent=days+'天 '+hrs+'时 '+mins+'分';
-  var memTotal=parseInt(data.memory&&data.memory.total)||1;
-  var memAvail=parseInt(data.memory&&data.memory.available)||0;
-  var memUsed=memTotal-memAvail;
-  var memPct=Math.round((memUsed/memTotal)*100);
-  document.getElementById('memUsage').textContent=formatBytes(memUsed*1024)+' / '+formatBytes(memTotal*1024);
-  document.getElementById('memBar').style.width=memPct+'%';
-  document.getElementById('cpuUsage').textContent=data.cpu||'—';
-  var cpuPct=parseFloat(data.cpu)||0;
-  document.getElementById('cpuBar').style.width=cpuPct+'%';
-  var rx=parseInt(data.traffic&&data.traffic.rx_bytes)||0;
-  var tx=parseInt(data.traffic&&data.traffic.tx_bytes)||0;
-  document.getElementById('rxText').textContent=formatBytes(rx);
-  document.getElementById('txText').textContent=formatBytes(tx);
-  var maxTraffic=Math.max(rx,tx,1);
-  document.getElementById('rxBar').style.width=((rx/maxTraffic)*100)+'%';
-  document.getElementById('txBar').style.width=((tx/maxTraffic)*100)+'%';
+  // Nodes
+  document.getElementById('nodeCount').textContent = data.node_count || 0;
+  document.getElementById('lastUpdate').textContent = data.last_update || '—';
+  document.getElementById('hostname').textContent = data.hostname || '—';
+  // Uptime
+  let uptimeSec = parseInt(data.uptime) || 0;
+  let d = Math.floor(uptimeSec / 86400), h = Math.floor((uptimeSec % 86400) / 3600), m = Math.floor((uptimeSec % 3600) / 60);
+  document.getElementById('uptime').textContent = d + '天 ' + h + '时 ' + m + '分';
+  // Memory
+  let memTotal = parseInt(data.memory && data.memory.total) || 1;
+  let memAvail = parseInt(data.memory && data.memory.available) || 0;
+  let memUsed = memTotal - memAvail;
+  let memPct = Math.round((memUsed / memTotal) * 100);
+  document.getElementById('memText').textContent = formatBytes(memUsed * 1024) + ' / ' + formatBytes(memTotal * 1024) + ' (' + memPct + '%)';
+  document.getElementById('memBar').style.width = memPct + '%';
+  // CPU
+  let cpuStr = data.cpu || '0%';
+  document.getElementById('cpuText').textContent = cpuStr;
+  let cpuPct = parseFloat(cpuStr) || 0;
+  document.getElementById('cpuBar').style.width = Math.min(cpuPct, 100) + '%';
+  // Traffic
+  let rx = parseInt(data.traffic && data.traffic.rx_bytes) || 0;
+  let tx = parseInt(data.traffic && data.traffic.tx_bytes) || 0;
+  document.getElementById('downText').textContent = '总下载: ' + formatBytes(rx);
+  document.getElementById('upText').textContent = '总上传: ' + formatBytes(tx);
+  let maxT = Math.max(rx, tx, 1);
+  document.getElementById('downBar').style.width = (rx / maxT * 100) + '%';
+  document.getElementById('upBar').style.width = (tx / maxT * 100) + '%';
+  // Node list
+  fetchNodeList();
 }
 
-function startDashboardAutoRefresh(){
-  stopDashboardAutoRefresh();
-  if(currentServer&&currentPort&&currentToken){
-    dashboardTimer=setInterval(fetchDashboard,30000);
-  }
-}
-function stopDashboardAutoRefresh(){
-  if(dashboardTimer){ clearInterval(dashboardTimer); dashboardTimer=null; }
-}
-function refreshDashboard(){ fetchDashboard(); }
-
-// ========== NODE LIST ==========
-function fetchNodeList(){
-  if(!currentServer||!currentPort||!currentToken) return;
-  fetch('http://'+currentServer+':'+currentPort+'/'+currentToken+'/jhsub.txt')
-    .then(function(r){ return r.text(); })
-    .then(function(txt){
-      var lines=txt.split('\n').filter(function(l){ return l.trim(); });
-      var html='';
-      if(lines.length===0){
-        html='<span style="color:var(--warn);">暂无节点数据</span>';
-      }else{
-        for(var i=0;i<lines.length;i++){
-          var l=lines[i], proto=l.split('://')[0]||'', tag='';
-          if(proto.indexOf('vless')!==-1||proto.indexOf('vmess')!==-1) tag='xray';
-          else if(proto.indexOf('hysteria')!==-1||proto.indexOf('tuic')!==-1||proto.indexOf('ss')!==-1||proto.indexOf('any')!==-1) tag='sb';
-          else if(proto.indexOf('argo')!==-1||proto.indexOf('trycloudflare')!==-1) tag='argo';
-          html+='<div class="node-item">'+
-            '<span class="ptag '+tag+'">'+proto+'</span>'+
-            '<span class="proto-name">节点 #'+(i+1)+'</span>'+
-            '<span class="node-url">'+escapeHtml(l.substring(0,100))+'…</span>'+
-            '<span class="node-status"><span class="status-dot online"></span></span>'+
-            '</div>';
-        }
+function fetchNodeList() {
+  if (!currentServer || !currentPort || !currentToken) return;
+  fetch('http://' + currentServer + ':' + currentPort + '/' + currentToken + '/jhsub.txt')
+    .then(r => r.text())
+    .then(txt => {
+      let lines = txt.split('\n').filter(l => l.trim());
+      if (lines.length === 0) {
+        document.getElementById('nodeList').innerHTML = '<span style="color: var(--warn);">暂无节点数据</span>';
+        return;
       }
-      document.getElementById('nodeList').innerHTML=html;
+      let html = '';
+      for (let i = 0; i < lines.length; i++) {
+        let l = lines[i], proto = l.split('://')[0] || '?';
+        let tag = 'xray';
+        if (proto.includes('hy') || proto.includes('tuic') || proto.includes('ss') || proto.includes('any')) tag = 'sb';
+        if (proto.includes('trycloudflare') || l.includes('argo')) tag = 'argo';
+        html += '<div class="node-item">' +
+          '<span class="ptag ' + tag + '">' + escapeHtml(proto) + '</span>' +
+          '<span class="proto">节点 #' + (i + 1) + '</span>' +
+          '<span class="url">' + escapeHtml(l.substring(0, 120)) + (l.length > 120 ? '…' : '') + '</span>' +
+          '<button class="sm copy-btn" onclick="copyToClipboard(\'' + escapeHtml(l).replace(/'/g, "\\'") + '\',this)">复制</button>' +
+          '</div>';
+      }
+      document.getElementById('nodeList').innerHTML = html;
     })
-    .catch(function(){
-      document.getElementById('nodeList').innerHTML='<span style="color:var(--err)">无法获取节点信息，请检查服务器地址和端口</span>';
+    .catch(() => {
+      document.getElementById('nodeList').innerHTML = '<span style="color: var(--err);">无法获取节点信息</span>';
     });
 }
 
-// ========== COPY SUBSCRIPTION URLS ==========
-function copyText(id){
-  var el=document.getElementById(id);
-  if(!el) return;
-  var text=el.textContent;
-  if(text==='请先连接服务器') return;
-  // find the button that triggered this
-  var btn=null;
-  var btns=el.parentElement.querySelectorAll('button');
-  for(var i=0;i<btns.length;i++){
-    if(btns[i].textContent.indexOf('复制')!==-1){ btn=btns[i]; break; }
+function startDashboardAutoRefresh() {
+  stopDashboardAutoRefresh();
+  if (currentServer && currentPort && currentToken) {
+    dashboardTimer = setInterval(fetchServerStatus, 30000);
   }
-  if(!btn) btn=event&&event.target;
-  navigator.clipboard.writeText(text).then(function(){
-    if(btn){ btn.textContent='已复制!'; setTimeout(function(){ btn.textContent='复制'; },1500); }
-  }).catch(function(){
-    var ta=document.createElement('textarea');
-    ta.value=text; ta.style.position='fixed'; ta.style.left='-9999px';
-    document.body.appendChild(ta); ta.select();
-    try{document.execCommand('copy')}catch(e){}
-    document.body.removeChild(ta);
-    if(btn){ btn.textContent='已复制!'; setTimeout(function(){ btn.textContent='复制'; },1500); }
-  });
+}
+function stopDashboardAutoRefresh() {
+  if (dashboardTimer) { clearInterval(dashboardTimer); dashboardTimer = null; }
+}
+function refreshDashboard() {
+  if (!currentServer) loadSubscriptions();
+  else fetchServerStatus();
 }
 
-function showQR(id){
-  var el=document.getElementById(id);
-  if(!el) return;
-  var url=el.textContent;
-  if(url==='请先连接服务器') return;
-  var card=document.getElementById('qrCard');
-  var disp=document.getElementById('qrDisplay');
-  card.style.display='block';
-  disp.innerHTML='';
-  try{
-    new QRCode(disp,{text:url,width:200,height:200});
-  }catch(e){
-    disp.innerHTML='<span style="color:var(--err)">二维码生成失败，请手动复制链接</span>';
+// ============ HELPERS ============
+function updateStatus(text, online) {
+  let dot = document.getElementById('statusDot');
+  let txt = document.getElementById('statusText');
+  if (online) {
+    dot.className = 'status-dot online';
+    txt.textContent = '已连接: ' + text;
+    txt.style.color = 'var(--ok)';
+  } else {
+    dot.className = 'status-dot offline';
+    txt.textContent = '无法连接: ' + text;
+    txt.style.color = 'var(--err)';
   }
-  card.scrollIntoView({behavior:'smooth'});
 }
 
-// ========== HELPERS ==========
-function formatBytes(b){
-  if(b<1024) return b+' B';
-  if(b<1048576) return (b/1024).toFixed(1)+' KB';
-  if(b<1073741824) return (b/1048576).toFixed(1)+' MB';
-  return (b/1073741824).toFixed(2)+' GB';
+function copyToClipboard(text, btn) {
+  let orig = btn ? btn.textContent : '复制';
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      if (btn) { btn.textContent = '已复制!'; setTimeout(() => btn.textContent = orig, 1500); }
+    }).catch(() => fallbackCopy(text, btn, orig));
+  } else {
+    fallbackCopy(text, btn, orig);
+  }
 }
-function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function fallbackCopy(text, btn, orig) {
+  let ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); } catch (e) { }
+  document.body.removeChild(ta);
+  if (btn) { btn.textContent = '已复制!'; setTimeout(() => btn.textContent = orig, 1500); }
+}
+
+function copyEl(id, btn) {
+  let el = document.getElementById(id);
+  if (!el) return;
+  let text = el.textContent || el.innerText || '';
+  if (text === '请先连接服务器' || !text) return;
+  copyToClipboard(text, btn);
+}
+
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+  if (b < 1073741824) return (b / 1048576).toFixed(1) + ' MB';
+  return (b / 1073741824).toFixed(2) + ' GB';
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 </script>
 </body>
 </html>
