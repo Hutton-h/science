@@ -455,6 +455,37 @@ button:hover { opacity:.85; }
 // ========== GLOBAL STATE ==========
 let currentServer='', currentPort='', currentToken='';
 let dashboardTimer = null;
+
+// ========== AUTO-DETECT SERVER FROM URL ==========
+// 面板部署在服务器上时，URL格式为 http://IP:端口/Token/index.html
+// 自动从URL提取服务器信息，无需手动输入
+(function autoDetect(){
+  let path = window.location.pathname;  // /Token/index.html
+  let parts = path.split('/').filter(p=>p);
+  if(parts.length >= 2 && parts[parts.length-1] === 'index.html'){
+    currentToken = parts[parts.length-2];  // Token
+    currentServer = window.location.hostname;
+    currentPort = window.location.port || '80';
+    // 自动填入订阅面板的输入框
+    let srv=document.getElementById('subServer');
+    let prt=document.getElementById('subPort');
+    let tok=document.getElementById('subToken');
+    if(srv) srv.value = currentServer;
+    if(prt) prt.value = currentPort;
+    if(tok) tok.value = currentToken;
+    // 自动连接
+    let base='http://'+currentServer+':'+currentPort+'/'+currentToken+'/';
+    document.getElementById('clashUrl').textContent=base+'clmi.yaml';
+    document.getElementById('singboxUrl').textContent=base+'sbox.json';
+    document.getElementById('allUrl').textContent=base+'jhsub.txt';
+    document.getElementById('serverStatus').innerHTML='<span class="status-dot online"></span>已自动连接: '+currentServer+':'+currentPort;
+    document.getElementById('headerStatus').innerHTML='<span class="status-dot online"></span>'+currentServer+':'+currentPort;
+    document.getElementById('headerStatus').style.color='var(--ok)';
+    fetchNodeList(currentServer,currentPort,currentToken);
+    fetchDashboard(currentServer,currentPort,currentToken);
+    startDashboardAutoRefresh();
+  }
+})();
 let prevRx = 0, prevTx = 0;
 
 // ========== THEME ==========
