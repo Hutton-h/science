@@ -3,17 +3,19 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Science小钢炮 - 命令生成器 & 订阅面板</title>
+<title>Science小钢炮 - 控制面板</title>
 <style>
 :root {
   --bg:#0b1020; --card:#121831; --ink:#e9edf7; --sub:#b7c1d9; --line:#263255;
   --acc:#4f7cff; --ok:#22c55e; --warn:#f59e0b; --err:#ef4444;
   --input-bg:#0d1430; --btn1:#1a2346; --btn2:#121a39;
+  --accent2:#00d4aa;
 }
 .light-mode {
   --bg:#fff; --card:#fff; --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0;
   --acc:#4f7cff; --ok:#22c55e; --warn:#f59e0b; --err:#ef4444;
   --input-bg:#fff; --btn1:#e2e8f0; --btn2:#f0f4f9;
+  --accent2:#00d4aa;
 }
 * { box-sizing:border-box; margin:0; padding:0; }
 body {
@@ -45,6 +47,8 @@ header a { color:var(--acc); text-decoration:none; }
 .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 @media(max-width:1100px){ .grid{grid-template-columns:1fr;} }
 .grid-full { grid-column:1/-1; }
+.grid-3 { grid-template-columns:1fr 1fr 1fr; }
+@media(max-width:900px){ .grid-3{grid-template-columns:1fr;} }
 
 /* cards */
 .card {
@@ -53,6 +57,32 @@ header a { color:var(--acc); text-decoration:none; }
 }
 .card h2 { font-size:18px; margin-bottom:10px; }
 .card h3 { font-size:14px; margin-bottom:8px; color:var(--acc); }
+
+/* dashboard stat cards */
+.stat-card {
+  text-align:center; padding:16px; border-radius:12px;
+  background:rgba(255,255,255,.03); border:1px solid var(--line);
+}
+.stat-card .value { font-size:32px; font-weight:700; margin:6px 0; }
+.stat-card .label { font-size:11px; color:var(--sub); text-transform:uppercase; letter-spacing:1px; }
+.stat-card .value.online { color:var(--ok); }
+.stat-card .value.offline { color:var(--err); }
+.stat-card .value.warn { color:var(--warn); }
+
+/* status dots */
+.status-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:5px; }
+.status-dot.online { background:var(--ok); box-shadow:0 0 6px var(--ok); }
+.status-dot.offline { background:var(--err); }
+.status-dot.unknown { background:var(--warn); }
+
+/* traffic bar */
+.traffic-bar { display:flex; gap:12px; margin:8px 0; }
+.traffic-item { flex:1; }
+.traffic-item .label { font-size:11px; color:var(--sub); }
+.traffic-item .bar-bg { height:8px; background:var(--line); border-radius:4px; margin:4px 0; overflow:hidden; }
+.traffic-item .bar { height:100%; border-radius:4px; transition:width .5s; }
+.traffic-item .bar.rx { background:linear-gradient(90deg,var(--acc),var(--accent2)); }
+.traffic-item .bar.tx { background:linear-gradient(90deg,var(--warn),var(--err)); }
 
 /* protocol grid */
 .proto-grid { display:grid; grid-template-columns:auto 1fr; gap:8px 14px; align-items:center; }
@@ -76,6 +106,8 @@ input[type="checkbox"] { accent-color:var(--acc); width:auto; }
 
 .pill { display:inline-block; font-size:11px; padding:1px 6px; border:1px solid var(--line);
   border-radius:99px; color:var(--sub); margin-left:4px; }
+.pill.green { border-color:var(--ok); color:var(--ok); }
+.pill.blue { border-color:var(--acc); color:var(--acc); }
 
 /* buttons */
 button {
@@ -101,43 +133,156 @@ button:hover { opacity:.85; }
 .ptag.sb { background:rgba(0,212,170,.15); color:var(--ok); }
 .ptag.argo { background:rgba(52,152,219,.15); color:var(--acc); }
 
-/* status */
-.status-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:5px; }
-.status-dot.online { background:var(--ok); box-shadow:0 0 6px var(--ok); }
-.status-dot.offline { background:var(--err); }
-
 .alert { background:rgba(245,158,11,.1); border:1px solid var(--warn); color:var(--warn);
   padding:8px 12px; border-radius:8px; font-size:12px; margin:8px 0; }
 
 .qr-wrap { display:inline-block; padding:12px; background:#fff; border-radius:8px; margin:8px; }
 .qr-wrap canvas { display:block; }
 
-/* shortcut commands */
-.shortcut-grid { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-.shortcut-grid code { background:var(--input-bg); padding:4px 8px; border-radius:6px; font-size:12px; }
+/* refresh indicator */
+.refresh-indicator { font-size:11px; color:var(--sub); display:flex; align-items:center; gap:6px; }
+.refresh-indicator .spinner { width:12px; height:12px; border:3px solid var(--line); border-top-color:var(--acc);
+  border-radius:50%; animation:spin 1s linear infinite; display:none; }
+.refresh-indicator .spinner.active { display:inline-block; }
+@keyframes spin { to{transform:rotate(360deg);} }
+
+/* progress bar */
+.progress-bar { height:6px; background:var(--line); border-radius:3px; overflow:hidden; margin:4px 0; }
+.progress-bar .fill { height:100%; border-radius:3px; transition:width .5s; }
+.progress-bar .fill.green { background:var(--ok); }
+.progress-bar .fill.blue { background:var(--acc); }
+.progress-bar .fill.orange { background:var(--warn); }
+
+/* node list */
+.node-item { display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--line); }
+.node-item .proto-name { font-weight:600; min-width:100px; }
+.node-item .node-url { flex:1; font-size:11px; word-break:break-all; color:var(--sub); }
+.node-item .node-status { font-size:11px; }
+
+/* one-click preset */
+.preset-box { background:rgba(79,124,255,.08); border:1px solid var(--acc); border-radius:10px; padding:12px; margin:8px 0; }
+.preset-box code { color:var(--accent2); font-size:12px; word-break:break-all; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <div class="theme-switch" onclick="toggleTheme()" title="切换主题">🌓</div>
-    <h1><span>Science</span> 小钢炮脚本 💣</h1>
+    <h1><span>Science</span> 小钢炮控制面板 💣</h1>
     <p>
       <a href="https://github.com/Hutton-h/science" target="_blank">github.com/Hutton-h/science</a>
       &nbsp;|&nbsp; V26.5.10
+      &nbsp;|&nbsp; <span id="headerStatus" style="color:var(--warn);">未连接</span>
     </p>
   </header>
 
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('generator')">🔧 SSH命令生成器</button>
-    <button class="tab" onclick="switchTab('subscription')">📡 订阅面板</button>
-    <button class="tab" onclick="switchTab('nodes')">📋 节点信息</button>
+    <button class="tab active" onclick="switchTab('dashboard')">📊 仪表盘</button>
+    <button class="tab" onclick="switchTab('generator')">🔧 命令生成器</button>
+    <button class="tab" onclick="switchTab('subscription')">📡 订阅链接</button>
+    <button class="tab" onclick="switchTab('nodes')">📋 节点列表</button>
   </div>
 
-  <!-- ==================== TAB 1: 命令生成器 ==================== -->
-  <div class="panel active" id="panel-generator">
+  <!-- ==================== TAB 1: 仪表盘 ==================== -->
+  <div class="panel active" id="panel-dashboard">
+    <div class="card grid-full">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <h2 style="margin:0;">服务器实时状态</h2>
+        <div class="refresh-indicator">
+          <span class="spinner" id="refreshSpinner"></span>
+          <span id="lastRefresh">等待连接…</span>
+          <button class="sm" onclick="refreshDashboard()">刷新</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 内核状态 -->
+    <div class="grid grid-3">
+      <div class="stat-card">
+        <div class="label">Xray 内核</div>
+        <div class="value" id="xrayStatus">—</div>
+        <div class="label" id="xrayInfo"></div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Sing-box 内核</div>
+        <div class="value" id="sboxStatus">—</div>
+        <div class="label" id="sboxInfo"></div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Argo 隧道</div>
+        <div class="value" id="argoStatus">—</div>
+        <div class="label" id="argoInfo"></div>
+      </div>
+    </div>
+
+    <!-- 节点数 + 流量 -->
     <div class="grid">
-      <!-- 协议选择 -->
+      <div class="card">
+        <h3>节点统计</h3>
+        <div style="display:flex;gap:16px;align-items:center;">
+          <div class="stat-card" style="flex:1;">
+            <div class="label">活跃节点</div>
+            <div class="value" id="nodeCount">—</div>
+          </div>
+          <div class="stat-card" style="flex:1;">
+            <div class="label">最近更新</div>
+            <div class="value" style="font-size:14px;" id="lastUpdate">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>VPS 资源</h3>
+        <div style="font-size:13px;">
+          <div style="display:flex;justify-content:space-between;margin:4px 0;">
+            <span>CPU</span><span id="cpuUsage">—</span>
+          </div>
+          <div class="progress-bar"><div class="fill blue" id="cpuBar" style="width:0%"></div></div>
+          <div style="display:flex;justify-content:space-between;margin:4px 0;">
+            <span>内存</span><span id="memUsage">—</span>
+          </div>
+          <div class="progress-bar"><div class="fill green" id="memBar" style="width:0%"></div></div>
+          <div style="display:flex;justify-content:space-between;margin:4px 0;">
+            <span>主机名</span><span id="hostname">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin:4px 0;">
+            <span>运行时间</span><span id="uptime">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 流量 -->
+    <div class="card">
+      <h3>网络流量</h3>
+      <div class="traffic-bar">
+        <div class="traffic-item">
+          <div class="label">下载 <span id="rxText">—</span></div>
+          <div class="bar-bg"><div class="bar rx" id="rxBar" style="width:0%"></div></div>
+        </div>
+        <div class="traffic-item">
+          <div class="label">上传 <span id="txText">—</span></div>
+          <div class="bar-bg"><div class="bar tx" id="txBar" style="width:0%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 一键全协议 -->
+    <div class="card">
+      <h3>一键部署命令</h3>
+      <div class="preset-box">
+        <div style="font-size:13px;margin-bottom:6px;color:var(--sub);">8协议 + 2 Argo 节点 + 订阅面板，一条命令搞定：</div>
+        <code id="oneClickCmd">all=y dnym="你的域名" bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)</code>
+        <div class="actions" style="margin-top:8px;">
+          <button class="primary sm" onclick="copyOneClick()">复制命令</button>
+          <button class="sm" onclick="deployPanel()">部署面板</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 2: 命令生成器 ==================== -->
+  <div class="panel" id="panel-generator">
+    <div class="grid">
       <div class="card" style="grid-row:1/4;">
         <h2>必选：内核协议 &amp; 端口</h2>
         <div style="margin-bottom:12px; padding-bottom:10px; border-bottom:1px dotted var(--line);">
@@ -166,9 +311,12 @@ button:hover { opacity:.85; }
             <label><input type="checkbox" data-var="sopt"> SOCKS5 <span class="pill">sopt</span></label><input type="text" data-port="sopt" placeholder="留空随机端口">
           </div>
         </div>
+        <div style="margin-top:8px;padding-top:8px;border-top:1px dotted var(--line);">
+          <button class="primary sm" onclick="selectAll()">全选8协议</button>
+          <button class="sm" onclick="clearAll()">清空</button>
+        </div>
       </div>
 
-      <!-- 全局配置 -->
       <div class="card">
         <h2>全局配置</h2>
         <div class="row"><label>UUID <span class="pill">uuid</span></label>
@@ -206,7 +354,6 @@ button:hover { opacity:.85; }
         </div>
       </div>
 
-      <!-- 订阅设置 -->
       <div class="card">
         <h2>订阅链接设置</h2>
         <div class="row"><label>启用订阅 <span class="pill">sub</span></label>
@@ -217,7 +364,6 @@ button:hover { opacity:.85; }
         <div class="row"><label>Hysteria2端口跳跃 <span class="pill">hyjpt</span></label><input id="hyjpt" type="text" placeholder="例：10000:20000 30000"></div>
       </div>
 
-      <!-- Argo隧道 -->
       <div class="card">
         <h2>Argo隧道（CDN优选）</h2>
         <div class="row"><label>Argo <span class="pill">argo</span></label>
@@ -228,7 +374,6 @@ button:hover { opacity:.85; }
         <div class="row"><label>优选IP域名 <span class="pill">cfip</span></label><input id="cfip" type="text" placeholder="IPv4或[IPv6]或域名，最多2个空格隔开"></div>
       </div>
 
-      <!-- 输出 -->
       <div class="card grid-full">
         <h2>生成的命令</h2>
         <div class="cmd-box" id="cmdBox">点击"生成命令"按钮</div>
@@ -241,7 +386,7 @@ button:hover { opacity:.85; }
     </div>
   </div>
 
-  <!-- ==================== TAB 2: 订阅面板 ==================== -->
+  <!-- ==================== TAB 3: 订阅链接 ==================== -->
   <div class="panel" id="panel-subscription">
     <div class="grid">
       <div class="card grid-full">
@@ -253,7 +398,7 @@ button:hover { opacity:.85; }
           <button class="primary" onclick="loadSubscriptions()">加载订阅</button>
         </div>
         <div class="alert" style="margin-top:8px;">
-          提示：服务器需开启 <code>sub=y</code>。订阅面板地址：<code>http://服务器IP:端口/Token/index.html</code>（本页面也可以放到服务器上直接使用）
+          提示：服务器需开启 <code>sub=y</code>。订阅面板地址：<code>http://服务器IP:端口/Token/index.html</code>
         </div>
         <div id="serverStatus" style="font-size:13px;color:var(--sub);margin-top:6px;">未连接服务器</div>
       </div>
@@ -265,7 +410,6 @@ button:hover { opacity:.85; }
           <button class="sm" onclick="copyText('clashUrl')">复制</button>
           <button class="sm" onclick="showQR('clashUrl')">二维码</button>
         </div>
-        <div class="sub-url" id="clashUrlExt" style="display:none;"></div>
       </div>
 
       <div class="card">
@@ -275,7 +419,6 @@ button:hover { opacity:.85; }
           <button class="sm" onclick="copyText('singboxUrl')">复制</button>
           <button class="sm" onclick="showQR('singboxUrl')">二维码</button>
         </div>
-        <div class="sub-url" id="singboxUrlExt" style="display:none;"></div>
       </div>
 
       <div class="card">
@@ -293,10 +436,13 @@ button:hover { opacity:.85; }
     </div>
   </div>
 
-  <!-- ==================== TAB 3: 节点信息 ==================== -->
+  <!-- ==================== TAB 4: 节点列表 ==================== -->
   <div class="panel" id="panel-nodes">
     <div class="card">
-      <h2>当前节点列表</h2>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h2>当前节点列表</h2>
+        <button class="sm" onclick="fetchNodeList(currentServer,currentPort,currentToken)">刷新节点</button>
+      </div>
       <div id="nodeList" style="font-size:13px;color:var(--sub);">请先在订阅面板连接服务器</div>
     </div>
   </div>
@@ -304,6 +450,11 @@ button:hover { opacity:.85; }
 
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
+// ========== GLOBAL STATE ==========
+let currentServer='', currentPort='', currentToken='';
+let dashboardTimer = null;
+let prevRx = 0, prevTx = 0;
+
 // ========== THEME ==========
 function toggleTheme(){ document.body.classList.toggle('light-mode'); }
 
@@ -313,23 +464,38 @@ function switchTab(name){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelector('.tab[onclick*="'+name+'"]').classList.add('active');
   document.getElementById('panel-'+name).classList.add('active');
+  if(name==='dashboard') startDashboardAutoRefresh();
+  else stopDashboardAutoRefresh();
 }
 
 // ========== UUID ==========
 function genUUID(){ document.getElementById('uuid').value=crypto.randomUUID(); }
 
+// ========== PROTOCOL SELECT ==========
+function selectAll(){
+  ['vlpt','xhpt','vxpt','vwpt','hypt','tupt','anpt','arpt','sspt'].forEach(v=>{
+    let cb=document.querySelector('input[data-var="'+v+'"]');
+    if(cb) cb.checked=true;
+  });
+  document.getElementById('sub').value='y';
+  document.getElementById('argo').value='vmpt';
+}
+function clearAll(){
+  document.querySelectorAll('input[data-var]').forEach(cb=>cb.checked=false);
+  document.getElementById('sub').value='';
+  document.getElementById('argo').value='';
+}
+
 // ========== COMMAND GENERATOR ==========
 function generateCmd(){
   let vars=[];
   document.querySelectorAll('input[data-var]').forEach(cb=>{ if(cb.checked) vars.push(cb.dataset.var+'=""'); });
-  if(vars.length===0){ alert('请至少选择一个协议'); return; }
-
+  if(vars.length===0){ alert('请至少选择一个协议，或点击"全选8协议"'); return; }
   let extras=['uuid','dnym','reym','cdnym','warp','ippz','name','oap','sub','subid','subpt','hyjpt','argo','agn','agk','cfip'];
   extras.forEach(id=>{
     let el=document.getElementById(id);
     if(el&&el.value) vars.push(id+'="'+el.value.replace(/"/g,'\\"')+'"');
   });
-
   let cmd=vars.join(' ')+' bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)';
   document.getElementById('cmdBox').textContent=cmd;
 }
@@ -339,11 +505,21 @@ function copyCmd(){
   if(t==='点击"生成命令"按钮') return;
   navigator.clipboard.writeText(t).then(()=>{ let b=event.target; b.textContent='已复制!'; setTimeout(()=>b.textContent='复制命令',1500); });
 }
-
 function copyCurl(){
   let t=document.getElementById('cmdBox').textContent;
   if(t==='点击"生成命令"按钮') return;
   navigator.clipboard.writeText(t).then(()=>{ let b=event.target; b.textContent='已复制!'; setTimeout(()=>b.textContent='复制curl命令',1500); });
+}
+
+// ========== ONE CLICK ==========
+function copyOneClick(){
+  let cmd=document.getElementById('oneClickCmd').textContent;
+  navigator.clipboard.writeText(cmd).then(()=>{ let b=event.target; b.textContent='已复制!'; setTimeout(()=>b.textContent='复制命令',1500); });
+}
+function deployPanel(){
+  let s=document.getElementById('subServer').value.trim()||currentServer;
+  if(!s){ alert('请先在订阅链接页输入服务器地址'); return; }
+  window.open('http://'+s+':端口/Token/index.html','_blank');
 }
 
 // ========== SUBSCRIPTION ==========
@@ -355,37 +531,135 @@ function loadSubscriptions(){
   if(!p){ alert('请输入订阅端口'); return; }
   if(!t){ alert('请输入订阅Token'); return; }
   s=s.replace(/\/$/,'');
+  currentServer=s; currentPort=p; currentToken=t;
   let base='http://'+s+':'+p+'/'+t+'/';
   document.getElementById('clashUrl').textContent=base+'clmi.yaml';
   document.getElementById('singboxUrl').textContent=base+'sbox.json';
   document.getElementById('allUrl').textContent=base+'jhsub.txt';
   document.getElementById('serverStatus').innerHTML='<span class="status-dot online"></span>已连接: '+s+':'+p;
+  document.getElementById('headerStatus').innerHTML='<span class="status-dot online"></span>'+s+':'+p;
+  document.getElementById('headerStatus').style.color='var(--ok)';
   fetchNodeList(s,p,t);
+  fetchDashboard(s,p,t);
+  startDashboardAutoRefresh();
 }
 
+// ========== DASHBOARD ==========
+function fetchDashboard(s,p,t){
+  s=s||currentServer; p=p||currentPort; t=t||currentToken;
+  if(!s||!p||!t) return;
+  document.getElementById('refreshSpinner').classList.add('active');
+  fetch('http://'+s+':'+p+'/'+t+'/status.json')
+    .then(r=>r.json())
+    .then(data=>{
+      updateDashboard(data);
+      document.getElementById('lastRefresh').textContent='更新于 '+data.last_update;
+      document.getElementById('refreshSpinner').classList.remove('active');
+    })
+    .catch(()=>{
+      document.getElementById('lastRefresh').textContent='获取状态失败（请确保已运行 science panel 命令）';
+      document.getElementById('refreshSpinner').classList.remove('active');
+    });
+}
+
+function updateDashboard(data){
+  // Kernel status
+  ['xray','singbox','argo'].forEach(k=>{
+    let status=data.kernels[k];
+    let el=document.getElementById((k==='singbox'?'sbox':k)+'Status');
+    let infoEl=document.getElementById((k==='singbox'?'sbox':k)+'Info');
+    if(status==='running'){
+      el.textContent='运行中';
+      el.className='value online';
+      infoEl.innerHTML='<span class="status-dot online"></span>正常';
+    } else {
+      el.textContent='已停止';
+      el.className='value offline';
+      infoEl.innerHTML='<span class="status-dot offline"></span>停止';
+    }
+  });
+
+  // Node count
+  document.getElementById('nodeCount').textContent=data.node_count||0;
+
+  // Last update
+  document.getElementById('lastUpdate').textContent=data.last_update||'—';
+
+  // VPS info
+  document.getElementById('hostname').textContent=data.hostname||'—';
+  let uptimeSec=parseInt(data.uptime)||0;
+  let days=Math.floor(uptimeSec/86400);
+  let hrs=Math.floor((uptimeSec%86400)/3600);
+  let mins=Math.floor((uptimeSec%3600)/60);
+  document.getElementById('uptime').textContent=days+'天 '+hrs+'时 '+mins+'分';
+
+  // Memory
+  let memTotal=parseInt(data.memory?.total)||1;
+  let memAvail=parseInt(data.memory?.available)||0;
+  let memUsed=memTotal-memAvail;
+  let memPct=Math.round((memUsed/memTotal)*100);
+  document.getElementById('memUsage').textContent=formatBytes(memUsed*1024)+' / '+formatBytes(memTotal*1024);
+  document.getElementById('memBar').style.width=memPct+'%';
+
+  // CPU
+  document.getElementById('cpuUsage').textContent=data.cpu||'—';
+  let cpuPct=parseFloat(data.cpu)||0;
+  document.getElementById('cpuBar').style.width=cpuPct+'%';
+
+  // Traffic
+  let rx=parseInt(data.traffic?.rx_bytes)||0;
+  let tx=parseInt(data.traffic?.tx_bytes)||0;
+  document.getElementById('rxText').textContent=formatBytes(rx);
+  document.getElementById('txText').textContent=formatBytes(tx);
+  let maxTraffic=Math.max(rx,tx,1);
+  document.getElementById('rxBar').style.width=((rx/maxTraffic)*100)+'%';
+  document.getElementById('txBar').style.width=((tx/maxTraffic)*100)+'%';
+}
+
+function startDashboardAutoRefresh(){
+  stopDashboardAutoRefresh();
+  if(currentServer&&currentPort&&currentToken){
+    dashboardTimer=setInterval(()=>fetchDashboard(currentServer,currentPort,currentToken),30000);
+  }
+}
+function stopDashboardAutoRefresh(){
+  if(dashboardTimer){ clearInterval(dashboardTimer); dashboardTimer=null; }
+}
+function refreshDashboard(){
+  fetchDashboard(currentServer,currentPort,currentToken);
+}
+
+// ========== NODE LIST ==========
 function fetchNodeList(s,p,t){
+  s=s||currentServer; p=p||currentPort; t=t||currentToken;
+  if(!s||!p||!t) return;
   fetch('http://'+s+':'+p+'/'+t+'/jhsub.txt')
     .then(r=>r.text())
     .then(txt=>{
       let lines=txt.split('\n').filter(l=>l.trim());
-      document.getElementById('nodeList').innerHTML=lines.map(l=>{
+      document.getElementById('nodeList').innerHTML=lines.map((l,i)=>{
         let proto=l.split('://')[0]||'';
         let tag='';
         if(proto.includes('vless')||proto.includes('vmess')) tag='xray';
         else if(proto.includes('hysteria')||proto.includes('tuic')||proto.includes('ss')||proto.includes('any')) tag='sb';
-        else if(proto.includes('argo')) tag='argo';
-        return '<div style="padding:6px 0;border-bottom:1px solid var(--line);word-break:break-all;"><span class="ptag '+tag+'">'+proto+'</span> '+l.substring(0,120)+'...</div>';
+        else if(proto.includes('argo')||proto.includes('trycloudflare')) tag='argo';
+        return '<div class="node-item">'+
+          '<span class="ptag '+tag+'">'+proto+'</span>'+
+          '<span class="proto-name">节点 #'+(i+1)+'</span>'+
+          '<span class="node-url">'+escapeHtml(l.substring(0,100))+'…</span>'+
+          '<span class="node-status"><span class="status-dot online"></span></span>'+
+          '</div>';
       }).join('');
     })
     .catch(()=>{ document.getElementById('nodeList').innerHTML='<span style="color:var(--err)">无法获取节点信息，请检查服务器地址和端口</span>'; });
 }
 
+// ========== HELPERS ==========
 function copyText(id){
   let t=document.getElementById(id).textContent;
   if(t==='请先连接服务器') return;
   navigator.clipboard.writeText(t).then(()=>{ let b=event.target; b.textContent='已复制!'; setTimeout(()=>b.textContent='复制',1500); });
 }
-
 function showQR(id){
   let url=document.getElementById(id).textContent;
   if(url==='请先连接服务器') return;
@@ -396,6 +670,13 @@ function showQR(id){
   new QRCode(disp,{text:url,width:200,height:200});
   card.scrollIntoView({behavior:'smooth'});
 }
+function formatBytes(b){
+  if(b<1024) return b+' B';
+  if(b<1048576) return (b/1024).toFixed(1)+' KB';
+  if(b<1073741824) return (b/1048576).toFixed(1)+' MB';
+  return (b/1073741824).toFixed(2)+' GB';
+}
+function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 </script>
 </body>
 </html>
