@@ -19,7 +19,7 @@ if [ "$1" = "rep" ]; then
 [ "$vwp" = yes ] || [ "$sop" = yes ] || [ "$vxp" = yes ] || [ "$ssp" = yes ] || [ "$vlp" = yes ] || [ "$vmp" = yes ] || [ "$hyp" = yes ] || [ "$tup" = yes ] || [ "$xhp" = yes ] || [ "$anp" = yes ] || [ "$arp" = yes ] || { echo "提示：rep重置协议时，请在脚本前至少设置一个协议变量哦，再见！💣"; exit; }
 fi
 else
-[ "$1" = "del" ] || [ "$vwp" = yes ] || [ "$sop" = yes ] || [ "$vxp" = yes ] || [ "$ssp" = yes ] || [ "$vlp" = yes ] || [ "$vmp" = yes ] || [ "$hyp" = yes ] || [ "$tup" = yes ] || [ "$xhp" = yes ] || [ "$anp" = yes ] || [ "$arp" = yes ] || { echo "提示：未安装science脚本，请在脚本前至少设置一个协议变量哦，再见！💣"; exit; }
+[ "$1" = "del" ] || [ "$1" = "panel" ] || [ "$1" = "statusgen" ] || [ "$1" = "list" ] || [ "$vwp" = yes ] || [ "$sop" = yes ] || [ "$vxp" = yes ] || [ "$ssp" = yes ] || [ "$vlp" = yes ] || [ "$vmp" = yes ] || [ "$hyp" = yes ] || [ "$tup" = yes ] || [ "$xhp" = yes ] || [ "$anp" = yes ] || [ "$arp" = yes ] || { echo "提示：未安装science脚本，请在脚本前至少设置一个协议变量哦，再见！💣"; exit; }
 fi
 export uuid=${uuid:-''}
 export port_vl_re=${vlpt:-''}
@@ -77,7 +77,7 @@ arm64|aarch64) cpu=arm64;;
 amd64|x86_64) cpu=amd64;;
 *) echo "目前脚本不支持$(uname -m)架构" && exit
 esac
-if [ "$1" != "del" ]; then
+if [ "$1" != "del" ] && [ "$1" != "panel" ] && [ "$1" != "statusgen" ]; then
 mkdir -p "$HOME/science"
 if [ ! -f sbx_update ]; then
 echo "执行必要的脚本依赖中，请稍等10秒……"
@@ -2283,6 +2283,7 @@ exit
 fi
 # 部署/更新订阅面板命令
 if [ "$1" = "panel" ]; then
+mkdir -p "$HOME/science"
 panelurl="https://raw.githubusercontent.com/Hutton-h/science/main/panel.html"
 echo "正在下载最新订阅面板……"
 (command -v curl >/dev/null 2>&1 && curl -Ls "$panelurl" -o "$HOME/science/panel.html") || (command -v wget >/dev/null 2>&1 && wget -qO "$HOME/science/panel.html" "$panelurl")
