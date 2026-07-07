@@ -1300,6 +1300,62 @@ vl_xh_link="vless://$uuid@$server_ip:$port_xh?encryption=$enkey&flow=xtls-rprx-v
 echo "$vl_xh_link" >> "$HOME/science/jhsub.txt"
 echo "$vl_xh_link"
 echo
+sbxhpt(){
+cat <<EOF
+    {
+      "type": "vless",
+      "tag": "${sxname}vl-xhttp-reality-enc-$hostname",
+      "server": "$server_ip",
+      "server_port": $port_xh,
+      "uuid": "$uuid",
+      "flow": "xtls-rprx-vision",
+      "tls": {
+        "enabled": true,
+        "server_name": "$ym_vl_re",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        },
+        "reality": {
+          "enabled": true,
+          "public_key": "$public_key_x",
+          "short_id": "$short_id_x"
+        }
+      },
+      "transport": {
+        "type": "http",
+        "host": ["$ym_vl_re"],
+        "path": "/$uuid-xh"
+      }
+    },
+EOF
+}
+sbxhpt1(){
+echo "\"${sxname}vl-xhttp-reality-enc-$hostname\","
+}
+clxhpt(){
+cat <<EOF
+- name: ${sxname}vl-xhttp-reality-enc-$hostname
+  type: vless
+  server: $server_ip
+  port: $port_xh
+  uuid: $uuid
+  network: xhttp
+  flow: xtls-rprx-vision
+  tls: true
+  servername: $ym_vl_re
+  reality-opts:
+    public-key: $public_key_x
+    short-id: $short_id_x
+  client-fingerprint: chrome
+  xhttp-opts:
+    path: /$uuid-xh
+    mode: auto
+EOF
+}
+clxhpt1(){
+echo "- ${sxname}vl-xhttp-reality-enc-$hostname"
+}
 fi
 if grep vless-xhttp "$HOME/science/xr.json" >/dev/null 2>&1; then
 echo "💣【 Vless-xhttp-enc 】支持ENC加密，节点信息如下："
@@ -1317,6 +1373,43 @@ echo "$vl_vx_cdn_link"
 echo
 fi
 fi
+sbvxpt(){
+cat <<EOF
+    {
+      "type": "vless",
+      "tag": "${sxname}vl-xhttp-enc-$hostname",
+      "server": "$server_ip",
+      "server_port": $port_vx,
+      "uuid": "$uuid",
+      "flow": "xtls-rprx-vision",
+      "transport": {
+        "type": "http",
+        "host": ["$server_ip"],
+        "path": "/$uuid-vx"
+      }
+    },
+EOF
+}
+sbvxpt1(){
+echo "\"${sxname}vl-xhttp-enc-$hostname\","
+}
+clvxpt(){
+cat <<EOF
+- name: ${sxname}vl-xhttp-enc-$hostname
+  type: vless
+  server: $server_ip
+  port: $port_vx
+  uuid: $uuid
+  network: xhttp
+  flow: xtls-rprx-vision
+  xhttp-opts:
+    path: /$uuid-vx
+    mode: auto
+EOF
+}
+clvxpt1(){
+echo "- ${sxname}vl-xhttp-enc-$hostname"
+}
 if grep vless-ws "$HOME/science/xr.json" >/dev/null 2>&1; then
 echo "💣【 Vless-ws-enc 】支持ENC加密，节点信息如下："
 port_vw=$(cat "$HOME/science/port_vw")
@@ -1721,6 +1814,36 @@ echo "客户端端口：$port_so"
 echo "客户端用户名：$uuid"
 echo "客户端密码：$uuid"
 echo
+sbsopt(){
+cat <<EOF
+    {
+      "type": "socks",
+      "tag": "${sxname}socks5-$hostname",
+      "server": "$server_ip",
+      "server_port": $port_so,
+      "version": "5",
+      "username": "$uuid",
+      "password": "$uuid"
+    },
+EOF
+}
+sbsopt1(){
+echo "\"${sxname}socks5-$hostname\","
+}
+clsopt(){
+cat <<EOF
+- name: ${sxname}socks5-$hostname
+  type: socks5
+  server: $server_ip
+  port: $port_so
+  username: $uuid
+  password: $uuid
+  udp: true
+EOF
+}
+clsopt1(){
+echo "- ${sxname}socks5-$hostname"
+}
 fi
 argodomain=$(cat "$HOME/science/sbargoym.log" 2>/dev/null)
 [ -z "$argodomain" ] && argodomain=$(grep -a trycloudflare.com "$HOME/science/argo.log" 2>/dev/null | awk 'NR==2{print}' | awk -F// '{print $2}' | awk '{print $1}')
@@ -1885,10 +2008,10 @@ out=$($f)
 [ -n "$out" ] && printf "%s\n" "$out"
 fi
 }
-sbxy="$(get_func sbvlpt; get_func sbsspt; get_func sbanpt; get_func sbarpt; get_func sbvmpt; get_func sbhypt; get_func sbtupt; get_func sbvmargopt)"
-clxy="$(get_func clvlpt; get_func clsspt; get_func clanpt; get_func clvmpt; get_func clhypt; get_func cltupt; get_func clvmargopt)"
-sbgz="$(get_func sbvlpt1; get_func sbsspt1; get_func sbanpt1; get_func sbarpt1; get_func sbvmpt1; get_func sbhypt1; get_func sbtupt1; get_func sbvmargopt1)"
-clgz="$({ get_func clvlpt1; get_func clsspt1; get_func clanpt1; get_func clvmpt1; get_func clhypt1; get_func cltupt1; get_func clvmargopt1; } | sed '2,$s/^/    /')"
+sbxy="$(get_func sbvlpt; get_func sbsspt; get_func sbanpt; get_func sbarpt; get_func sbvmpt; get_func sbhypt; get_func sbtupt; get_func sbxhpt; get_func sbvxpt; get_func sbsopt; get_func sbvmargopt)"
+clxy="$(get_func clvlpt; get_func clsspt; get_func clanpt; get_func clvmpt; get_func clhypt; get_func cltupt; get_func clxhpt; get_func clvxpt; get_func clsopt; get_func clvmargopt)"
+sbgz="$(get_func sbvlpt1; get_func sbsspt1; get_func sbanpt1; get_func sbarpt1; get_func sbvmpt1; get_func sbhypt1; get_func sbtupt1; get_func sbxhpt1; get_func sbvxpt1; get_func sbsopt1; get_func sbvmargopt1)"
+clgz="$({ get_func clvlpt1; get_func clsspt1; get_func clanpt1; get_func clvmpt1; get_func clhypt1; get_func cltupt1; get_func clxhpt1; get_func clvxpt1; get_func clsopt1; get_func clvmargopt1; } | sed '2,$s/^/    /')"
 sbgz=$(printf "%s\n" "$sbgz" | sed '$ s/,$//')
 cat > $HOME/science/sbox.json <<EOF
 {
