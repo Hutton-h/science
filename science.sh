@@ -57,8 +57,6 @@ echo
 }
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo "skpl Github项目 ：github.com/Hutton-h"
-echo "skpl Blogger博客 ：skpl-lift.blogspot.com"
-echo "skpl YouTube频道 ：www.youtube.com/@skpl-lift"
 echo "Science一键无交互小钢炮脚本💣"
 echo "当前版本：V26.5.10"
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"

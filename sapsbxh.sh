@@ -66,8 +66,6 @@ crontime=5
 echo "*****************************************************"
 echo "*****************************************************"
 echo "skpl Github项目  ：github.com/Hutton-h"
-echo "skpl Blogger博客 ：skpl-lift.blogspot.com"
-echo "skpl YouTube频道 ：www.youtube.com/@skpl-lift"
 echo "Science小钢炮脚本-SAP多账户自动保活脚本【VPS】"
 echo "版本：V25.10.19"
 echo "*****************************************************"
