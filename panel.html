@@ -270,13 +270,16 @@ button:hover { opacity:.85; }
     <div class="card">
       <h3>一键部署命令</h3>
       <div class="preset-box">
-        <div style="font-size:13px;margin-bottom:6px;color:var(--sub);">8协议 + 订阅面板，一条命令搞定（Argo需额外加域名和令牌）：</div>
-        <code id="oneClickCmd">all=y dnym="你的域名" bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)</code>
-        <div style="font-size:12px;margin-top:4px;color:var(--sub);">加Argo固定隧道：</div>
-        <code id="oneClickCmdArgo" style="font-size:11px;">all=y dnym="你的域名" argo=vmpt agn="cf.你的域名.com" agk="ey..." bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)</code>
+        <div style="font-size:13px;margin-bottom:4px;color:var(--sub);">纯IP版（无需域名，8协议+订阅）：</div>
+        <code id="oneClickCmd">all=y sub=y bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)</code>
+        <div style="font-size:12px;margin-top:6px;color:var(--sub);">域名版（隐藏IP，需DNS解析）：</div>
+        <code id="oneClickCmdDnym">all=y dnym="你的域名" sub=y bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)</code>
+        <div style="font-size:12px;margin-top:6px;color:var(--sub);">域名+Argo固定隧道：</div>
+        <code id="oneClickCmdArgo" style="font-size:11px;">all=y dnym="你的域名" argo=vmpt agn="cf.你的域名.com" agk="ey..." sub=y bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)</code>
         <div class="actions" style="margin-top:8px;">
-          <button class="primary sm" onclick="copyOneClick()">复制基础命令</button>
-          <button class="sm" onclick="copyOneClickArgo()">复制+Argo命令</button>
+          <button class="primary sm" onclick="copyOneClick()">复制IP版</button>
+          <button class="sm" onclick="copyOneClickDnym()">复制域名版</button>
+          <button class="sm" onclick="copyOneClickArgo()">复制+Argo</button>
         </div>
       </div>
     </div>
@@ -560,7 +563,11 @@ function copyCurl(){
 }
 function copyOneClick(){
   var el=document.querySelector('button[onclick="copyOneClick()"]');
-  doCopy(el,document.getElementById('oneClickCmd').textContent,'复制基础命令');
+  doCopy(el,document.getElementById('oneClickCmd').textContent,'复制IP版');
+}
+function copyOneClickDnym(){
+  var el=document.querySelector('button[onclick="copyOneClickDnym()"]');
+  doCopy(el,document.getElementById('oneClickCmdDnym').textContent,'复制域名版');
 }
 function copyOneClickArgo(){
   var el=document.querySelector('button[onclick="copyOneClickArgo()"]');
