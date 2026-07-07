@@ -270,11 +270,13 @@ button:hover { opacity:.85; }
     <div class="card">
       <h3>一键部署命令</h3>
       <div class="preset-box">
-        <div style="font-size:13px;margin-bottom:6px;color:var(--sub);">8协议 + 2 Argo 节点 + 订阅面板，一条命令搞定：</div>
+        <div style="font-size:13px;margin-bottom:6px;color:var(--sub);">8协议 + 订阅面板，一条命令搞定（Argo需额外加域名和令牌）：</div>
         <code id="oneClickCmd">all=y dnym="你的域名" bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)</code>
+        <div style="font-size:12px;margin-top:4px;color:var(--sub);">加Argo固定隧道：</div>
+        <code id="oneClickCmdArgo" style="font-size:11px;">all=y dnym="你的域名" argo=vmpt agn="cf.你的域名.com" agk="ey..." bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)</code>
         <div class="actions" style="margin-top:8px;">
-          <button class="primary sm" onclick="copyOneClick()">复制命令</button>
-          <button class="sm" onclick="deployPanel()">部署面板</button>
+          <button class="primary sm" onclick="copyOneClick()">复制基础命令</button>
+          <button class="sm" onclick="copyOneClickArgo()">复制+Argo命令</button>
         </div>
       </div>
     </div>
@@ -478,7 +480,7 @@ function selectAll(){
     if(cb) cb.checked=true;
   });
   document.getElementById('sub').value='y';
-  document.getElementById('argo').value='vmpt';
+  // Argo不自动选，需要用户自行填写域名和令牌
 }
 function clearAll(){
   document.querySelectorAll('input[data-var]').forEach(cb=>cb.checked=false);
@@ -514,12 +516,11 @@ function copyCurl(){
 // ========== ONE CLICK ==========
 function copyOneClick(){
   let cmd=document.getElementById('oneClickCmd').textContent;
-  navigator.clipboard.writeText(cmd).then(()=>{ let b=event.target; b.textContent='已复制!'; setTimeout(()=>b.textContent='复制命令',1500); });
+  navigator.clipboard.writeText(cmd).then(()=>{ let b=event.target; b.textContent='已复制!'; setTimeout(()=>b.textContent='复制基础命令',1500); });
 }
-function deployPanel(){
-  let s=document.getElementById('subServer').value.trim()||currentServer;
-  if(!s){ alert('请先在订阅链接页输入服务器地址'); return; }
-  window.open('http://'+s+':端口/Token/index.html','_blank');
+function copyOneClickArgo(){
+  let cmd=document.getElementById('oneClickCmdArgo').textContent;
+  navigator.clipboard.writeText(cmd).then(()=>{ let b=event.target; b.textContent='已复制!'; setTimeout(()=>b.textContent='复制+Argo命令',1500); });
 }
 
 // ========== SUBSCRIPTION ==========
