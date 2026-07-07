@@ -1,245 +1,394 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Science 订阅面板</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Science小钢炮 - 命令生成器 & 订阅面板</title>
 <style>
-:root{--bg:#0f0f0f;--card:#1a1a1a;--border:#2a2a2a;--text:#e0e0e0;--muted:#888;--accent:#00d4aa;--red:#ff4757;--blue:#3498db;--orange:#ff9f43}
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;min-height:100vh}
-.header{background:linear-gradient(135deg,#0a1628,#1a2a3a);padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
-.header h1{font-size:1.4em;font-weight:700}
-.header h1 span{color:var(--accent)}
-.status-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px}
-.status-dot.online{background:var(--accent);box-shadow:0 0 8px var(--accent)}
-.status-dot.offline{background:var(--red)}
-.tabs{display:flex;gap:0;background:var(--card);border-radius:10px;overflow:hidden;margin:0 24px;transform:translateY(-50%);border:1px solid var(--border)}
-.tab{padding:12px 24px;cursor:pointer;font-size:0.9em;color:var(--muted);transition:all .2s;border:none;background:none;font-weight:500}
-.tab.active{background:var(--accent);color:#000;font-weight:600}
-.tab:hover:not(.active){color:var(--text)}
-.container{max-width:900px;margin:0 auto;padding:0 24px 60px}
-.panel{display:none}
-.panel.active{display:block}
-.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
-.card h3{font-size:1em;margin-bottom:12px;color:var(--accent)}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-label{font-size:0.85em;color:var(--muted);display:block;margin-bottom:4px}
-input,select{background:#0a0a0a;border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:8px;font-size:0.9em;width:100%;outline:none}
-input:focus,select:focus{border-color:var(--accent)}
-input.w50{width:48%}
-.btn{background:var(--accent);color:#000;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.9em;transition:all .2s}
-.btn:hover{opacity:0.85}
-.btn-outline{background:transparent;border:1px solid var(--accent);color:var(--accent)}
-.btn-sm{padding:6px 14px;font-size:0.8em}
-.btn-red{background:var(--red)}
-.cmd-box{background:#0a0a0a;border:1px solid var(--border);border-radius:8px;padding:14px;font-family:monospace;font-size:0.8em;word-break:break-all;color:var(--accent);position:relative;max-height:200px;overflow-y:auto}
-.copy-btn{position:absolute;top:8px;right:8px}
-.sub-url{background:#0a0a0a;border:1px solid var(--border);border-radius:8px;padding:12px;font-family:monospace;font-size:0.8em;word-break:break-all;color:var(--accent);margin:8px 0}
-.protocol-tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.75em;margin:2px;font-weight:600}
-.protocol-tag.xray{background:rgba(255,71,87,.15);color:var(--red)}
-.protocol-tag.singbox{background:rgba(0,212,170,.15);color:var(--accent)}
-.protocol-tag.argo{background:rgba(52,152,219,.15);color:var(--blue)}
-.qr-wrap{display:inline-block;padding:16px;background:#fff;border-radius:8px;margin:8px}
-.qr-wrap canvas{display:block}
-.protocol-list{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
-.checkbox-item{display:flex;align-items:center;gap:6px;font-size:0.85em;cursor:pointer}
-.checkbox-item input{width:auto;accent-color:var(--accent)}
-.port-input{width:80px!important;display:inline-block}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-@media(max-width:600px){.grid2{grid-template-columns:1fr}}
-.alert{background:rgba(255,159,67,.1);border:1px solid var(--orange);color:var(--orange);padding:10px 14px;border-radius:8px;font-size:0.85em;margin:10px 0}
+:root {
+  --bg:#0b1020; --card:#121831; --ink:#e9edf7; --sub:#b7c1d9; --line:#263255;
+  --acc:#4f7cff; --ok:#22c55e; --warn:#f59e0b; --err:#ef4444;
+  --input-bg:#0d1430; --btn1:#1a2346; --btn2:#121a39;
+}
+.light-mode {
+  --bg:#fff; --card:#fff; --ink:#1a202c; --sub:#4a5568; --line:#e2e8f0;
+  --acc:#4f7cff; --ok:#22c55e; --warn:#f59e0b; --err:#ef4444;
+  --input-bg:#fff; --btn1:#e2e8f0; --btn2:#f0f4f9;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body {
+  background:linear-gradient(180deg, var(--bg) 0%, #0e1530 100%);
+  color:var(--ink); font:16px/1.4 system-ui,-apple-system,sans-serif;
+  min-height:100vh; transition:background .3s,color .3s;
+}
+.wrap { max-width:1450px; margin:0 auto; padding:20px; }
+header { text-align:center; margin-bottom:20px; position:relative; }
+header h1 { font-size:28px; margin-bottom:4px; }
+header h1 span { color:var(--acc); }
+header p { font-size:13px; color:var(--sub); }
+header a { color:var(--acc); text-decoration:none; }
+.theme-switch { position:absolute; top:0; right:0; cursor:pointer; font-size:22px; }
+
+/* tabs */
+.tabs { display:flex; gap:0; background:var(--card); border-radius:12px; overflow:hidden;
+  margin-bottom:20px; border:1px solid var(--line); }
+.tab { flex:1; padding:14px 20px; cursor:pointer; text-align:center; color:var(--sub);
+  border:none; background:none; font-size:15px; font-weight:600; transition:.2s; }
+.tab.active { background:var(--acc); color:#fff; }
+.tab:hover:not(.active) { color:var(--ink); }
+
+/* panels */
+.panel { display:none; }
+.panel.active { display:block; }
+
+/* grid */
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media(max-width:1100px){ .grid{grid-template-columns:1fr;} }
+.grid-full { grid-column:1/-1; }
+
+/* cards */
+.card {
+  background:rgba(255,255,255,.04); backdrop-filter:blur(6px);
+  border:1px solid var(--line); border-radius:14px; padding:18px; margin-bottom:12px;
+}
+.card h2 { font-size:18px; margin-bottom:10px; }
+.card h3 { font-size:14px; margin-bottom:8px; color:var(--acc); }
+
+/* protocol grid */
+.proto-grid { display:grid; grid-template-columns:auto 1fr; gap:8px 14px; align-items:center; }
+.proto-item { display:flex; align-items:center; gap:8px; }
+.proto-item label { display:flex; align-items:center; gap:6px; white-space:nowrap; cursor:pointer; }
+.proto-item input[type="text"] { flex:1; min-width:80px; }
+
+/* form elements */
+input[type="text"], input[type="number"], select {
+  width:100%; padding:9px 11px; border:1px solid var(--line); border-radius:8px;
+  background:var(--input-bg); color:var(--ink); outline:none; font-size:13px;
+  transition:background .3s,border .3s,color .3s;
+}
+input:focus, select:focus { border-color:var(--acc); }
+input:disabled { opacity:.5; }
+label { display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; }
+input[type="checkbox"] { accent-color:var(--acc); width:auto; }
+
+.row { display:grid; grid-template-columns:200px 1fr; gap:10px; align-items:center; margin:6px 0; }
+@media(max-width:600px){ .row{grid-template-columns:1fr;} }
+
+.pill { display:inline-block; font-size:11px; padding:1px 6px; border:1px solid var(--line);
+  border-radius:99px; color:var(--sub); margin-left:4px; }
+
+/* buttons */
+button {
+  cursor:pointer; border:1px solid var(--line); padding:9px 14px; border-radius:10px;
+  background:linear-gradient(180deg,var(--btn1),var(--btn2)); color:var(--ink);
+  font-size:13px; transition:.2s; font-weight:500;
+}
+button.primary { background:linear-gradient(180deg,#4f7cff,#385fdf); border-color:#476de2; color:#fff; }
+button.sm { padding:5px 10px; font-size:12px; }
+button:hover { opacity:.85; }
+.actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+
+/* cmd box */
+.cmd-box { background:#0a1128; color:#dbeafe; border:1px dashed #3752a6; border-radius:10px;
+  padding:12px; font-family:monospace; font-size:12px; word-break:break-all;
+  min-height:50px; white-space:pre-wrap; max-height:180px; overflow-y:auto; }
+.sub-url { background:#0a1128; color:var(--acc); border:1px solid var(--line); border-radius:8px;
+  padding:10px; font-family:monospace; font-size:12px; word-break:break-all; margin:6px 0; }
+
+/* protocol tags */
+.ptag { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; margin:2px; font-weight:600; }
+.ptag.xray { background:rgba(255,71,87,.15); color:var(--err); }
+.ptag.sb { background:rgba(0,212,170,.15); color:var(--ok); }
+.ptag.argo { background:rgba(52,152,219,.15); color:var(--acc); }
+
+/* status */
+.status-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:5px; }
+.status-dot.online { background:var(--ok); box-shadow:0 0 6px var(--ok); }
+.status-dot.offline { background:var(--err); }
+
+.alert { background:rgba(245,158,11,.1); border:1px solid var(--warn); color:var(--warn);
+  padding:8px 12px; border-radius:8px; font-size:12px; margin:8px 0; }
+
+.qr-wrap { display:inline-block; padding:12px; background:#fff; border-radius:8px; margin:8px; }
+.qr-wrap canvas { display:block; }
+
+/* shortcut commands */
+.shortcut-grid { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.shortcut-grid code { background:var(--input-bg); padding:4px 8px; border-radius:6px; font-size:12px; }
 </style>
 </head>
 <body>
-<div class="header">
-  <h1><span>Science</span> 订阅面板</h1>
-  <div id="serverStatus" style="font-size:0.85em;color:var(--muted)">未连接服务器</div>
-</div>
-<div class="tabs">
-  <button class="tab active" onclick="switchTab('generator')">命令生成器</button>
-  <button class="tab" onclick="switchTab('subscription')">订阅面板</button>
-  <button class="tab" onclick="switchTab('nodes')">节点信息</button>
-</div>
-<div class="container">
+<div class="wrap">
+  <header>
+    <div class="theme-switch" onclick="toggleTheme()" title="切换主题">🌓</div>
+    <h1><span>Science</span> 小钢炮脚本 💣</h1>
+    <p>
+      <a href="https://github.com/Hutton-h/science" target="_blank">github.com/Hutton-h/science</a>
+      &nbsp;|&nbsp; V26.5.10
+    </p>
+  </header>
 
-<!-- ========== 命令生成器 ========== -->
-<div class="panel active" id="panel-generator">
-  <div class="card">
-    <h3>服务器信息</h3>
-    <div class="row">
-      <input type="text" id="serverUrl" placeholder="服务器地址 (如 1.2.3.4:8080)" style="flex:1">
-      <button class="btn" onclick="connectServer()">连接</button>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('generator')">🔧 SSH命令生成器</button>
+    <button class="tab" onclick="switchTab('subscription')">📡 订阅面板</button>
+    <button class="tab" onclick="switchTab('nodes')">📋 节点信息</button>
+  </div>
+
+  <!-- ==================== TAB 1: 命令生成器 ==================== -->
+  <div class="panel active" id="panel-generator">
+    <div class="grid">
+      <!-- 协议选择 -->
+      <div class="card" style="grid-row:1/4;">
+        <h2>必选：内核协议 &amp; 端口</h2>
+        <div style="margin-bottom:12px; padding-bottom:10px; border-bottom:1px dotted var(--line);">
+          <h3>Xray 协议</h3>
+          <div class="proto-grid">
+            <label><input type="checkbox" data-var="vlpt"> VLESS-TCP-Reality <span class="pill">vlpt</span></label><input type="text" data-port="vlpt" placeholder="留空随机端口">
+            <label><input type="checkbox" data-var="xhpt"> VLESS-XHTTP-Reality <span class="pill">xhpt</span></label><input type="text" data-port="xhpt" placeholder="留空随机端口">
+            <label><input type="checkbox" data-var="vxpt"> VLESS-XHTTP-ENC <span class="pill">vxpt</span></label><input type="text" data-port="vxpt" placeholder="留空随机（支持CDN）">
+            <label><input type="checkbox" data-var="vwpt"> VLESS-WS-ENC <span class="pill">vwpt</span></label><input type="text" data-port="vwpt" placeholder="留空随机（支持CDN）">
+          </div>
+        </div>
+        <div style="margin-bottom:12px; padding-bottom:10px; border-bottom:1px dotted var(--line);">
+          <h3>Sing-box 协议</h3>
+          <div class="proto-grid">
+            <label><input type="checkbox" data-var="hypt"> Hysteria2 <span class="pill">hypt</span></label><input type="text" data-port="hypt" placeholder="留空随机端口">
+            <label><input type="checkbox" data-var="tupt"> Tuic <span class="pill">tupt</span></label><input type="text" data-port="tupt" placeholder="留空随机端口">
+            <label><input type="checkbox" data-var="anpt"> AnyTLS <span class="pill">anpt</span></label><input type="text" data-port="anpt" placeholder="留空随机端口">
+            <label><input type="checkbox" data-var="arpt"> Any-Reality <span class="pill">arpt</span></label><input type="text" data-port="arpt" placeholder="留空随机端口">
+            <label><input type="checkbox" data-var="sspt"> Shadowsocks-2022 <span class="pill">sspt</span></label><input type="text" data-port="sspt" placeholder="留空随机端口">
+          </div>
+        </div>
+        <div>
+          <h3>自动（Xray优先）</h3>
+          <div class="proto-grid">
+            <label><input type="checkbox" data-var="vmpt"> VMess-WS <span class="pill">vmpt</span></label><input type="text" data-port="vmpt" placeholder="留空随机（支持CDN）">
+            <label><input type="checkbox" data-var="sopt"> SOCKS5 <span class="pill">sopt</span></label><input type="text" data-port="sopt" placeholder="留空随机端口">
+          </div>
+        </div>
+      </div>
+
+      <!-- 全局配置 -->
+      <div class="card">
+        <h2>全局配置</h2>
+        <div class="row"><label>UUID <span class="pill">uuid</span></label>
+          <div style="display:flex;gap:8px;"><input id="uuid" type="text" placeholder="留空随机生成"><button class="primary sm" onclick="genUUID()">生成UUID</button></div>
+        </div>
+        <div class="row"><label>服务器域名 <span class="pill">dnym</span></label><input id="dnym" type="text" placeholder="有域名则填，节点链接用域名代替IP，保护IP不暴露"></div>
+        <div class="row"><label>Reality域名 <span class="pill">reym</span></label><input id="reym" type="text" placeholder="仅Reality协议可用，默认apple.com"></div>
+        <div class="row"><label>CDN域名 <span class="pill">cdnym</span></label><input id="cdnym" type="text" placeholder="WS/XHTTP协议启用80系CDN或回源CDN时使用"></div>
+        <div class="row"><label>WARP出站 <span class="pill">warp</span></label>
+          <select id="warp">
+            <option value="">默认 本地IP出站</option>
+            <option value="s">1、Singbox WARP v4+v6</option>
+            <option value="s4">2、Singbox WARP v4</option>
+            <option value="s6">3、Singbox WARP v6</option>
+            <option value="x">4、Xray WARP v4+v6</option>
+            <option value="x4">5、Xray WARP v4</option>
+            <option value="x6">6、Xray WARP v6</option>
+            <option value="s4x4">7、双WARP v4</option>
+            <option value="s4x6">8、S-v4 X-v6</option>
+            <option value="s6x4">9、S-v6 X-v4</option>
+            <option value="s6x6">10、双WARP v6</option>
+            <option value="sx4">11、S-v4+v6 X-v4</option>
+            <option value="sx6">12、S-v4+v6 X-v6</option>
+            <option value="s4x">13、S-v4 X-v4+v6</option>
+            <option value="s6x">14、S-v6 X-v4+v6</option>
+            <option value="sx">15、双WARP v4+v6</option>
+          </select>
+        </div>
+        <div class="row"><label>IP版本 <span class="pill">ippz</span></label>
+          <select id="ippz"><option value="">自动</option><option value="4">IPv4</option><option value="6">IPv6</option></select>
+        </div>
+        <div class="row"><label>节点名称前缀 <span class="pill">name</span></label><input id="name" type="text" placeholder="留空默认协议名前缀"></div>
+        <div class="row"><label>开放所有端口 <span class="pill">oap</span></label>
+          <select id="oap"><option value="">关闭</option><option value="y">开启（执行一次即关闭）</option></select>
+        </div>
+      </div>
+
+      <!-- 订阅设置 -->
+      <div class="card">
+        <h2>订阅链接设置</h2>
+        <div class="row"><label>启用订阅 <span class="pill">sub</span></label>
+          <select id="sub"><option value="">关闭</option><option value="y">开启</option></select>
+        </div>
+        <div class="row"><label>订阅密码 <span class="pill">subid</span></label><input id="subid" type="text" placeholder="留空=UUID"></div>
+        <div class="row"><label>订阅端口 <span class="pill">subpt</span></label><input id="subpt" type="text" placeholder="留空随机"></div>
+        <div class="row"><label>Hysteria2端口跳跃 <span class="pill">hyjpt</span></label><input id="hyjpt" type="text" placeholder="例：10000:20000 30000"></div>
+      </div>
+
+      <!-- Argo隧道 -->
+      <div class="card">
+        <h2>Argo隧道（CDN优选）</h2>
+        <div class="row"><label>Argo <span class="pill">argo</span></label>
+          <select id="argo"><option value="">关闭</option><option value="vmpt">VMess-WS隧道</option><option value="vwpt">VLESS-WS隧道</option></select>
+        </div>
+        <div class="row"><label>固定隧道域名 <span class="pill">agn</span></label><input id="agn" type="text" placeholder="CF上托管的域名"></div>
+        <div class="row"><label>固定隧道Token <span class="pill">agk</span></label><input id="agk" type="text" placeholder="ey开头的token"></div>
+        <div class="row"><label>优选IP域名 <span class="pill">cfip</span></label><input id="cfip" type="text" placeholder="IPv4或[IPv6]或域名，最多2个空格隔开"></div>
+      </div>
+
+      <!-- 输出 -->
+      <div class="card grid-full">
+        <h2>生成的命令</h2>
+        <div class="cmd-box" id="cmdBox">点击"生成命令"按钮</div>
+        <div class="actions">
+          <button class="primary" onclick="generateCmd()">生成命令</button>
+          <button onclick="copyCmd()">复制命令</button>
+          <button onclick="copyCurl()">复制curl命令</button>
+        </div>
+      </div>
     </div>
-    <div class="alert" style="margin-top:10px">提示：先在服务器上运行 <code>bash &lt;(curl -Ls http://你的服务器/science.sh)</code> 安装脚本，开启订阅功能后即可连接面板</div>
   </div>
 
-  <div class="card">
-    <h3>协议选择</h3>
-    <div class="protocol-list">
-      <label class="checkbox-item"><input type="checkbox" data-var="vlpt" id="chk_vlpt"> VLESS-TCP-Reality</label>
-      <label class="checkbox-item"><input type="checkbox" data-var="xhpt" id="chk_xhpt"> VLESS-XHTTP-Reality</label>
-      <label class="checkbox-item"><input type="checkbox" data-var="vxpt" id="chk_vxpt"> VLESS-XHTTP-ENC</label>
-      <label class="checkbox-item"><input type="checkbox" data-var="vwpt" id="chk_vwpt"> VLESS-WS-ENC</label>
-      <label class="checkbox-item"><input type="checkbox" data-var="vmpt" id="chk_vmpt"> VMess-WS</label>
-      <label class="checkbox-item"><input type="checkbox" data-var="sspt" id="chk_sspt"> Shadowsocks-2022</label>
-      <label class="checkbox-item"><input type="checkbox" data-var="anpt" id="chk_anpt"> AnyTLS</label>
-      <label class="checkbox-item"><input type="checkbox" data-var="arpt" id="chk_arpt"> Any-Reality</label>
-      <label class="checkbox-item"><input type="checkbox" data-var="hypt" id="chk_hypt"> Hysteria2</label>
-      <label class="checkbox-item"><input type="checkbox" data-var="tupt" id="chk_tupt"> Tuic</label>
-      <label class="checkbox-item"><input type="checkbox" data-var="sopt" id="chk_sopt"> SOCKS5</label>
+  <!-- ==================== TAB 2: 订阅面板 ==================== -->
+  <div class="panel" id="panel-subscription">
+    <div class="grid">
+      <div class="card grid-full">
+        <h2>服务器连接</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <input type="text" id="subServer" placeholder="服务器地址 (如 1.2.3.4 或 your.domain.com)" style="flex:1;min-width:200px;">
+          <input type="text" id="subPort" placeholder="订阅端口" style="max-width:100px;">
+          <input type="text" id="subToken" placeholder="订阅Token" style="max-width:250px;">
+          <button class="primary" onclick="loadSubscriptions()">加载订阅</button>
+        </div>
+        <div class="alert" style="margin-top:8px;">
+          提示：服务器需开启 <code>sub=y</code>。订阅面板地址：<code>http://服务器IP:端口/Token/index.html</code>（本页面也可以放到服务器上直接使用）
+        </div>
+        <div id="serverStatus" style="font-size:13px;color:var(--sub);margin-top:6px;">未连接服务器</div>
+      </div>
+
+      <div class="card">
+        <h3>Clash Meta 订阅</h3>
+        <div class="sub-url" id="clashUrl">请先连接服务器</div>
+        <div class="actions">
+          <button class="sm" onclick="copyText('clashUrl')">复制</button>
+          <button class="sm" onclick="showQR('clashUrl')">二维码</button>
+        </div>
+        <div class="sub-url" id="clashUrlExt" style="display:none;"></div>
+      </div>
+
+      <div class="card">
+        <h3>Sing-Box 订阅</h3>
+        <div class="sub-url" id="singboxUrl">请先连接服务器</div>
+        <div class="actions">
+          <button class="sm" onclick="copyText('singboxUrl')">复制</button>
+          <button class="sm" onclick="showQR('singboxUrl')">二维码</button>
+        </div>
+        <div class="sub-url" id="singboxUrlExt" style="display:none;"></div>
+      </div>
+
+      <div class="card">
+        <h3>聚合协议列表</h3>
+        <div class="sub-url" id="allUrl">请先连接服务器</div>
+        <div class="actions">
+          <button class="sm" onclick="copyText('allUrl')">复制</button>
+        </div>
+      </div>
+
+      <div class="card grid-full" id="qrCard" style="display:none;">
+        <h3>二维码</h3>
+        <div class="qr-wrap" id="qrDisplay"></div>
+      </div>
     </div>
   </div>
 
-  <div class="card">
-    <h3>可选参数</h3>
-    <div class="grid2">
-      <div><label>UUID</label><input type="text" id="uuid" placeholder="留空随机生成"></div>
-      <div><label>WARP出站</label><select id="warp"><option value="">关闭</option><option value="s">全局V4+V6</option><option value="s4">全局V4</option><option value="s6">全局V6</option><option value="s4s6">SingV4+XrayV6</option><option value="s6s4">SingV6+XrayV4</option></select></div>
-      <div><label>Argo隧道</label><select id="argo"><option value="">关闭</option><option value="vmpt">VMess-WS隧道</option><option value="vwpt">VLESS-WS隧道</option></select></div>
-      <div><label>Argo域名</label><input type="text" id="agn" placeholder="固定隧道域名"></div>
-      <div><label>Argo Token</label><input type="text" id="agk" placeholder="ey开头token"></div>
-      <div><label>节点名称前缀</label><input type="text" id="name" placeholder="自定义前缀"></div>
-      <div><label>IP版本</label><select id="ippz"><option value="">自动</option><option value="4">IPv4</option><option value="6">IPv6</option></select></div>
-      <div><label>开启订阅</label><select id="sub"><option value="">关闭</option><option value="y">开启</option></select></div>
-      <div><label>订阅密码</label><input type="text" id="subid" placeholder="留空=UUID"></div>
-      <div><label>订阅端口</label><input type="text" id="subpt" placeholder="留空随机"></div>
+  <!-- ==================== TAB 3: 节点信息 ==================== -->
+  <div class="panel" id="panel-nodes">
+    <div class="card">
+      <h2>当前节点列表</h2>
+      <div id="nodeList" style="font-size:13px;color:var(--sub);">请先在订阅面板连接服务器</div>
     </div>
   </div>
-
-  <div class="card">
-    <h3>生成的命令</h3>
-    <div class="cmd-box" id="cmdBox">点击下方按钮生成命令</div>
-    <div style="margin-top:10px;display:flex;gap:8px">
-      <button class="btn" onclick="generateCmd()">生成命令</button>
-      <button class="btn btn-outline" onclick="copyCmd()">复制命令</button>
-    </div>
-  </div>
-</div>
-
-<!-- ========== 订阅面板 ========== -->
-<div class="panel" id="panel-subscription">
-  <div class="card">
-    <h3>服务器连接</h3>
-    <div class="row">
-      <input type="text" id="subServer" placeholder="服务器地址 (如 1.2.3.4:3000)" style="flex:1">
-      <input type="text" id="subToken" placeholder="订阅Token" style="max-width:200px">
-      <button class="btn" onclick="loadSubscriptions()">加载订阅</button>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3>Clash Meta 订阅</h3>
-    <div class="sub-url" id="clashUrl">请先连接服务器</div>
-    <button class="btn btn-sm" onclick="copyText('clashUrl')">复制</button>
-    <button class="btn btn-sm btn-outline" onclick="showQR('clashUrl')">二维码</button>
-  </div>
-
-  <div class="card">
-    <h3>Sing-Box 订阅</h3>
-    <div class="sub-url" id="singboxUrl">请先连接服务器</div>
-    <button class="btn btn-sm" onclick="copyText('singboxUrl')">复制</button>
-    <button class="btn btn-sm btn-outline" onclick="showQR('singboxUrl')">二维码</button>
-  </div>
-
-  <div class="card">
-    <h3>聚合协议列表</h3>
-    <div class="sub-url" id="allUrl">请先连接服务器</div>
-    <button class="btn btn-sm" onclick="copyText('allUrl')">复制</button>
-  </div>
-
-  <div class="card" id="qrCard" style="display:none">
-    <h3>二维码</h3>
-    <div class="qr-wrap" id="qrDisplay"></div>
-  </div>
-</div>
-
-<!-- ========== 节点信息 ========== -->
-<div class="panel" id="panel-nodes">
-  <div class="card">
-    <h3>节点列表</h3>
-    <div id="nodeList" style="font-size:0.85em;color:var(--muted)">请先在订阅面板连接服务器</div>
-  </div>
-</div>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
+// ========== THEME ==========
+function toggleTheme(){ document.body.classList.toggle('light-mode'); }
+
+// ========== TAB SWITCH ==========
 function switchTab(name){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelector(`.tab[onclick*="${name}"]`).classList.add('active');
+  document.querySelector('.tab[onclick*="'+name+'"]').classList.add('active');
   document.getElementById('panel-'+name).classList.add('active');
 }
 
+// ========== UUID ==========
+function genUUID(){ document.getElementById('uuid').value=crypto.randomUUID(); }
+
+// ========== COMMAND GENERATOR ==========
 function generateCmd(){
   let vars=[];
-  document.querySelectorAll('input[data-var]').forEach(cb=>{
-    if(cb.checked) vars.push(cb.dataset.var+'=""');
-  });
-  if(vars.length===0){alert('请至少选择一个协议');return;}
+  document.querySelectorAll('input[data-var]').forEach(cb=>{ if(cb.checked) vars.push(cb.dataset.var+'=""'); });
+  if(vars.length===0){ alert('请至少选择一个协议'); return; }
 
-  let extras=['uuid','warp','argo','agn','agk','name','ippz','sub','subid','subpt'];
+  let extras=['uuid','dnym','reym','cdnym','warp','ippz','name','oap','sub','subid','subpt','hyjpt','argo','agn','agk','cfip'];
   extras.forEach(id=>{
     let el=document.getElementById(id);
-    if(el&&el.value) vars.push(id+'="'+el.value+'"');
+    if(el&&el.value) vars.push(id+'="'+el.value.replace(/"/g,'\\"')+'"');
   });
 
-  let cmd=vars.join(' ')+' bash <(curl -Ls '+(location.protocol+'//'+location.host+'/science.sh')+')';
+  let cmd=vars.join(' ')+' bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)';
   document.getElementById('cmdBox').textContent=cmd;
 }
 
 function copyCmd(){
   let t=document.getElementById('cmdBox').textContent;
-  navigator.clipboard.writeText(t).then(()=>alert('已复制!'));
+  if(t==='点击"生成命令"按钮') return;
+  navigator.clipboard.writeText(t).then(()=>{ let b=event.target; b.textContent='已复制!'; setTimeout(()=>b.textContent='复制命令',1500); });
 }
 
-function connectServer(){
-  let s=document.getElementById('serverUrl').value.trim();
-  if(!s){alert('请输入服务器地址');return;}
-  s=s.replace(/\/$/,'');
-  document.getElementById('subServer').value=s;
-  document.getElementById('serverStatus').innerHTML='<span class="status-dot online"></span>已连接: '+s;
+function copyCurl(){
+  let t=document.getElementById('cmdBox').textContent;
+  if(t==='点击"生成命令"按钮') return;
+  navigator.clipboard.writeText(t).then(()=>{ let b=event.target; b.textContent='已复制!'; setTimeout(()=>b.textContent='复制curl命令',1500); });
 }
 
+// ========== SUBSCRIPTION ==========
 function loadSubscriptions(){
   let s=document.getElementById('subServer').value.trim();
+  let p=document.getElementById('subPort').value.trim();
   let t=document.getElementById('subToken').value.trim();
-  if(!s||!t){alert('请输入服务器地址和订阅Token');return;}
+  if(!s){ alert('请输入服务器地址'); return; }
+  if(!p){ alert('请输入订阅端口'); return; }
+  if(!t){ alert('请输入订阅Token'); return; }
   s=s.replace(/\/$/,'');
-  let base=s+'/'+t+'/';
-  document.getElementById('clashUrl').textContent='http://'+base+'clmi.yaml';
-  document.getElementById('singboxUrl').textContent='http://'+base+'sbox.json';
-  document.getElementById('allUrl').textContent='http://'+base+'jhsub.txt';
-  document.getElementById('serverStatus').innerHTML='<span class="status-dot online"></span>已连接: '+s;
-  fetchNodeList(s,t);
+  let base='http://'+s+':'+p+'/'+t+'/';
+  document.getElementById('clashUrl').textContent=base+'clmi.yaml';
+  document.getElementById('singboxUrl').textContent=base+'sbox.json';
+  document.getElementById('allUrl').textContent=base+'jhsub.txt';
+  document.getElementById('serverStatus').innerHTML='<span class="status-dot online"></span>已连接: '+s+':'+p;
+  fetchNodeList(s,p,t);
 }
 
-function fetchNodeList(s,t){
-  fetch('http://'+s+'/'+t+'/jhsub.txt')
+function fetchNodeList(s,p,t){
+  fetch('http://'+s+':'+p+'/'+t+'/jhsub.txt')
     .then(r=>r.text())
     .then(txt=>{
       let lines=txt.split('\n').filter(l=>l.trim());
       document.getElementById('nodeList').innerHTML=lines.map(l=>{
         let proto=l.split('://')[0]||'';
         let tag='';
-        if(proto.includes('vless'))tag='xray';
-        else if(proto.includes('hysteria')||proto.includes('tuic')||proto.includes('ss')||proto.includes('any'))tag='singbox';
-        else if(proto.includes('vmess'))tag='xray';
-        return '<div style="padding:6px 0;border-bottom:1px solid var(--border)"><span class="protocol-tag '+tag+'">'+proto+'</span> '+l.substring(0,80)+'...</div>';
+        if(proto.includes('vless')||proto.includes('vmess')) tag='xray';
+        else if(proto.includes('hysteria')||proto.includes('tuic')||proto.includes('ss')||proto.includes('any')) tag='sb';
+        else if(proto.includes('argo')) tag='argo';
+        return '<div style="padding:6px 0;border-bottom:1px solid var(--line);word-break:break-all;"><span class="ptag '+tag+'">'+proto+'</span> '+l.substring(0,120)+'...</div>';
       }).join('');
     })
-    .catch(()=>{document.getElementById('nodeList').innerHTML='<span style="color:var(--red)">无法获取节点信息</span>';});
+    .catch(()=>{ document.getElementById('nodeList').innerHTML='<span style="color:var(--err)">无法获取节点信息，请检查服务器地址和端口</span>'; });
 }
 
 function copyText(id){
   let t=document.getElementById(id).textContent;
-  navigator.clipboard.writeText(t).then(()=>alert('已复制!'));
+  if(t==='请先连接服务器') return;
+  navigator.clipboard.writeText(t).then(()=>{ let b=event.target; b.textContent='已复制!'; setTimeout(()=>b.textContent='复制',1500); });
 }
 
 function showQR(id){
   let url=document.getElementById(id).textContent;
+  if(url==='请先连接服务器') return;
   let card=document.getElementById('qrCard');
   let disp=document.getElementById('qrDisplay');
   card.style.display='block';
