@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Science 控制面板</title>
 <style>
-:root { --bg:#fff; --card:#fff; --ink:#111; --sub:#555; --muted:#999; --line:#ddd; --acc:#111; --bg2:#f5f5f5; }
+:root { --bg:#fff; --card:#fff; --ink:#111; --sub:#555; --muted:#999; --line:#ddd; --bg2:#f5f5f5; }
 * { box-sizing:border-box; margin:0; padding:0; }
 body { background:var(--bg2); color:var(--ink); font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; min-height:100vh; }
 .wrap { max-width:900px; margin:0 auto; padding:16px; }
@@ -47,10 +47,7 @@ button.sm { padding:4px 10px; font-size:12px; }
 .node { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--line); font-size:12px; }
 .node .n { font-weight:600; min-width:70px; font-size:11px; }
 .node .u { flex:1; word-break:break-all; color:var(--sub); font-family:monospace; font-size:10px; }
-.qr-container { display:flex; flex-wrap:wrap; gap:16px; margin-top:10px; }
-.qr-item { text-align:center; }
-.qr-item canvas { border:1px solid var(--line); border-radius:4px; display:block; }
-.qr-item .qr-label { font-size:10px; color:var(--muted); margin-top:4px; }
+.qr-img { display:block; margin:8px auto 0; border:1px solid var(--line); border-radius:4px; width:160px; height:160px; }
 input[type="checkbox"] { accent-color:var(--ink); }
 .proto-grid { display:grid; grid-template-columns:auto 1fr; gap:4px 10px; align-items:center; }
 .proto-grid label { display:flex; align-items:center; gap:4px; cursor:pointer; font-size:12px; }
@@ -65,11 +62,11 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
   <h1>Science 小钢炮控制面板</h1>
   <div class="meta"><a href="https://github.com/Hutton-h/science">github.com/Hutton-h/science</a> · V26.5.10</div>
 </header>
-<div class="status wait" id="statusBar">⏳ 等待连接服务器…</div>
+<div class="status wait" id="statusBar">等待连接服务器…</div>
 <div class="tabs">
-  <button class="tab active" onclick="switchTab('dashboard')">仪表盘</button>
-  <button class="tab" onclick="switchTab('generator')">命令生成器</button>
-  <button class="tab" onclick="switchTab('sub')">订阅 & 节点</button>
+  <button class="tab active" id="tab-dashboard">仪表盘</button>
+  <button class="tab" id="tab-generator">命令生成器</button>
+  <button class="tab" id="tab-sub">订阅 &amp; 节点</button>
 </div>
 
 <!-- TAB 1: 仪表盘 -->
@@ -91,7 +88,7 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
   <div class="card">
     <h3>一键部署</h3>
     <div class="url-box" id="oneClickIP">all=y sub=y bash &lt;(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)</div>
-    <button class="sm" onclick="cp('oneClickIP',this)">复制</button>
+    <button class="sm" id="btn-oneClick">复制</button>
   </div>
 </div>
 
@@ -122,12 +119,12 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
       <label><input type="checkbox" data-var="sopt">SOCKS5 <span class="pill">sopt</span></label><input type="text" data-port="sopt" placeholder="随机">
     </div>
     <div style="margin-top:8px;display:flex;gap:6px;">
-      <button class="dark sm" onclick="selAll()">全选11协议</button>
-      <button class="sm" onclick="clrAll()">清空</button>
+      <button class="dark sm" id="btn-selAll">全选11协议</button>
+      <button class="sm" id="btn-clrAll">清空</button>
     </div>
   </div>
   <div class="card"><h3>高级参数</h3>
-    <div class="row"><label>UUID</label><input type="text" id="uuid" placeholder="随机"><button class="sm" onclick="genUUID()">生成</button></div>
+    <div class="row"><label>UUID</label><input type="text" id="uuid" placeholder="随机"><button class="sm" id="btn-genUUID">生成</button></div>
     <div class="row"><label>域名(dnym)</label><input type="text" id="dnym" placeholder="隐藏IP"></div>
     <div class="row"><label>Reality(reym)</label><input type="text" id="reym" placeholder="apple.com"></div>
     <div class="row"><label>CDN(cdnym)</label><input type="text" id="cdnym" placeholder="回源域名"></div>
@@ -146,8 +143,8 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
   </div>
   <div class="card">
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="dark" onclick="genCmd()">生成命令</button>
-      <button onclick="copyCmd()">复制命令</button>
+      <button class="dark" id="btn-genCmd">生成命令</button>
+      <button id="btn-copyCmd">复制命令</button>
     </div>
     <div class="cmd-box" id="cmdBox" style="margin-top:8px;">点击"生成命令"</div>
   </div>
@@ -161,174 +158,263 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
     <div class="row"><label>端口</label><input type="text" id="subPort" placeholder="订阅端口"></div>
     <div class="row"><label>Token</label><input type="text" id="subToken" placeholder="UUID"></div>
     <div style="margin-top:8px;display:flex;gap:8px;">
-      <button class="dark sm" onclick="connect()">连接</button>
-      <button class="sm" onclick="refresh()">刷新</button>
+      <button class="dark sm" id="btn-connect">连接</button>
+      <button class="sm" id="btn-refresh">刷新</button>
     </div>
   </div>
-  <div class="card"><h3>Clash/Meta 订阅</h3><div class="url-box" id="clashUrl">请先连接</div><button class="sm" onclick="cp('clashUrl',this)">复制</button><div class="qr-item" id="qrClash" style="margin-top:8px;"></div></div>
-  <div class="card"><h3>Sing-box 订阅</h3><div class="url-box" id="singboxUrl">请先连接</div><button class="sm" onclick="cp('singboxUrl',this)">复制</button><div class="qr-item" id="qrSbox" style="margin-top:8px;"></div></div>
-  <div class="card"><h3>聚合订阅</h3><div class="url-box" id="allUrl">请先连接</div><button class="sm" onclick="cp('allUrl',this)">复制</button><div class="qr-item" id="qrAll" style="margin-top:8px;"></div></div>
+  <div class="card"><h3>Clash/Meta 订阅</h3><div class="url-box" id="clashUrl">请先连接</div><button class="sm" id="btn-cpClash">复制</button><img class="qr-img" id="qrClash" src="" alt="QR" style="display:none"></div>
+  <div class="card"><h3>Sing-box 订阅</h3><div class="url-box" id="singboxUrl">请先连接</div><button class="sm" id="btn-cpSbox">复制</button><img class="qr-img" id="qrSbox" src="" alt="QR" style="display:none"></div>
+  <div class="card"><h3>聚合订阅</h3><div class="url-box" id="allUrl">请先连接</div><button class="sm" id="btn-cpAll">复制</button><img class="qr-img" id="qrAll" src="" alt="QR" style="display:none"></div>
   <div class="card"><h3>节点列表</h3><div id="nodeList" style="max-height:400px;overflow-y:auto;color:var(--muted);">请先连接</div></div>
 </div>
 <footer>github.com/Hutton-h/science · Science 小钢炮 V26.5.10</footer>
 </div>
 
 <script>
-// ===== QR CODE (inline, no deps) =====
-var QRCode=function(){function t(t,e){if("undefined"==typeof e&&(e={}),"string"==typeof t&&(t=document.getElementById(t)),!t||!t.appendChild)throw new Error("QRCode: invalid element");this._el=t,this._ht=document.createElement("div"),this._ht.style.display="none",this._qr=null,this._opts=e;for(var n in e)this["_"+n]=e[n];this._ht.innerHTML='<canvas width="1" height="1" style="display:none"></canvas>',t.appendChild(this._ht),this.makeCode(e.text||"")}function e(t,e){this.typeNumber=t,this.errorCorrectLevel=e,this.modules=null,this.moduleCount=0,this.dataCache=null,this.dataList=[]}function n(t,e){if(void 0==t.length)throw new Error(t.length+"/"+e);for(var n=0;n<t.length&&0==t[n];)n++;this.num=new Array(t.length-n+e);for(var r=0;r<t.length-n;r++)this.num[r]=t[r+n]}function r(t,e){this.totalCount=t,this.dataCount=e}function o(){this.buffer=[],this.length=0}function i(){var t=!1,e=navigator.userAgent;return/android/i.test(e)&&(t=!0),/iPad|iPhone|iPod/i.test(e)&&(t=!1),t}function a(){this.rsBlock=null,this.totalCount=0,this.dataCount=0}function s(t){var e,n,r=1,o=0,i=0,a=t.length,s=t.fg;if("undefined"!=typeof s)for(e=0;e<a;e++)n=t[e],r!=n.getLength()&&o!=n.getECLevel()&&i++,r=n.getLength(),o=n.getECLevel();else for(e=0;e<a;e++)n=t[e],r!=n.getLength()&&i++,r=n.getLength();return i}function u(t,e){var n,r,o,i,a,s,u,l=t.length;e>=0||(e=0),n=0;for(r=0;r<l;r++)o=t[r],i=o.getLength(),a=o.getECLevel(),s=e*2+i*(a+7)+16,n+=s*(s-1)+2*s;return n}function l(t,e){var n=t.length;e>=0||(e=0);var r,o,i=0;for(r=0;r<n;r++)o=t[r],i+=o.getLength();return i*8+1}function h(t,e){var n,r,o,i,a,s,u,l,h,c,d=t.length,p=e.length;if(n=0,d!=p)throw new Error("QRCode: version mismatch");for(r=0;r<d;r++)if(o=t[r],i=e[r],o.getLength()!=i.getLength()||o.getNumBlocks()!=i.getNumBlocks()||o.getECLevel()!=i.getECLevel())throw new Error("QRCode: RS block mismatch");a=o.getNumBlocks(),s=o.getLength(),u=new Array(a),l=0;for(r=0;r<a;r++)u[r]=new Array(s),l+=s;h=new Array(l);for(r=0;r<a;r++)for(c=0;c<u[r].length;c++)u[r][c]=255&t[n++];n=0;for(r=0;r<a;r++)for(c=0;c<u[r].length;c++)h[n++]=u[r][c];return h}var c=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],d=31892,p=[[],[7,10,13,17],[10,16,22,28],[15,26,18,22],[20,18,26,16],[26,24,18,22],[18,18,24,16],[20,22,22,26],[24,22,26,18],[28,22,30,22],[26,22,24,20],[30,24,28,22],[22,26,28,24],[22,26,26,22],[24,30,28,24],[24,28,32,24],[28,32,30,24],[28,32,30,28],[26,32,30,28],[30,36,30,28],[28,26,30,28,28],[28,26,28,28,26],[28,28,30,30,28],[28,30,30,30,30],[28,30,30,30,30],[28,30,24,30,30],[28,30,24,30,30],[30,30,28,30,30],[28,26,28,30,30,30],[28,30,28,30,30,30],[28,30,28,30,30,30],[30,30,30,30,30,30],[30,30,30,30,30,30],[30,30,30,30,30,30],[30,30,30,30,30,30],[30,30,30,30,30,30],[30,30,30,30,30,30],[30,30,30,30,30,30],[30,30,30,30,30,30],[30,30,30,30,30,30]],g=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]];t.prototype.makeCode=function(t){if(!this._ht||!t)return;try{this._qr&&this._qr.clear(),this._qr=new function(t){var e,n,r,o,i,a,s,u,l,h,c=t.length,d=0,p=1;do{for(d+=1,p=function(t){for(var e=1,n=1,r=1,o=1;r<=40;r++)if(o<=t&&t<=g[r][0]){n=r;break}else o+=g[r][0];return n}((c+8)*8+64),e=function(t,e){if(t<1||t>40)throw new Error("QRCode: typeNumber out of range");var n,r,o=1,i=p[t][0],a=p[t][1],s=p[t][2],u=p[t][3],l=Math.floor(e/8)+1;return l>a&&(l=a),l>u?l=u:(l<s||(l=s),o=0),n=new r(l,i),r=o?new n(l,i):n}(p,d),e.addData(t),e.make()}while(e.getModuleCount()<=this._opts.width/10||e.getModuleCount()<=this._opts.height/10);this._qr=e;var m=this._qr.getModuleCount(),f=this._opts.width,w=this._opts.height;_=Math.floor(Math.min(f,w)/m),this._qrSize=m*_,this._el.removeChild(this._ht);var v=this._ht.querySelector("canvas");v.width=this._qrSize,v.height=this._qrSize;var y=v.getContext("2d");y.fillStyle=this._opts.background||"#fff",y.fillRect(0,0,v.width,v.height),y.fillStyle=this._opts.foreground||"#000";for(var b=0;b<m;b++)for(var k=0;k<m;k++)e.isDark(b,k)&&y.fillRect(b*_,k*_,_,_);this._ht.style.display="block",this._qr.makeImage=function(){return v.toDataURL("image/png")}}catch(t){this._qr=null,this._ht.innerHTML="<span style='color:red'>"+t+"</span>"}},e.prototype={addData:function(t){var n=new Array(t.length);for(var r=0;r<t.length;r++)n[r]=255&t.charCodeAt(r);this.dataList.push(n),this.dataCache=null},isDark:function(t,e){if(t<0||this.moduleCount<=t||e<0||this.moduleCount<=e)throw new Error(t+","+e);return this.modules[t][e]},getModuleCount:function(){return this.moduleCount},make:function(){var t,e,n,r,o,i,a,s,u,l,h,c,d,p;if(this.typeNumber<1){var m=1;for(m=1;m<40;m++){for(var f=c[m],w=p[m],v=0;v<f.length;v++){var y=f[v],b=w[v];if(y<this.dataList.length)break;if(v==f.length-1){m=40;break}}}this.typeNumber=m}this.makeImpl(!1,this.getBestMaskPattern())},makeImpl:function(t,e){this.moduleCount=4*this.typeNumber+17,this.modules=new Array(this.moduleCount);for(var n=0;n<this.moduleCount;n++){this.modules[n]=new Array(this.moduleCount);for(var r=0;r<this.moduleCount;r++)this.modules[n][r]=null}this.setupPositionProbePattern(0,0),this.setupPositionProbePattern(this.moduleCount-7,0),this.setupPositionProbePattern(0,this.moduleCount-7),this.setupPositionAdjustPattern(),this.setupTimingPattern(),this.setupTypeInfo(t,e),this.typeNumber>=7&&this.setupTypeNumber(t),null==this.dataCache&&(this.dataCache=function(t){for(var e,n,r,o,i,a,s,u,l,h=t.dataList,c=t.typeNumber,d=t.errorCorrectLevel,g=[],m=0;m<h.length;m++){var f=new Array;f.push(64),f.push(16),Array.prototype.push.apply(f,h[m]),g.push(f)}for(var w=0;w<g.length;w++)g[w]=function(t,e){var n,r,o,i,a,s,u,l,h,c=t.length,d=0;for(n=0;n<c;n++)d+=t[n].length;l=Math.floor(d/8),h=new Array(l);for(n=0;n<l;n++)h[n]=0;for(n=0;n<c;n++)for(r=0;r<t[n].length;r++)o=8*(l-1-n)+r,h[o]=255&t[n][r];return h}(g[w]);var v=g.length;if(v<1)return[];for(var y=1,b=0;b<v;b++)y+=g[b].length;var k=new Array(y);b=0;for(var x=0;x<v;x++)for(var S=0;S<g[x].length;S++)k[b++]=g[x][S];for(var E=function(t,e){var n,r,o,i,a=[],s=new Array(t.length);for(r=0;r<t.length;r++){if(o=t[r],o.getLength()!=e.getLength()||o.getNumBlocks()!=e.getNumBlocks()||o.getECLevel()!=e.getECLevel())throw new Error("QRCode: RS block mismatch");a.push(o.getNumBlocks()),s[r]=o.getLength()}n=new Array(a.length);for(r=0;r<a.length;r++)n[r]=new Array(a[r]);var u=0;for(r=0;r<a.length;r++)for(o=0;o<s[r];o++)for(i=0;i<a[r];i++)n[i][o]=t[u][o];return n}((a=function(t,e){var n,r,o,i,a,s,u,l,h,c,d,p,g,m,f,w,v;if(e<1||e>40)throw new Error("QRCode: errorCorrectLevel out of range");for(n=0,r=0;r<t.length;r++)n+=t[r].length;for(o=1,i=Math.floor(n/8),a=i,l=(o=1==e?1:0==e?0:2==e?2:3,function(t,e){var n,r,o,i,a,s,u,l,h,c=t.length,d=0;for(n=0;n<c;n++)d+=t[n].length;s=Math.floor(d/8);for(h=0;h<s;h++){for(r=0;r<c;r++){l=h%t[r].length,void 0===t[r][l]&&(t[r][l]=0)}for(o=0;o<c;o++){u=new Array(t[o].length);for(i=0;i<t[o].length;i++)u[i]=t[o][(i+1)%t[o].length];t[o]=u}h>0&&(t=function(t){var e,n,r,o,i,a,s,u,l,h,c,d,p=[],g=t.length;for(e=0;e<g;e++)p.push(t[e].slice());for(n=0;n<g;n++){if(r=n,o=0,void 0===p[n][r]){p[n].splice(r,1),o=1;for(var m=0;m<g;m++)n!=m&&p[m].splice(r,1)}o&&(n-=1,r-=1)}for(i=0;i<g;i++)for(a=0;a<p[i].length;a++)void 0===p[i][a]&&(p[i][a]=0);return p}(t))}return t}((d=function(t,e){var n,r,o,i,a,s,u,l,h,c,d,p,g,m,f,w,v,y,b,k,x,S,E,C,T,A,I,R,D,N,O,L,M,P,F,B,U,j,W,H;if(e<1)throw new Error("QRCode: totalCount error");for(s=t.length,u=0,n=0;n<s;n++)u+=t[n].length;if(l=Math.floor(u/8),h=0,h<e&&(h=e),l>h&&(l=h),d=function(t,e){var n,r,o,i,a,s,u,l=t.length,h=0;for(n=0;n<l;n++)h+=t[n].length;for(r=Math.floor(h/8),o=Math.ceil(h/8),a=new Array(r),i=0;i<r;i++)a[i]=0;for(n=0;n<l;n++)for(s=7;s>=0;s--)if(h<n*8+s+1){var c=0,d=0;void 0!==t[n][s]&&(c=1,d=255&t[n][s]),a[r-1-(n*8+s)]=d}return a}(t,l),p=function(t,e){var n,r,o,i,a,s,u,l,h,c,d,p,g,m=[],f=[],w=[];for(n=0;n<e;n++)m.push(new Array);for(r=0;r<t.length;r++){for(o=0;o<e;o++)m[o].push(t[r]);t[r]=[]}for(i=0,a=0;n<e;){for(u=0;u<e;u++)void 0===m[u][i]&&(m[u][i]=0),l=n-u,l<0&&(l+=e),a+=m[u][i]*d[l];n++}for(s=0;s<e;s++)f.push(new Array);for(h=0;h<e;h++){for(c=0;c<e;c++)void 0===m[c][h]&&(m[c][h]=0);f[h]=m[c][h]}for(g=0;g<e;g++)w.push(new Array);w[0]=new Array;for(p=0;p<e;p++)w[0][p]=0;for(p=0;p<e;p++)void 0===f[p]&&(f[p]=0),w[0][p]=f[p];return w}(d,l),g=function(t,e){var n,r,o,i,a=[],s=t.length,u=0;for(n=0;n<s;n++)a.push(t[n].slice()),u+=t[n].length;for(r=Math.floor(u/8),o=Math.ceil(u/8),i=new Array(r),n=0;n<r;n++)i[n]=0;for(n=0;n<s;n++)for(var l=7;l>=0;l--)if(u<n*8+l+1){var h=0,c=0;void 0!==a[n][l]&&(h=1,c=255&a[n][l]),i[r-1-(n*8+l)]=c}return i}(t,l),m=function(t,e,n){var r,o,i,a,s,u,l=t.length,h=0;for(r=0;r<l;r++)h+=t[r].length;for(o=Math.floor(h/8),i=Math.ceil(h/8),a=new Array(i),s=0;s<o;s++)a[s]=0;for(r=0;r<l;r++)for(u=7;u>=0;u--)if(h<r*8+u+1){var c=0,d=0;void 0!==t[r][u]&&(c=1,d=255&t[r][u]);var p=r*8+u+1-o;a[a.length-1-p]=d}return a}(t,l),f=function(t,e,n){var r,o,i,a,s,u,l,h,c,d,p,g,m=t.length,f=0;for(r=0;r<m;r++)f+=t[r].length;for(o=Math.floor(f/8),i=Math.ceil(f/8),a=new Array(i),s=0;s<o;s++)a[s]=0;for(r=0;r<m;r++)for(u=7;u>=0;u--)if(f<r*8+u+1){var w=0,v=0;void 0!==t[r][u]&&(w=1,v=255&t[r][u]),a[i-1-(r*8+u)]=v}return a}(t,l),w=l,v=function(t,e){var n,r,o,i,a,s,u,l=t.length,h=0;for(n=0;n<l;n++)h+=t[n].length;for(r=Math.floor(h/8),o=Math.ceil(h/8),i=new Array(o),a=0;a<r;a++)i[a]=0;for(n=0;n<l;n++)for(s=7;s>=0;s--)if(h<n*8+s+1){var c=0,d=0;void 0!==t[n][s]&&(c=1,d=255&t[n][s]),i[o-1-(n*8+s)]=d}return i}(t,l),y=function(t,e){var n,r,o,i,a,s,u,l,h=t.length,c=0;for(n=0;n<h;n++)c+=t[n].length;for(r=Math.floor(c/8),o=Math.ceil(c/8),i=new Array(o),a=0;a<r;a++)i[a]=0;for(n=0;n<h;n++)for(s=7;s>=0;s--)if(c<n*8+s+1){var d=0,p=0;void 0!==t[n][s]&&(d=1,p=255&t[n][s]),i[o-1-(n*8+s)]=p}return i}(t,l),b=function(t,e){var n,r,o,i,a,s,u,l=t.length,h=0;for(n=0;n<l;n++)h+=t[n].length;for(r=Math.floor(h/8),o=Math.ceil(h/8),i=new Array(o),a=0;a<r;a++)i[a]=0;for(n=0;n<l;n++)for(s=7;s>=0;s--)if(h<n*8+s+1){var c=0,d=0;void 0!==t[n][s]&&(c=1,d=255&t[n][s]),i[o-1-(n*8+s)]=d}return i}(t,l),k=0,x=0,x<e;){for(S=0;S<e;S++){if(void 0===p[S][k]){p[S][k]=0;for(var E=0;E<e;E++)void 0===p[E][k]&&(p[E][k]=0)}p[S][k]=255&p[S][k]}k++}for(C=0,T=0;T<e;T++){E=T,void 0===p[T][E]&&(p[T][E]=0),p[T][E]=255&p[T][E]}for(A=0;A<e;A++)for(I=0;I<e;I++)void 0===p[A][I]&&(p[A][I]=0),p[A][I]=255&p[A][I];for(R=0;R<e;R++)for(D=0;D<e;D++)p[R][D]=255&p[R][D];N=[];for(var q=0;q<e;q++)N.push(new Array);for(O=0;O<e;O++)for(L=0;L<e;L++)N[L][O]=p[L][O];for(M=0;M<e;M++){P=0;for(var V=0;V<e;V++)P+=p[M][V]*g[M][V];P=255&P,N[M][M]=P}for(F=0;F<e;F++)for(B=0;B<e;B++)N[F][B]=255&N[F][B];return N}(p,l),c=function(t,e){var n,r,o,i,a,s,u,l,h=t.length,c=0;for(n=0;n<h;n++)c+=t[n].length;for(r=Math.floor(c/8),o=Math.ceil(c/8),i=new Array(o),a=0;a<r;a++)i[a]=0;for(n=0;n<h;n++)for(s=7;s>=0;s--)if(c<n*8+s+1){var d=0,p=0;void 0!==t[n][s]&&(d=1,p=255&t[n][s]),i[o-1-(n*8+s)]=p}return i}(t,l),U=0,j=0;j<l;j++){for(W=0;W<l;W++)void 0===g[W][j]&&(g[W][j]=0),g[W][j]=255&g[W][j];U+=g[0][j]*c[j]}H=0;for(var Y=0;Y<l;Y++){for(var Z=0;Z<l;Z++)void 0===g[Z][Y]&&(g[Z][Y]=0);H+=g[0][Y]*c[Y]}return H}(c,t)),u=0,u<d.length;u++)d[u]=255&d[u];for(g=0;g<k.length;g++)k[g]=255&k[g];return k}(c,t)),r=0;r<k.length;r++)k[r]=255&k[r];var C=[];for(r=0;r<k.length;r++)C.push(k[r]);var T=[];for(r=0;r<k.length;r++)T.push(k[r]);var I=[];for(r=0;r<k.length;r++)I.push(k[r]);return I}(e),this.dataCache),this.mapData(this.dataCache,e)},setupPositionProbePattern:function(t,e){for(var n=-1;n<=7;n++)if(!(t+n<=-1||this.moduleCount<=t+n))for(var r=-1;r<=7;r++)e+r<=-1||this.moduleCount<=e+r||(this.modules[t+n][e+r]=n>=0&&n<=6&&(0==r||6==r)||r>=0&&r<=6&&(0==n||6==n)||n>=2&&n<=4&&r>=2&&r<=4)},getBestMaskPattern:function(){for(var t=0,e=0,n=0;n<8;n++){this.makeImpl(!0,n);var r=QRUtil.getLostPoint(this);(0==n||t>r)&&(t=r,e=n)}return e},setupTimingPattern:function(){for(var t=8;t<this.moduleCount-8;t++)null==this.modules[t][6]&&(this.modules[t][6]=t%2==0);for(var e=8;e<this.moduleCount-8;e++)null==this.modules[6][e]&&(this.modules[6][e]=e%2==0)},setupPositionAdjustPattern:function(){for(var t=QRUtil.getPatternPosition(this.typeNumber),e=0;e<t.length;e++)for(var n=0;n<t.length;n++){var r=t[e],o=t[n];if(null==this.modules[r][o])for(var i=-2;i<=2;i++)for(var a=-2;a<=2;a++)this.modules[r+i][o+a]=-2==i||2==i||-2==a||2==a||0==i&&0==a}},setupTypeNumber:function(t){for(var e=QRUtil.getBCHTypeNumber(this.typeNumber),n=0;n<18;n++){var r=!t&&1==(e>>n&1);this.modules[Math.floor(n/3)][n%3+this.moduleCount-8-3]=r}for(n=0;n<18;n++){r=!t&&1==(e>>n&1);this.modules[n%3+this.moduleCount-8-3][Math.floor(n/3)]=r}},setupTypeInfo:function(t,e){for(var n=this.errorCorrectLevel<<3|e,r=QRUtil.getBCHTypeInfo(n),o=0;o<15;o++){var i=!t&&1==(r>>o&1);o<6?this.modules[o][8]=i:o<8?this.modules[o+1][8]=i:this.modules[this.moduleCount-15+o][8]=i}for(o=0;o<15;o++){i=!t&&1==(r>>o&1);o<8?this.modules[8][this.moduleCount-o-1]=i:o<9?this.modules[8][15-o-1+1]=i:this.modules[8][15-o-1]=i}this.modules[this.moduleCount-8][8]=!t},mapData:function(t,e){for(var n=-1,r=this.moduleCount-1,o=7,i=0,a=this.moduleCount-1;a>0;a-=2)for(6==a&&a--;;){for(var s=0;s<2;s++)if(null==this.modules[r][a-s]){var u=!1;i<t.length&&(u=1==(t[i]>>>o&1));QRUtil.getMask(e,r,a-s)&&(u=!u),this.modules[r][a-s]=u,o--,-1==o&&(i++,o=7)}if(r+=n,r<0||this.moduleCount<=r){r-=n,n=-n;break}}}};var QRUtil={PATTERN_POSITION_TABLE:[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],G15:1335,G18:7973,G15_MASK:21522,getBCHTypeInfo:function(t){for(var e=t<<10;QRUtil.getBCHDigit(e)-QRUtil.getBCHDigit(QRUtil.G15)>=0;)e^=QRUtil.G15<<QRUtil.getBCHDigit(e)-QRUtil.getBCHDigit(QRUtil.G15);return(t<<10|e)^QRUtil.G15_MASK},getBCHTypeNumber:function(t){for(var e=t<<12;QRUtil.getBCHDigit(e)-QRUtil.getBCHDigit(QRUtil.G18)>=0;)e^=QRUtil.G18<<QRUtil.getBCHDigit(e)-QRUtil.getBCHDigit(QRUtil.G18);return t<<12|e},getBCHDigit:function(t){for(var e=0;0!=t;)e++,t>>>=1;return e},getPatternPosition:function(t){return QRUtil.PATTERN_POSITION_TABLE[t-1]},getMask:function(t,e,n){switch(t){case 0:return(e+n)%2==0;case 1:return e%2==0;case 2:return n%3==0;case 3:return(e+n)%3==0;case 4:return(Math.floor(e/2)+Math.floor(n/3))%2==0;case 5:return e*n%2+e*n%3==0;case 6:return(e*n%2+e*n%3)%2==0;case 7:return(e*n%3+(e+n)%2)%2==0;default:throw new Error("bad maskPattern:"+t)}},getLostPoint:function(t){for(var e=t.getModuleCount(),n=0,r=0;r<e;r++)for(var o=0;o<e;o++){for(var i=0,a=t.modules[r][o],s=0;s<2;s++)r+s<e&&t.modules[r+s][o]==a&&i++;i>=5&&(n+=3+i-5);for(i=0,s=0;s<2;s++)o+s<e&&t.modules[r][o+s]==a&&i++;i>=5&&(n+=3+i-5)}for(r=0;r<e-1;r++)for(o=0;o<e-1;o++){var u=t.modules[r][o];u==t.modules[r+1][o]&&u==t.modules[r][o+1]&&u==t.modules[r+1][o+1]&&(n+=3)}for(r=0;r<e;r++)for(o=0;o<e-6;o++)t.modules[r][o]&&!t.modules[r][o+1]&&t.modules[r][o+2]&&t.modules[r][o+3]&&t.modules[r][o+4]&&!t.modules[r][o+5]&&t.modules[r][o+6]&&(n+=40);for(o=0;o<e;o++)for(r=0;r<e-6;r++)t.modules[r][o]&&!t.modules[r+1][o]&&t.modules[r+2][o]&&t.modules[r+3][o]&&t.modules[r+4][o]&&!t.modules[r+5][o]&&t.modules[r+6][o]&&(n+=40);var l=0;for(r=0;r<e;r++)for(o=0;o<e;o++)t.modules[r][o]&&l++;return n+=Math.abs(100*l/e/e-50)/5*10}};return t}();
-
-// ===== GEN QR =====
-function genQR(elId, text) {
-  var el = document.getElementById(elId);
-  if (!el || !text || text === '请先连接') return;
-  el.innerHTML = '';
-  try { new QRCode(el, { text: text, width: 160, height: 160, background: '#fff', foreground: '#000' }); } catch(e) { el.innerHTML = 'QR生成失败'; }
-}
-
 // ===== STATE =====
 var srv='', port='', token='', timer=null;
 
+// ===== QR CODE (via API, no JS lib needed) =====
+function setQR(id, text) {
+  var img = document.getElementById(id);
+  if (!img || !text) return;
+  img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' + encodeURIComponent(text);
+  img.style.display = 'block';
+}
+
+// ===== TAB SWITCH =====
+function switchTab(n) {
+  var tabs = document.querySelectorAll('.tab');
+  for (var i = 0; i < tabs.length; i++) { tabs[i].classList.remove('active'); }
+  var panels = document.querySelectorAll('.panel');
+  for (var j = 0; j < panels.length; j++) { panels[j].classList.remove('active'); }
+  var tab = document.getElementById('tab-' + n); if (tab) tab.classList.add('active');
+  var panel = document.getElementById('panel-' + n); if (panel) panel.classList.add('active');
+  if (n === 'dashboard') { startTimer(); } else { stopTimer(); }
+}
+
+// Bind tab clicks
+document.getElementById('tab-dashboard').addEventListener('click', function(){ switchTab('dashboard'); });
+document.getElementById('tab-generator').addEventListener('click', function(){ switchTab('generator'); });
+document.getElementById('tab-sub').addEventListener('click', function(){ switchTab('sub'); });
+
 // ===== AUTO DETECT =====
 (function(){
-  var p=window.location.pathname.split('/').filter(function(x){return x;});
-  if(p.length>=2 && p[p.length-1]==='index.html'){
-    token=p[p.length-2]; srv=window.location.hostname; port=window.location.port||'80';
-    document.getElementById('subServer').value=srv;
-    document.getElementById('subPort').value=port;
-    document.getElementById('subToken').value=token;
-    var base='http://'+srv+':'+port+'/'+token+'/';
-    document.getElementById('clashUrl').textContent=base+'clmi.yaml';
-    document.getElementById('singboxUrl').textContent=base+'sbox.json';
-    document.getElementById('allUrl').textContent=base+'jhsub.txt';
-    genQR('qrClash',base+'clmi.yaml');
-    genQR('qrSbox',base+'sbox.json');
-    genQR('qrAll',base+'jhsub.txt');
+  var p = window.location.pathname.split('/').filter(function(x){ return x; });
+  if (p.length >= 2 && p[p.length - 1] === 'index.html') {
+    token = p[p.length - 2];
+    srv = window.location.hostname;
+    port = window.location.port || '80';
+    document.getElementById('subServer').value = srv;
+    document.getElementById('subPort').value = port;
+    document.getElementById('subToken').value = token;
+    var base = 'http://' + srv + ':' + port + '/' + token + '/';
+    document.getElementById('clashUrl').textContent = base + 'clmi.yaml';
+    document.getElementById('singboxUrl').textContent = base + 'sbox.json';
+    document.getElementById('allUrl').textContent = base + 'jhsub.txt';
+    setQR('qrClash', base + 'clmi.yaml');
+    setQR('qrSbox', base + 'sbox.json');
+    setQR('qrAll', base + 'jhsub.txt');
     fetchDash();
     startTimer();
   }
 })();
 
-function switchTab(n){
-  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
-  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
-  var t=document.querySelector('.tab[onclick*="'+n+'"]'); if(t)t.classList.add('active');
-  var p=document.getElementById('panel-'+n); if(p)p.classList.add('active');
-  if(n==='dashboard')startTimer();else stopTimer();
-}
+// ===== UUID GENERATOR =====
+document.getElementById('btn-genUUID').addEventListener('click', function(){
+  var u = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+  document.getElementById('uuid').value = u;
+});
 
-function genUUID(){
-  var u='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){var r=Math.random()*16|0,v=c==='x'?r:(r&0x3|0x8);return v.toString(16);});
-  document.getElementById('uuid').value=u;
-}
+// ===== SELECT/CLEAR ALL =====
+document.getElementById('btn-selAll').addEventListener('click', function(){
+  var cs = document.querySelectorAll('input[data-var]');
+  for (var i = 0; i < cs.length; i++) { cs[i].checked = true; }
+  document.getElementById('sub').value = 'y';
+});
+document.getElementById('btn-clrAll').addEventListener('click', function(){
+  var cs = document.querySelectorAll('input[data-var]');
+  for (var i = 0; i < cs.length; i++) { cs[i].checked = false; }
+  document.getElementById('sub').value = '';
+});
 
-function selAll(){document.querySelectorAll('input[data-var]').forEach(function(c){c.checked=true;});document.getElementById('sub').value='y';}
-function clrAll(){document.querySelectorAll('input[data-var]').forEach(function(c){c.checked=false;});document.getElementById('sub').value='';}
-
-function genCmd(){
-  var v=[];
-  document.querySelectorAll('input[data-var]').forEach(function(c){
-    if(c.checked){
-      var pe=document.querySelector('input[data-port="'+c.dataset.var+'"]');
-      v.push(c.dataset.var+'="'+(pe?pe.value.trim():'')+'"');
+// ===== GENERATE COMMAND =====
+document.getElementById('btn-genCmd').addEventListener('click', function(){
+  var v = [];
+  var cs = document.querySelectorAll('input[data-var]');
+  for (var i = 0; i < cs.length; i++) {
+    if (cs[i].checked) {
+      var pe = document.querySelector('input[data-port="' + cs[i].dataset.var + '"]');
+      v.push(cs[i].dataset.var + '="' + (pe ? pe.value.trim() : '') + '"');
     }
-  });
-  if(!v.length){alert('请至少选一个协议');return;}
-  ['uuid','dnym','reym','cdnym','warp','ippz','name','oap','sub','subid','subpt','hyjpt','argo','agn','agk','cfip'].forEach(function(id){
-    var e=document.getElementById(id); if(e&&e.value.trim()) v.push(id+'="'+e.value.trim().replace(/"/g,'\\"')+'"');
-  });
-  document.getElementById('cmdBox').textContent=v.join(' ')+' bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)';
-}
+  }
+  if (!v.length) { alert('请至少选一个协议'); return; }
+  var ids = ['uuid','dnym','reym','cdnym','warp','ippz','name','oap','sub','subid','subpt','hyjpt','argo','agn','agk','cfip'];
+  for (var j = 0; j < ids.length; j++) {
+    var e = document.getElementById(ids[j]);
+    if (e && e.value.trim()) { v.push(ids[j] + '="' + e.value.trim().replace(/"/g, '\\"') + '"'); }
+  }
+  document.getElementById('cmdBox').textContent = v.join(' ') + ' bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)';
+});
 
-function copyCmd(){cpTxt(document.getElementById('cmdBox').textContent,document.querySelector('#panel-generator button[onclick="copyCmd()"]'));}
+// ===== COPY COMMAND =====
+document.getElementById('btn-copyCmd').addEventListener('click', function(){
+  copyText(document.getElementById('cmdBox').textContent, document.getElementById('btn-copyCmd'));
+});
 
 // ===== CONNECT =====
-function connect(){
-  var s=document.getElementById('subServer').value.trim();
-  var p=document.getElementById('subPort').value.trim();
-  var t=document.getElementById('subToken').value.trim();
-  if(!s||!p||!t){alert('请填写完整');return;}
-  s=s.replace(/\/$/,''); srv=s; port=p; token=t;
-  var base='http://'+s+':'+p+'/'+t+'/';
-  document.getElementById('clashUrl').textContent=base+'clmi.yaml';
-  document.getElementById('singboxUrl').textContent=base+'sbox.json';
-  document.getElementById('allUrl').textContent=base+'jhsub.txt';
-  genQR('qrClash',base+'clmi.yaml');
-  genQR('qrSbox',base+'sbox.json');
-  genQR('qrAll',base+'jhsub.txt');
+document.getElementById('btn-connect').addEventListener('click', function(){
+  var s = document.getElementById('subServer').value.trim();
+  var p = document.getElementById('subPort').value.trim();
+  var t = document.getElementById('subToken').value.trim();
+  if (!s || !p || !t) { alert('请填写完整'); return; }
+  s = s.replace(/\/$/, '');
+  srv = s; port = p; token = t;
+  var base = 'http://' + s + ':' + p + '/' + t + '/';
+  document.getElementById('clashUrl').textContent = base + 'clmi.yaml';
+  document.getElementById('singboxUrl').textContent = base + 'sbox.json';
+  document.getElementById('allUrl').textContent = base + 'jhsub.txt';
+  setQR('qrClash', base + 'clmi.yaml');
+  setQR('qrSbox', base + 'sbox.json');
+  setQR('qrAll', base + 'jhsub.txt');
   fetchDash();
   startTimer();
-}
+});
 
-function refresh(){if(!srv)connect();else fetchDash();}
+// ===== REFRESH =====
+document.getElementById('btn-refresh').addEventListener('click', function(){
+  if (!srv) { document.getElementById('btn-connect').click(); } else { fetchDash(); }
+});
+
+// ===== COPY BUTTONS =====
+document.getElementById('btn-oneClick').addEventListener('click', function(){
+  copyEl('oneClickIP', this);
+});
+document.getElementById('btn-cpClash').addEventListener('click', function(){
+  copyEl('clashUrl', this);
+});
+document.getElementById('btn-cpSbox').addEventListener('click', function(){
+  copyEl('singboxUrl', this);
+});
+document.getElementById('btn-cpAll').addEventListener('click', function(){
+  copyEl('allUrl', this);
+});
 
 // ===== DASHBOARD =====
-function fetchDash(){
-  if(!srv||!port||!token)return;
-  fetch('http://'+srv+':'+port+'/'+token+'/status.json')
-    .then(function(r){return r.json();})
-    .then(function(d){
-      setStatus('已连接: '+srv+':'+port,'ok');
-      var m={xray:'xr',singbox:'sb',argo:'ar'};
-      for(var k in m){
-        var s=d.kernels?d.kernels[k]:'stopped';
-        var v=document.getElementById(m[k]+'V'); if(!v)continue;
-        if(s==='running'){v.textContent='运行中';v.className='v on';}else{v.textContent='已停止';v.className='v off';}
-      }
-      document.getElementById('nodeV').textContent=d.node_count||0;
-      document.getElementById('hostV').textContent=d.hostname||'—';
-      var u=parseInt(d.uptime)||0,dd=Math.floor(u/86400),hh=Math.floor((u%86400)/3600),mm=Math.floor((u%3600)/60);
-      document.getElementById('upV').textContent=dd+'天 '+hh+'时 '+mm+'分';
-      document.getElementById('cpuV').textContent=d.cpu||'—';
-      var mt=parseInt(d.memory&&d.memory.total)||1,ma=parseInt(d.memory&&d.memory.available)||0,mu=mt-ma;
-      document.getElementById('memV').textContent=fmt(mu*1024)+' / '+fmt(mt*1024);
-      fetchNodes();
-    })
-    .catch(function(){setStatus('无法连接: '+srv+':'+port,'err');});
+function fetchDash() {
+  if (!srv || !port || !token) return;
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', 'http://' + srv + ':' + port + '/' + token + '/status.json', true);
+  xhr.onload = function() {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      try {
+        var d = JSON.parse(xhr.responseText);
+        setStatus('已连接: ' + srv + ':' + port, 'ok');
+        var m = { xray: 'xr', singbox: 'sb', argo: 'ar' };
+        for (var k in m) {
+          var s = (d.kernels && d.kernels[k]) ? d.kernels[k] : 'stopped';
+          var el = document.getElementById(m[k] + 'V');
+          if (!el) continue;
+          if (s === 'running') { el.textContent = '运行中'; el.className = 'v on'; }
+          else { el.textContent = '已停止'; el.className = 'v off'; }
+        }
+        document.getElementById('nodeV').textContent = d.node_count || 0;
+        document.getElementById('hostV').textContent = d.hostname || '—';
+        var u = parseInt(d.uptime) || 0;
+        var dd = Math.floor(u / 86400), hh = Math.floor((u % 86400) / 3600), mm = Math.floor((u % 3600) / 60);
+        document.getElementById('upV').textContent = dd + '天 ' + hh + '时 ' + mm + '分';
+        document.getElementById('cpuV').textContent = d.cpu || '—';
+        var mt = parseInt(d.memory && d.memory.total) || 1;
+        var ma = parseInt(d.memory && d.memory.available) || 0;
+        var mu = mt - ma;
+        document.getElementById('memV').textContent = fmtSize(mu * 1024) + ' / ' + fmtSize(mt * 1024);
+        fetchNodes();
+      } catch(e) { setStatus('数据解析失败', 'err'); }
+    } else { setStatus('无法连接: ' + srv + ':' + port, 'err'); }
+  };
+  xhr.onerror = function() { setStatus('无法连接: ' + srv + ':' + port, 'err'); };
+  xhr.send();
 }
 
-function fetchNodes(){
-  if(!srv||!port||!token)return;
-  fetch('http://'+srv+':'+port+'/'+token+'/jhsub.txt')
-    .then(function(r){return r.text();})
-    .then(function(t){
-      var ls=t.split('\n').filter(function(l){return l.trim();});
-      if(!ls.length){document.getElementById('nodeList').innerHTML='<span style="color:#999">暂无节点</span>';return;}
-      var h='';
-      for(var i=0;i<ls.length;i++){
-        var l=ls[i],p=l.split('://')[0]||'?';
-        h+='<div class="node"><span class="n">#'+(i+1)+' '+esc(p)+'</span><span class="u">'+esc(l.substring(0,100))+(l.length>100?'…':'')+'</span><button class="sm" onclick="cpTxt(\''+esc(l).replace(/'/g,"\\'")+'\',this)">复制</button></div>';
+function fetchNodes() {
+  if (!srv || !port || !token) return;
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', 'http://' + srv + ':' + port + '/' + token + '/jhsub.txt', true);
+  xhr.onload = function() {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      var ls = xhr.responseText.split('\n').filter(function(l) { return l.trim(); });
+      if (!ls.length) { document.getElementById('nodeList').innerHTML = '暂无节点'; return; }
+      var h = '';
+      for (var i = 0; i < ls.length; i++) {
+        var l = ls[i], proto = l.split('://')[0] || '?';
+        h += '<div class="node"><span class="n">#' + (i + 1) + ' ' + escHtml(proto) + '</span><span class="u">' + escHtml(l.substring(0, 100)) + (l.length > 100 ? '…' : '') + '</span><button class="sm">复制</button></div>';
       }
-      document.getElementById('nodeList').innerHTML=h;
-    })
-    .catch(function(){document.getElementById('nodeList').innerHTML='<span style="color:#c62828">获取失败</span>';});
+      document.getElementById('nodeList').innerHTML = h;
+      // Bind copy buttons
+      var btns = document.querySelectorAll('#nodeList .sm');
+      for (var j = 0; j < btns.length; j++) {
+        (function(idx, txt) {
+          btns[idx].addEventListener('click', function() { copyText(txt, this); });
+        })(j, ls[j]);
+      }
+    } else { document.getElementById('nodeList').innerHTML = '获取失败'; }
+  };
+  xhr.onerror = function() { document.getElementById('nodeList').innerHTML = '获取失败'; };
+  xhr.send();
 }
 
-function startTimer(){stopTimer();if(srv&&port&&token)timer=setInterval(fetchDash,30000);}
-function stopTimer(){if(timer){clearInterval(timer);timer=null;}}
+function startTimer() { stopTimer(); if (srv && port && token) { timer = setInterval(fetchDash, 30000); } }
+function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
 
 // ===== HELPERS =====
-function setStatus(t,type){
-  var s=document.getElementById('statusBar');
-  if(type==='ok'){s.textContent='● '+t;s.className='status ok';}
-  else if(type==='err'){s.textContent='● '+t;s.className='status err';}
-  else{s.textContent='⏳ '+t;s.className='status wait';}
+function setStatus(t, type) {
+  var s = document.getElementById('statusBar');
+  if (type === 'ok') { s.textContent = '● ' + t; s.className = 'status ok'; }
+  else if (type === 'err') { s.textContent = '● ' + t; s.className = 'status err'; }
+  else { s.textContent = '⏳ ' + t; s.className = 'status wait'; }
 }
 
-function cpTxt(t,btn){
-  var o=btn?btn.textContent:'复制';
-  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){if(btn){btn.textContent='已复制';setTimeout(function(){btn.textContent=o;},1500);}}).catch(function(){fb(t,btn,o);});}
-  else{fb(t,btn,o);}
-}
-function fb(t,btn,o){var ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);if(btn){btn.textContent='已复制';setTimeout(function(){btn.textContent=o;},1500);}}
-
-function cp(id,btn){
-  var e=document.getElementById(id);if(!e)return;
-  var t=e.textContent||e.innerText||'';
-  if(t==='请先连接'||!t)return;cpTxt(t,btn);
+function copyText(t, btn) {
+  var orig = btn ? btn.textContent : '复制';
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(t).then(function() {
+      if (btn) { btn.textContent = '已复制'; setTimeout(function() { btn.textContent = orig; }, 1500); }
+    }).catch(function() { fallbackCopy(t, btn, orig); });
+  } else { fallbackCopy(t, btn, orig); }
 }
 
-function fmt(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';if(b<1073741824)return(b/1048576).toFixed(1)+' MB';return(b/1073741824).toFixed(2)+' GB';}
-function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fallbackCopy(t, btn, orig) {
+  var ta = document.createElement('textarea');
+  ta.value = t;
+  ta.style.position = 'fixed'; ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+  if (btn) { btn.textContent = '已复制'; setTimeout(function() { btn.textContent = orig; }, 1500); }
+}
+
+function copyEl(id, btn) {
+  var e = document.getElementById(id);
+  if (!e) return;
+  var t = e.textContent || e.innerText || '';
+  if (t === '请先连接' || !t) return;
+  copyText(t, btn);
+}
+
+function fmtSize(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+  if (b < 1073741824) return (b / 1048576).toFixed(1) + ' MB';
+  return (b / 1073741824).toFixed(2) + ' GB';
+}
+
+function escHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 </script>
 </body>
 </html>
