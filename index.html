@@ -457,23 +457,19 @@ let currentServer='', currentPort='', currentToken='';
 let dashboardTimer = null;
 
 // ========== AUTO-DETECT SERVER FROM URL ==========
-// 面板部署在服务器上时，URL格式为 http://IP:端口/Token/index.html
-// 自动从URL提取服务器信息，无需手动输入
 (function autoDetect(){
-  let path = window.location.pathname;  // /Token/index.html
+  let path = window.location.pathname;
   let parts = path.split('/').filter(p=>p);
   if(parts.length >= 2 && parts[parts.length-1] === 'index.html'){
-    currentToken = parts[parts.length-2];  // Token
+    currentToken = parts[parts.length-2];
     currentServer = window.location.hostname;
     currentPort = window.location.port || '80';
-    // 自动填入订阅面板的输入框
     let srv=document.getElementById('subServer');
     let prt=document.getElementById('subPort');
     let tok=document.getElementById('subToken');
     if(srv) srv.value = currentServer;
     if(prt) prt.value = currentPort;
     if(tok) tok.value = currentToken;
-    // 自动连接
     let base='http://'+currentServer+':'+currentPort+'/'+currentToken+'/';
     document.getElementById('clashUrl').textContent=base+'clmi.yaml';
     document.getElementById('singboxUrl').textContent=base+'sbox.json';
@@ -481,12 +477,11 @@ let dashboardTimer = null;
     document.getElementById('serverStatus').innerHTML='<span class="status-dot online"></span>已自动连接: '+currentServer+':'+currentPort;
     document.getElementById('headerStatus').innerHTML='<span class="status-dot online"></span>'+currentServer+':'+currentPort;
     document.getElementById('headerStatus').style.color='var(--ok)';
-    fetchNodeList(currentServer,currentPort,currentToken);
-    fetchDashboard(currentServer,currentPort,currentToken);
+    fetchNodeList();
+    fetchDashboard();
     startDashboardAutoRefresh();
   }
 })();
-let prevRx = 0, prevTx = 0;
 
 // ========== THEME ==========
 function toggleTheme(){ document.body.classList.toggle('light-mode'); }
@@ -502,7 +497,13 @@ function switchTab(name){
 }
 
 // ========== UUID ==========
-function genUUID(){ document.getElementById('uuid').value=crypto.randomUUID(); }
+function genUUID(){
+  if(window.crypto&&crypto.randomUUID){
+    document.getElementById('uuid').value=crypto.randomUUID();
+  }else{
+    document.getElementById('uuid').value='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){var r=Math.random()*16|0,v=c==='x'?r:(r&0x3|0x8);return v.toString(16);});
+  }
+}
 
 // ========== PROTOCOL SELECT ==========
 function selectAll(){
@@ -511,7 +512,6 @@ function selectAll(){
     if(cb) cb.checked=true;
   });
   document.getElementById('sub').value='y';
-  // Argo不自动选，需要用户自行填写域名和令牌
 }
 function clearAll(){
   document.querySelectorAll('input[data-var]').forEach(cb=>cb.checked=false);
@@ -533,117 +533,117 @@ function generateCmd(){
   document.getElementById('cmdBox').textContent=cmd;
 }
 
-function copyCmd(){
-  let t=document.getElementById('cmdBox').textContent;
-  if(t==='点击"生成命令"按钮') return;
-  navigator.clipboard.writeText(t).then(()=>{ let b=event.target; b.textContent='已复制!'; setTimeout(()=>b.textContent='复制命令',1500); });
-}
-function copyCurl(){
-  let t=document.getElementById('cmdBox').textContent;
-  if(t==='点击"生成命令"按钮') return;
-  navigator.clipboard.writeText(t).then(()=>{ let b=event.target; b.textContent='已复制!'; setTimeout(()=>b.textContent='复制curl命令',1500); });
+function doCopy(el,text,origText){
+  if(!text||text==='点击"生成命令"按钮'||text==='请先连接服务器') return;
+  navigator.clipboard.writeText(text).then(function(){
+    el.textContent='已复制!';
+    setTimeout(function(){ el.textContent=origText; },1500);
+  }).catch(function(){
+    // fallback: select text manually
+    var ta=document.createElement('textarea');
+    ta.value=text; ta.style.position='fixed'; ta.style.left='-9999px';
+    document.body.appendChild(ta); ta.select();
+    try{document.execCommand('copy')}catch(e){}
+    document.body.removeChild(ta);
+    el.textContent='已复制!';
+    setTimeout(function(){ el.textContent=origText; },1500);
+  });
 }
 
-// ========== ONE CLICK ==========
+function copyCmd(){
+  var el=document.querySelector('#panel-generator button[onclick="copyCmd()"]');
+  doCopy(el,document.getElementById('cmdBox').textContent,'复制命令');
+}
+function copyCurl(){
+  var el=document.querySelector('#panel-generator button[onclick="copyCurl()"]');
+  doCopy(el,document.getElementById('cmdBox').textContent,'复制curl命令');
+}
 function copyOneClick(){
-  let cmd=document.getElementById('oneClickCmd').textContent;
-  navigator.clipboard.writeText(cmd).then(()=>{ let b=event.target; b.textContent='已复制!'; setTimeout(()=>b.textContent='复制基础命令',1500); });
+  var el=document.querySelector('button[onclick="copyOneClick()"]');
+  doCopy(el,document.getElementById('oneClickCmd').textContent,'复制基础命令');
 }
 function copyOneClickArgo(){
-  let cmd=document.getElementById('oneClickCmdArgo').textContent;
-  navigator.clipboard.writeText(cmd).then(()=>{ let b=event.target; b.textContent='已复制!'; setTimeout(()=>b.textContent='复制+Argo命令',1500); });
+  var el=document.querySelector('button[onclick="copyOneClickArgo()"]');
+  doCopy(el,document.getElementById('oneClickCmdArgo').textContent,'复制+Argo命令');
 }
 
 // ========== SUBSCRIPTION ==========
 function loadSubscriptions(){
-  let s=document.getElementById('subServer').value.trim();
-  let p=document.getElementById('subPort').value.trim();
-  let t=document.getElementById('subToken').value.trim();
+  var s=document.getElementById('subServer').value.trim();
+  var p=document.getElementById('subPort').value.trim();
+  var t=document.getElementById('subToken').value.trim();
   if(!s){ alert('请输入服务器地址'); return; }
   if(!p){ alert('请输入订阅端口'); return; }
   if(!t){ alert('请输入订阅Token'); return; }
   s=s.replace(/\/$/,'');
   currentServer=s; currentPort=p; currentToken=t;
-  let base='http://'+s+':'+p+'/'+t+'/';
+  var base='http://'+s+':'+p+'/'+t+'/';
   document.getElementById('clashUrl').textContent=base+'clmi.yaml';
   document.getElementById('singboxUrl').textContent=base+'sbox.json';
   document.getElementById('allUrl').textContent=base+'jhsub.txt';
   document.getElementById('serverStatus').innerHTML='<span class="status-dot online"></span>已连接: '+s+':'+p;
   document.getElementById('headerStatus').innerHTML='<span class="status-dot online"></span>'+s+':'+p;
   document.getElementById('headerStatus').style.color='var(--ok)';
-  fetchNodeList(s,p,t);
-  fetchDashboard(s,p,t);
+  fetchNodeList();
+  fetchDashboard();
   startDashboardAutoRefresh();
 }
 
 // ========== DASHBOARD ==========
-function fetchDashboard(s,p,t){
-  s=s||currentServer; p=p||currentPort; t=t||currentToken;
-  if(!s||!p||!t) return;
-  document.getElementById('refreshSpinner').classList.add('active');
-  fetch('http://'+s+':'+p+'/'+t+'/status.json')
-    .then(r=>r.json())
-    .then(data=>{
+function fetchDashboard(){
+  if(!currentServer||!currentPort||!currentToken) return;
+  var spinner=document.getElementById('refreshSpinner');
+  if(spinner) spinner.classList.add('active');
+  fetch('http://'+currentServer+':'+currentPort+'/'+currentToken+'/status.json')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
       updateDashboard(data);
       document.getElementById('lastRefresh').textContent='更新于 '+data.last_update;
-      document.getElementById('refreshSpinner').classList.remove('active');
+      if(spinner) spinner.classList.remove('active');
     })
-    .catch(()=>{
+    .catch(function(){
       document.getElementById('lastRefresh').textContent='获取状态失败（请确保已运行 science panel 命令）';
-      document.getElementById('refreshSpinner').classList.remove('active');
+      if(spinner) spinner.classList.remove('active');
     });
 }
 
 function updateDashboard(data){
-  // Kernel status
-  ['xray','singbox','argo'].forEach(k=>{
-    let status=data.kernels[k];
-    let el=document.getElementById((k==='singbox'?'sbox':k)+'Status');
-    let infoEl=document.getElementById((k==='singbox'?'sbox':k)+'Info');
+  var kmap={xray:'xray',singbox:'sbox',argo:'argo'};
+   for(var k in kmap){
+     var status=data.kernels[k];
+     var el=document.getElementById(kmap[k]+'Status');
+     var infoEl=document.getElementById(kmap[k]+'Info');
+    if(!el||!infoEl) continue;
     if(status==='running'){
-      el.textContent='运行中';
-      el.className='value online';
+      el.textContent='运行中'; el.className='value online';
       infoEl.innerHTML='<span class="status-dot online"></span>正常';
-    } else {
-      el.textContent='已停止';
-      el.className='value offline';
+    }else{
+      el.textContent='已停止'; el.className='value offline';
       infoEl.innerHTML='<span class="status-dot offline"></span>停止';
     }
-  });
-
-  // Node count
+  }
   document.getElementById('nodeCount').textContent=data.node_count||0;
-
-  // Last update
   document.getElementById('lastUpdate').textContent=data.last_update||'—';
-
-  // VPS info
   document.getElementById('hostname').textContent=data.hostname||'—';
-  let uptimeSec=parseInt(data.uptime)||0;
-  let days=Math.floor(uptimeSec/86400);
-  let hrs=Math.floor((uptimeSec%86400)/3600);
-  let mins=Math.floor((uptimeSec%3600)/60);
+  var uptimeSec=parseInt(data.uptime)||0;
+  var days=Math.floor(uptimeSec/86400);
+  var hrs=Math.floor((uptimeSec%86400)/3600);
+  var mins=Math.floor((uptimeSec%3600)/60);
   document.getElementById('uptime').textContent=days+'天 '+hrs+'时 '+mins+'分';
-
-  // Memory
-  let memTotal=parseInt(data.memory?.total)||1;
-  let memAvail=parseInt(data.memory?.available)||0;
-  let memUsed=memTotal-memAvail;
-  let memPct=Math.round((memUsed/memTotal)*100);
+  var memTotal=parseInt(data.memory&&data.memory.total)||1;
+  var memAvail=parseInt(data.memory&&data.memory.available)||0;
+  var memUsed=memTotal-memAvail;
+  var memPct=Math.round((memUsed/memTotal)*100);
   document.getElementById('memUsage').textContent=formatBytes(memUsed*1024)+' / '+formatBytes(memTotal*1024);
   document.getElementById('memBar').style.width=memPct+'%';
-
-  // CPU
   document.getElementById('cpuUsage').textContent=data.cpu||'—';
-  let cpuPct=parseFloat(data.cpu)||0;
+  var cpuPct=parseFloat(data.cpu)||0;
   document.getElementById('cpuBar').style.width=cpuPct+'%';
-
-  // Traffic
-  let rx=parseInt(data.traffic?.rx_bytes)||0;
-  let tx=parseInt(data.traffic?.tx_bytes)||0;
+  var rx=parseInt(data.traffic&&data.traffic.rx_bytes)||0;
+  var tx=parseInt(data.traffic&&data.traffic.tx_bytes)||0;
   document.getElementById('rxText').textContent=formatBytes(rx);
   document.getElementById('txText').textContent=formatBytes(tx);
-  let maxTraffic=Math.max(rx,tx,1);
+  var maxTraffic=Math.max(rx,tx,1);
   document.getElementById('rxBar').style.width=((rx/maxTraffic)*100)+'%';
   document.getElementById('txBar').style.width=((tx/maxTraffic)*100)+'%';
 }
@@ -651,57 +651,88 @@ function updateDashboard(data){
 function startDashboardAutoRefresh(){
   stopDashboardAutoRefresh();
   if(currentServer&&currentPort&&currentToken){
-    dashboardTimer=setInterval(()=>fetchDashboard(currentServer,currentPort,currentToken),30000);
+    dashboardTimer=setInterval(fetchDashboard,30000);
   }
 }
 function stopDashboardAutoRefresh(){
   if(dashboardTimer){ clearInterval(dashboardTimer); dashboardTimer=null; }
 }
-function refreshDashboard(){
-  fetchDashboard(currentServer,currentPort,currentToken);
-}
+function refreshDashboard(){ fetchDashboard(); }
 
 // ========== NODE LIST ==========
-function fetchNodeList(s,p,t){
-  s=s||currentServer; p=p||currentPort; t=t||currentToken;
-  if(!s||!p||!t) return;
-  fetch('http://'+s+':'+p+'/'+t+'/jhsub.txt')
-    .then(r=>r.text())
-    .then(txt=>{
-      let lines=txt.split('\n').filter(l=>l.trim());
-      document.getElementById('nodeList').innerHTML=lines.map((l,i)=>{
-        let proto=l.split('://')[0]||'';
-        let tag='';
-        if(proto.includes('vless')||proto.includes('vmess')) tag='xray';
-        else if(proto.includes('hysteria')||proto.includes('tuic')||proto.includes('ss')||proto.includes('any')) tag='sb';
-        else if(proto.includes('argo')||proto.includes('trycloudflare')) tag='argo';
-        return '<div class="node-item">'+
-          '<span class="ptag '+tag+'">'+proto+'</span>'+
-          '<span class="proto-name">节点 #'+(i+1)+'</span>'+
-          '<span class="node-url">'+escapeHtml(l.substring(0,100))+'…</span>'+
-          '<span class="node-status"><span class="status-dot online"></span></span>'+
-          '</div>';
-      }).join('');
+function fetchNodeList(){
+  if(!currentServer||!currentPort||!currentToken) return;
+  fetch('http://'+currentServer+':'+currentPort+'/'+currentToken+'/jhsub.txt')
+    .then(function(r){ return r.text(); })
+    .then(function(txt){
+      var lines=txt.split('\n').filter(function(l){ return l.trim(); });
+      var html='';
+      if(lines.length===0){
+        html='<span style="color:var(--warn);">暂无节点数据</span>';
+      }else{
+        for(var i=0;i<lines.length;i++){
+          var l=lines[i], proto=l.split('://')[0]||'', tag='';
+          if(proto.indexOf('vless')!==-1||proto.indexOf('vmess')!==-1) tag='xray';
+          else if(proto.indexOf('hysteria')!==-1||proto.indexOf('tuic')!==-1||proto.indexOf('ss')!==-1||proto.indexOf('any')!==-1) tag='sb';
+          else if(proto.indexOf('argo')!==-1||proto.indexOf('trycloudflare')!==-1) tag='argo';
+          html+='<div class="node-item">'+
+            '<span class="ptag '+tag+'">'+proto+'</span>'+
+            '<span class="proto-name">节点 #'+(i+1)+'</span>'+
+            '<span class="node-url">'+escapeHtml(l.substring(0,100))+'…</span>'+
+            '<span class="node-status"><span class="status-dot online"></span></span>'+
+            '</div>';
+        }
+      }
+      document.getElementById('nodeList').innerHTML=html;
     })
-    .catch(()=>{ document.getElementById('nodeList').innerHTML='<span style="color:var(--err)">无法获取节点信息，请检查服务器地址和端口</span>'; });
+    .catch(function(){
+      document.getElementById('nodeList').innerHTML='<span style="color:var(--err)">无法获取节点信息，请检查服务器地址和端口</span>';
+    });
+}
+
+// ========== COPY SUBSCRIPTION URLS ==========
+function copyText(id){
+  var el=document.getElementById(id);
+  if(!el) return;
+  var text=el.textContent;
+  if(text==='请先连接服务器') return;
+  // find the button that triggered this
+  var btn=null;
+  var btns=el.parentElement.querySelectorAll('button');
+  for(var i=0;i<btns.length;i++){
+    if(btns[i].textContent.indexOf('复制')!==-1){ btn=btns[i]; break; }
+  }
+  if(!btn) btn=event&&event.target;
+  navigator.clipboard.writeText(text).then(function(){
+    if(btn){ btn.textContent='已复制!'; setTimeout(function(){ btn.textContent='复制'; },1500); }
+  }).catch(function(){
+    var ta=document.createElement('textarea');
+    ta.value=text; ta.style.position='fixed'; ta.style.left='-9999px';
+    document.body.appendChild(ta); ta.select();
+    try{document.execCommand('copy')}catch(e){}
+    document.body.removeChild(ta);
+    if(btn){ btn.textContent='已复制!'; setTimeout(function(){ btn.textContent='复制'; },1500); }
+  });
+}
+
+function showQR(id){
+  var el=document.getElementById(id);
+  if(!el) return;
+  var url=el.textContent;
+  if(url==='请先连接服务器') return;
+  var card=document.getElementById('qrCard');
+  var disp=document.getElementById('qrDisplay');
+  card.style.display='block';
+  disp.innerHTML='';
+  try{
+    new QRCode(disp,{text:url,width:200,height:200});
+  }catch(e){
+    disp.innerHTML='<span style="color:var(--err)">二维码生成失败，请手动复制链接</span>';
+  }
+  card.scrollIntoView({behavior:'smooth'});
 }
 
 // ========== HELPERS ==========
-function copyText(id){
-  let t=document.getElementById(id).textContent;
-  if(t==='请先连接服务器') return;
-  navigator.clipboard.writeText(t).then(()=>{ let b=event.target; b.textContent='已复制!'; setTimeout(()=>b.textContent='复制',1500); });
-}
-function showQR(id){
-  let url=document.getElementById(id).textContent;
-  if(url==='请先连接服务器') return;
-  let card=document.getElementById('qrCard');
-  let disp=document.getElementById('qrDisplay');
-  card.style.display='block';
-  disp.innerHTML='';
-  new QRCode(disp,{text:url,width:200,height:200});
-  card.scrollIntoView({behavior:'smooth'});
-}
 function formatBytes(b){
   if(b<1024) return b+' B';
   if(b<1048576) return (b/1024).toFixed(1)+' KB';
