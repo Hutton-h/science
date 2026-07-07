@@ -12,8 +12,8 @@ export LANG=en_US.UTF-8
 [ -z "${arpt+x}" ] || arp=yes
 [ -z "${sopt+x}" ] || sop=yes
 [ -z "${warp+x}" ] || wap=yes
-# 一键全协议预设：all=y 自动开启7大协议+订阅（Argo需额外指定agn和agk）
-[ -z "${all+x}" ] || { vlp=yes; vmp=yes; vmag=yes; hyp=yes; tup=yes; xhp=yes; vxp=yes; ssp=yes; sub=y; vmag=yes; }
+# 一键全协议预设：all=y 自动开启7大协议+Hysteria2端口跳跃+SOCKS5+订阅（Argo需额外指定agn和agk）
+[ -z "${all+x}" ] || { vlp=yes; vmp=yes; vmag=yes; hyp=yes; hyjpt="10000:20000"; tup=yes; xhp=yes; vxp=yes; ssp=yes; sop=yes; sub=y; vmag=yes; }
 if find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(s|x)' || pgrep -f 'science/(s|x)' >/dev/null 2>&1; then
 if [ "$1" = "rep" ]; then
 [ "$vwp" = yes ] || [ "$sop" = yes ] || [ "$vxp" = yes ] || [ "$ssp" = yes ] || [ "$vlp" = yes ] || [ "$vmp" = yes ] || [ "$hyp" = yes ] || [ "$tup" = yes ] || [ "$xhp" = yes ] || [ "$anp" = yes ] || [ "$arp" = yes ] || { echo "提示：rep重置协议时，请在脚本前至少设置一个协议变量哦，再见！💣"; exit; }
@@ -57,7 +57,7 @@ echo "卸载脚本命令：science del 【或者】 主脚本 del"
 echo "部署/更新面板命令：science panel 【或者】 主脚本 panel"
 echo "一键全协议命令：all=y dnym=\"域名\" bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)"
 echo "一键全协议+Argo：all=y dnym=\"域名\" argo=vmpt agn=\"CF域名\" agk=\"ey开头的token\" bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)"
-echo "（all=y 自动开启7协议：VLESS-Reality/XHTTP-Reality/XHTTP-ENC/Hysteria2/Tuic/SS-2022/VMess-WS）"
+echo "（all=y 自动开启9协议：VLESS-Reality/XHTTP-Reality/XHTTP-ENC/Hysteria2(端口跳跃)/Tuic/SS-2022/VMess-WS/SOCKS5）"
 echo "订阅面板(需开启sub=y)：http://服务器IP或域名:订阅端口/订阅Token/index.html"
 echo "隐藏IP用域名变量：dnym=\"你的域名\" (需先在DNS将域名解析到服务器IP)"
 echo "双栈VPS显示IPv4/IPv6节点配置命令：ippz=4或6 science list 【或者】 ippz=4或6 主脚本 list"
