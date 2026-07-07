@@ -1097,6 +1097,10 @@ if find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r 
 sed -i '/science/d' ~/.bashrc
 SCRIPT_PATH="$HOME/bin/science"
 mkdir -p "$HOME/bin"
+# 将脚本自身保存到磁盘（管道执行时$0不是文件，需从GitHub重新下载）
+if [ ! -s "$HOME/science/science.sh" ]; then
+  (command -v curl >/dev/null 2>&1 && curl -Ls "$scienceurl" -o "$HOME/science/science.sh") || (command -v wget >/dev/null 2>&1 && wget -qO "$HOME/science/science.sh" "$scienceurl")
+fi
 cp "$HOME/science/science.sh" "$SCRIPT_PATH"
 chmod +x "$SCRIPT_PATH"
 if ! pidof systemd >/dev/null 2>&1 && ! command -v rc-service >/dev/null 2>&1; then
