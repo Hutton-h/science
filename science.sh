@@ -2424,6 +2424,15 @@ if [ -s "$HOME/science/panel.html" ]; then
     subport=$(cat $HOME/science/subport.log)
     subtoken=$(cat $HOME/science/subtoken.log)
     echo "面板地址：http://$subip:$subport/$subtoken/index.html"
+    # 重启busybox httpd以加载新面板
+    kill $(pgrep -f 'websbx' 2>/dev/null) 2>/dev/null
+    sleep 1
+    if command -v apk >/dev/null 2>&1; then
+      busybox-extras httpd -f -p "$subport" -h "$HOME/websbx" > /dev/null 2>&1 &
+    else
+      busybox httpd -f -p "$subport" -h "$HOME/websbx" > /dev/null 2>&1 &
+    fi
+    echo "订阅面板服务已重启"
     # 启动状态监控cron
     (crontab -l 2>/dev/null | grep -v 'science/statusgen'; echo "*/2 * * * * $HOME/science/science.sh statusgen >/dev/null 2>&1") | crontab - 2>/dev/null
     echo "已启动每2分钟自动更新状态监控"
