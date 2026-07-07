@@ -270,7 +270,7 @@ button:hover { opacity:.85; }
     <div class="card">
       <h3>一键部署命令</h3>
       <div class="preset-box">
-        <div style="font-size:13px;margin-bottom:4px;color:var(--sub);">纯IP版（无需域名，7协议+订阅）：</div>
+        <div style="font-size:13px;margin-bottom:4px;color:var(--sub);">纯IP版（无需域名，9协议+订阅）：</div>
         <code id="oneClickCmd">all=y sub=y bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)</code>
         <div style="font-size:12px;margin-top:6px;color:var(--sub);">域名版（隐藏IP，需DNS解析）：</div>
         <code id="oneClickCmdDnym">all=y dnym="你的域名" sub=y bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)</code>
@@ -317,7 +317,7 @@ button:hover { opacity:.85; }
           </div>
         </div>
         <div style="margin-top:8px;padding-top:8px;border-top:1px dotted var(--line);">
-          <button class="primary sm" onclick="selectAll()">全选7协议</button>
+          <button class="primary sm" onclick="selectAll()">全选9协议</button>
           <button class="sm" onclick="clearAll()">清空</button>
         </div>
       </div>
@@ -510,7 +510,7 @@ function genUUID(){
 
 // ========== PROTOCOL SELECT ==========
 function selectAll(){
-  ['vlpt','xhpt','vxpt','hypt','tupt','sspt','vmpt'].forEach(v=>{
+  ['vlpt','xhpt','vxpt','hypt','tupt','sspt','vmpt','sopt'].forEach(v=>{
     let cb=document.querySelector('input[data-var="'+v+'"]');
     if(cb) cb.checked=true;
   });
@@ -526,7 +526,7 @@ function clearAll(){
 function generateCmd(){
   let vars=[];
   document.querySelectorAll('input[data-var]').forEach(cb=>{ if(cb.checked) vars.push(cb.dataset.var+'=""'); });
-  if(vars.length===0){ alert('请至少选择一个协议，或点击"全选8协议"'); return; }
+  if(vars.length===0){ alert('请至少选择一个协议，或点击"全选9协议"'); return; }
   let extras=['uuid','dnym','reym','cdnym','warp','ippz','name','oap','sub','subid','subpt','hyjpt','argo','agn','agk','cfip'];
   extras.forEach(id=>{
     let el=document.getElementById(id);
