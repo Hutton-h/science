@@ -2419,6 +2419,7 @@ if [ -s "$HOME/science/panel.html" ]; then
   if [ -s "$HOME/science/subport.log" ] && [ -s "$HOME/science/subtoken.log" ]; then
     mkdir -p "$HOME/websbx/$(cat $HOME/science/subtoken.log)"
     ln -sf "$HOME/science/panel.html" "$HOME/websbx/$(cat $HOME/science/subtoken.log)/index.html"
+    ln -sf "$HOME/science/status.json" "$HOME/websbx/$(cat $HOME/science/subtoken.log)/status.json"
     echo "面板已部署到订阅目录"
     subip=$(cat $HOME/science/server_ip.log 2>/dev/null)
     subport=$(cat $HOME/science/subport.log)
@@ -2433,6 +2434,8 @@ if [ -s "$HOME/science/panel.html" ]; then
       busybox httpd -f -p "$subport" -h "$HOME/websbx" > /dev/null 2>&1 &
     fi
     echo "订阅面板服务已重启"
+    # 立即生成一次status.json
+    $HOME/science/science.sh statusgen
     # 启动状态监控cron
     (crontab -l 2>/dev/null | grep -v 'science/statusgen'; echo "*/2 * * * * $HOME/science/science.sh statusgen >/dev/null 2>&1") | crontab - 2>/dev/null
     echo "已启动每2分钟自动更新状态监控"
@@ -2545,6 +2548,7 @@ ln -sf $HOME/science/clmi.yaml $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>
 ln -sf $HOME/science/sbox.json $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/sbox.json
 ln -sf $HOME/science/jhsub.txt $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/jhsub.txt
 ln -sf $HOME/science/panel.html $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/index.html
+ln -sf $HOME/science/status.json $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/status.json
 if command -v apk >/dev/null 2>&1; then
 busybox-extras httpd -f -p "$(cat $HOME/science/subport.log 2>/dev/null)" -h $HOME/websbx > /dev/null 2>&1 &
 else
