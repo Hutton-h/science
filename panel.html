@@ -35,7 +35,7 @@ header .meta a { color:var(--ink); }
 .v.on { color:#2e7d32; }
 .v.off { color:#c62828; }
 .row { display:flex; gap:6px; margin:6px 0; align-items:center; }
-.row label { min-width:90px; font-size:12px; color:var(--sub); }
+.row label { min-width:100px; font-size:12px; color:var(--sub); }
 input[type="text"],input[type="number"] { flex:1; padding:7px 9px; border:1px solid var(--line); border-radius:5px; font-size:13px; outline:none; }
 input:focus { border-color:var(--ink); }
 button { cursor:pointer; border:1px solid var(--line); padding:8px 14px; border-radius:6px; background:var(--card); font-size:13px; font-weight:500; }
@@ -51,15 +51,18 @@ button.sm { padding:4px 10px; font-size:12px; }
 input[type="checkbox"] { accent-color:var(--ink); }
 .proto-grid { display:grid; grid-template-columns:auto 1fr; gap:4px 10px; align-items:center; }
 .proto-grid label { display:flex; align-items:center; gap:4px; cursor:pointer; font-size:12px; }
-.pill { font-size:9px; padding:1px 5px; border:1px solid var(--line); border-radius:99px; color:var(--muted); }
+.pill { font-size:9px; padding:1px 5px; border:1px solid var(--line); border-radius:99px; color:var(--muted); white-space:nowrap; }
 .cmd-box { background:var(--bg2); border:1px dashed var(--line); border-radius:6px; padding:12px; font-family:monospace; font-size:12px; word-break:break-all; white-space:pre-wrap; max-height:180px; overflow-y:auto; }
+.help { font-size:12px; color:var(--sub); line-height:1.8; }
+.help code { background:var(--bg2); padding:1px 5px; border-radius:3px; font-size:11px; border:1px solid var(--line); }
+.help strong { color:var(--ink); }
 footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
 </style>
 </head>
 <body>
 <div class="wrap">
 <header>
-  <h1>Science 小钢炮控制面板</h1>
+  <h1>Science 控制面板</h1>
   <div class="meta"><a href="https://github.com/Hutton-h/science">github.com/Hutton-h/science</a> · V26.5.10</div>
 </header>
 <div class="status wait" id="statusBar">等待连接服务器…</div>
@@ -94,6 +97,16 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
 
 <!-- TAB 2: 命令生成器 -->
 <div class="panel" id="panel-generator">
+  <div class="card">
+    <h3>使用说明</h3>
+    <div class="help">
+      <p><strong>1.</strong> 勾选需要的协议，<strong>端口留空=随机生成</strong>，标注"CDN"的协议建议填入CDN回源端口</p>
+      <p><strong>2.</strong> <code>vlpt</code> / <code>xhpt</code> 为 Reality 系列协议，需要 <code>reym</code> 指定伪装域名</p>
+      <p><strong>3.</strong> <code>vxpt</code> / <code>vwpt</code> / <code>vmpt</code> 走 CDN，需要 <code>dnym</code> + <code>cdnym</code></p>
+      <p><strong>4.</strong> Argo 隧道需要同时填写 <code>argo</code> 模式 + <code>agn</code> 域名 + <code>agk</code> Token</p>
+      <p><strong>5.</strong> 点击<strong>"生成命令"</strong>后复制，在服务器上执行即可一键部署</p>
+    </div>
+  </div>
   <div class="grid">
     <div class="card"><h3>Xray 协议</h3>
       <div class="proto-grid">
@@ -126,11 +139,11 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
   <div class="card"><h3>高级参数</h3>
     <div class="row"><label>UUID</label><input type="text" id="uuid" placeholder="随机"><button class="sm" id="btn-genUUID">生成</button></div>
     <div class="row"><label>域名(dnym)</label><input type="text" id="dnym" placeholder="隐藏IP"></div>
-    <div class="row"><label>Reality(reym)</label><input type="text" id="reym" placeholder="apple.com"></div>
+    <div class="row"><label>Reality(reym)</label><input type="text" id="reym" placeholder="伪装域名 如apple.com"></div>
     <div class="row"><label>CDN(cdnym)</label><input type="text" id="cdnym" placeholder="回源域名"></div>
     <div class="row"><label>WARP</label><input type="text" id="warp" placeholder="s/x/s4/x6…"></div>
     <div class="row"><label>IP版本(ippz)</label><input type="text" id="ippz" placeholder="4/6"></div>
-    <div class="row"><label>前缀(name)</label><input type="text" id="name" placeholder="自定义"></div>
+    <div class="row"><label>前缀(name)</label><input type="text" id="name" placeholder="自定义前缀"></div>
     <div class="row"><label>H2跳跃(hyjpt)</label><input type="text" id="hyjpt" placeholder="10000:20000"></div>
     <div class="row"><label>Argo模式</label><input type="text" id="argo" placeholder="vmpt/vwpt"></div>
     <div class="row"><label>Argo域名(agn)</label><input type="text" id="agn" placeholder="CF域名"></div>
@@ -167,14 +180,17 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
   <div class="card"><h3>聚合订阅</h3><div class="url-box" id="allUrl">请先连接</div><button class="sm" id="btn-cpAll">复制</button><img class="qr-img" id="qrAll" src="" alt="QR" style="display:none"></div>
   <div class="card"><h3>节点列表</h3><div id="nodeList" style="max-height:400px;overflow-y:auto;color:var(--muted);">请先连接</div></div>
 </div>
-<footer>github.com/Hutton-h/science · Science 小钢炮 V26.5.10</footer>
+<footer>github.com/Hutton-h/science · Science V26.5.10</footer>
 </div>
 
 <script>
 // ===== STATE =====
 var srv='', port='', token='', timer=null;
 
-// ===== QR CODE (via API, no JS lib needed) =====
+// ===== DETECT PROTOCOL =====
+var proto = window.location.protocol || 'http:';
+
+// ===== QR CODE (via API) =====
 function setQR(id, text) {
   var img = document.getElementById(id);
   if (!img || !text) return;
@@ -193,7 +209,6 @@ function switchTab(n) {
   if (n === 'dashboard') { startTimer(); } else { stopTimer(); }
 }
 
-// Bind tab clicks
 document.getElementById('tab-dashboard').addEventListener('click', function(){ switchTab('dashboard'); });
 document.getElementById('tab-generator').addEventListener('click', function(){ switchTab('generator'); });
 document.getElementById('tab-sub').addEventListener('click', function(){ switchTab('sub'); });
@@ -204,11 +219,11 @@ document.getElementById('tab-sub').addEventListener('click', function(){ switchT
   if (p.length >= 2 && p[p.length - 1] === 'index.html') {
     token = p[p.length - 2];
     srv = window.location.hostname;
-    port = window.location.port || '80';
+    port = window.location.port || (proto === 'https:' ? '443' : '80');
     document.getElementById('subServer').value = srv;
     document.getElementById('subPort').value = port;
     document.getElementById('subToken').value = token;
-    var base = 'http://' + srv + ':' + port + '/' + token + '/';
+    var base = proto + '//' + srv + ':' + port + '/' + token + '/';
     document.getElementById('clashUrl').textContent = base + 'clmi.yaml';
     document.getElementById('singboxUrl').textContent = base + 'sbox.json';
     document.getElementById('allUrl').textContent = base + 'jhsub.txt';
@@ -220,7 +235,7 @@ document.getElementById('tab-sub').addEventListener('click', function(){ switchT
   }
 })();
 
-// ===== UUID GENERATOR =====
+// ===== UUID =====
 document.getElementById('btn-genUUID').addEventListener('click', function(){
   var u = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
     var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
@@ -229,7 +244,7 @@ document.getElementById('btn-genUUID').addEventListener('click', function(){
   document.getElementById('uuid').value = u;
 });
 
-// ===== SELECT/CLEAR ALL =====
+// ===== SELECT/CLEAR =====
 document.getElementById('btn-selAll').addEventListener('click', function(){
   var cs = document.querySelectorAll('input[data-var]');
   for (var i = 0; i < cs.length; i++) { cs[i].checked = true; }
@@ -241,7 +256,7 @@ document.getElementById('btn-clrAll').addEventListener('click', function(){
   document.getElementById('sub').value = '';
 });
 
-// ===== GENERATE COMMAND =====
+// ===== GENERATE =====
 document.getElementById('btn-genCmd').addEventListener('click', function(){
   var v = [];
   var cs = document.querySelectorAll('input[data-var]');
@@ -260,7 +275,6 @@ document.getElementById('btn-genCmd').addEventListener('click', function(){
   document.getElementById('cmdBox').textContent = v.join(' ') + ' bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)';
 });
 
-// ===== COPY COMMAND =====
 document.getElementById('btn-copyCmd').addEventListener('click', function(){
   copyText(document.getElementById('cmdBox').textContent, document.getElementById('btn-copyCmd'));
 });
@@ -273,7 +287,7 @@ document.getElementById('btn-connect').addEventListener('click', function(){
   if (!s || !p || !t) { alert('请填写完整'); return; }
   s = s.replace(/\/$/, '');
   srv = s; port = p; token = t;
-  var base = 'http://' + s + ':' + p + '/' + t + '/';
+  var base = proto + '//' + s + ':' + p + '/' + t + '/';
   document.getElementById('clashUrl').textContent = base + 'clmi.yaml';
   document.getElementById('singboxUrl').textContent = base + 'sbox.json';
   document.getElementById('allUrl').textContent = base + 'jhsub.txt';
@@ -284,30 +298,21 @@ document.getElementById('btn-connect').addEventListener('click', function(){
   startTimer();
 });
 
-// ===== REFRESH =====
 document.getElementById('btn-refresh').addEventListener('click', function(){
   if (!srv) { document.getElementById('btn-connect').click(); } else { fetchDash(); }
 });
 
-// ===== COPY BUTTONS =====
-document.getElementById('btn-oneClick').addEventListener('click', function(){
-  copyEl('oneClickIP', this);
-});
-document.getElementById('btn-cpClash').addEventListener('click', function(){
-  copyEl('clashUrl', this);
-});
-document.getElementById('btn-cpSbox').addEventListener('click', function(){
-  copyEl('singboxUrl', this);
-});
-document.getElementById('btn-cpAll').addEventListener('click', function(){
-  copyEl('allUrl', this);
-});
+// ===== COPY =====
+document.getElementById('btn-oneClick').addEventListener('click', function(){ copyEl('oneClickIP', this); });
+document.getElementById('btn-cpClash').addEventListener('click', function(){ copyEl('clashUrl', this); });
+document.getElementById('btn-cpSbox').addEventListener('click', function(){ copyEl('singboxUrl', this); });
+document.getElementById('btn-cpAll').addEventListener('click', function(){ copyEl('allUrl', this); });
 
 // ===== DASHBOARD =====
 function fetchDash() {
   if (!srv || !port || !token) return;
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', 'http://' + srv + ':' + port + '/' + token + '/status.json', true);
+  xhr.open('GET', proto + '//' + srv + ':' + port + '/' + token + '/status.json', true);
   xhr.onload = function() {
     if (xhr.status >= 200 && xhr.status < 300) {
       try {
@@ -342,18 +347,17 @@ function fetchDash() {
 function fetchNodes() {
   if (!srv || !port || !token) return;
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', 'http://' + srv + ':' + port + '/' + token + '/jhsub.txt', true);
+  xhr.open('GET', proto + '//' + srv + ':' + port + '/' + token + '/jhsub.txt', true);
   xhr.onload = function() {
     if (xhr.status >= 200 && xhr.status < 300) {
       var ls = xhr.responseText.split('\n').filter(function(l) { return l.trim(); });
       if (!ls.length) { document.getElementById('nodeList').innerHTML = '暂无节点'; return; }
       var h = '';
       for (var i = 0; i < ls.length; i++) {
-        var l = ls[i], proto = l.split('://')[0] || '?';
-        h += '<div class="node"><span class="n">#' + (i + 1) + ' ' + escHtml(proto) + '</span><span class="u">' + escHtml(l.substring(0, 100)) + (l.length > 100 ? '…' : '') + '</span><button class="sm">复制</button></div>';
+        var l = ls[i], pn = l.split('://')[0] || '?';
+        h += '<div class="node"><span class="n">#' + (i + 1) + ' ' + escHtml(pn) + '</span><span class="u">' + escHtml(l.substring(0, 100)) + (l.length > 100 ? '…' : '') + '</span><button class="sm">复制</button></div>';
       }
       document.getElementById('nodeList').innerHTML = h;
-      // Bind copy buttons
       var btns = document.querySelectorAll('#nodeList .sm');
       for (var j = 0; j < btns.length; j++) {
         (function(idx, txt) {
