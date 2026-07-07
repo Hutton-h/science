@@ -133,7 +133,7 @@ echo
 echo "=========启用xray内核========="
 mkdir -p "$HOME/science/xrk"
 if [ ! -e "$HOME/science/xray" ]; then
-url="https://github.com/Hutton-h/science/releases/download/science/xray-$cpu"; out="$HOME/science/xray"; (command -v curl >/dev/null 2>&1 && curl -Lo "$out" -# --retry 2 "$url") || (command -v wget>/dev/null 2>&1 && timeout 3 wget -O "$out" --tries=2 "$url")
+url="https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip"; tmpdir=$(mktemp -d); (command -v curl >/dev/null 2>&1 && curl -Lo "$tmpdir/xray.zip" -# --retry 2 "$url") || (command -v wget>/dev/null 2>&1 && timeout 5 wget -O "$tmpdir/xray.zip" --tries=2 "$url"); unzip -o "$tmpdir/xray.zip" xray -d "$HOME/science/" >/dev/null 2>&1; rm -rf "$tmpdir"
 chmod +x "$HOME/science/xray"
 sbcore=$("$HOME/science/xray" version 2>/dev/null | awk '/^Xray/{print $2}')
 echo "已安装Xray正式版内核：$sbcore"
@@ -369,7 +369,7 @@ installsb(){
 echo
 echo "=========启用Sing-box内核========="
 if [ ! -e "$HOME/science/sing-box" ]; then
-url="https://github.com/Hutton-h/science/releases/download/science/sing-box-$cpu"; out="$HOME/science/sing-box"; (command -v curl>/dev/null 2>&1 && curl -Lo "$out" -# --retry 2 "$url") || (command -v wget>/dev/null 2>&1 && timeout 3 wget -O "$out" --tries=2 "$url")
+sb_ver=$(curl -s https://api.github.com/repos/SagerNet/sing-box/releases?per_page=20 2>/dev/null | grep -B5 '"prerelease": false' | grep '"tag_name"' | head -1 | sed -E 's/.*"([^"]+)".*/\1/'); [ -z "$sb_ver" ] && sb_ver="v1.13.14"; sb_verno="${sb_ver#v}"; url="https://github.com/SagerNet/sing-box/releases/download/$sb_ver/sing-box-${sb_verno}-linux-amd64.tar.gz"; tmpdir=$(mktemp -d); (curl -Lo "$tmpdir/sb.tar.gz" --retry 2 "$url" || wget -O "$tmpdir/sb.tar.gz" --tries=2 "$url"); tar xzf "$tmpdir/sb.tar.gz" -C "$tmpdir" >/dev/null 2>&1; find "$tmpdir" -name "sing-box" -type f -exec cp {} "$HOME/science/sing-box" \; 2>/dev/null; rm -rf "$tmpdir"
 chmod +x "$HOME/science/sing-box"
 sbcore=$("$HOME/science/sing-box" version 2>/dev/null | awk '/version/{print $NF}')
 echo "已安装Sing-box正式版内核：$sbcore"
@@ -387,8 +387,7 @@ insuuid
 command -v openssl >/dev/null 2>&1 && openssl ecparam -genkey -name prime256v1 -out "$HOME/science/private.key" >/dev/null 2>&1
 command -v openssl >/dev/null 2>&1 && openssl req -new -x509 -days 36500 -key "$HOME/science/private.key" -out "$HOME/science/cert.pem" -subj "/CN=www.bing.com" >/dev/null 2>&1
 if [ ! -f "$HOME/science/private.key" ]; then
-url="https://github.com/Hutton-h/science/releases/download/science/private.key"; out="$HOME/science/private.key"; (command -v curl>/dev/null 2>&1 && curl -Ls -o "$out" --retry 2 "$url") || (command -v wget>/dev/null 2>&1 && timeout 3 wget -q -O "$out" --tries=2 "$url")
-url="https://github.com/Hutton-h/science/releases/download/science/cert.pem"; out="$HOME/science/cert.pem"; (command -v curl>/dev/null 2>&1 && curl -Ls -o "$out" --retry 2 "$url") || (command -v wget>/dev/null 2>&1 && timeout 3 wget -q -O "$out" --tries=2 "$url")
+echo "证书生成失败，请安装openssl"
 fi
 if [ -n "$hypt" ]; then
 if [ -z "$hypt" ] && [ ! -e "$HOME/science/hypt" ]; then
