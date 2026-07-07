@@ -1089,7 +1089,7 @@ if find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r 
 sed -i '/science/d' ~/.bashrc
 SCRIPT_PATH="$HOME/bin/science"
 mkdir -p "$HOME/bin"
-(command -v curl >/dev/null 2>&1 && curl -sL "$scienceurl" -o "$SCRIPT_PATH") || (command -v wget >/dev/null 2>&1 && wget -qO "$SCRIPT_PATH" "$scienceurl")
+cp "$HOME/science/science.sh" "$SCRIPT_PATH"
 chmod +x "$SCRIPT_PATH"
 if ! pidof systemd >/dev/null 2>&1 && ! command -v rc-service >/dev/null 2>&1; then
 echo "if ! find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(s|x)' && ! pgrep -f 'science/(s|x)' >/dev/null 2>&1; then echo '检测到系统可能中断过，或者变量格式错误？建议在SSH对话框输入 reboot 重启下服务器。现在自动执行Science脚本的节点恢复操作，请稍等……'; sleep 6; export cfip=\"${cfip}\" hyjpt=\"${hyjpt}\" cdnym=\"${cdnym}\" name=\"${name}\" ippz=\"${ippz}\" argo=\"${argo}\" uuid=\"${uuid}\" $wap=\"${warp}\" $xhp=\"${port_xh}\" $vxp=\"${port_vx}\" $ssp=\"${port_ss}\" $sop=\"${port_so}\" $anp=\"${port_an}\" $arp=\"${port_ar}\" $vlp=\"${port_vl_re}\" $vwp=\"${port_vw}\" $vmp=\"${port_vm_ws}\" $hyp=\"${port_hy2}\" $tup=\"${port_tu}\" reym=\"${ym_vl_re}\" agn=\"${ARGO_DOMAIN}\" agk=\"${ARGO_AUTH}\"; bash "$HOME/bin/science"; fi" >> ~/.bashrc
@@ -1629,7 +1629,7 @@ fi
 if grep tuic5-sb "$HOME/science/sb.json" >/dev/null 2>&1; then
 echo "💣【 Tuic 】节点信息如下："
 port_tu=$(cat "$HOME/science/port_tu")
-tuic5_link="tuic://$uuid:$uuid@$server_ip:$port_tu?congestion_control=bbr&udp_relay_mode=native&alpn=h3&sni=www.bing.com&insecure=1&allowInsecure=1&allow_insecure=1#${sxname}tuic-$hostname"
+tuic5_link="tuic://$uuid:$uuid@$server_ip:$port_tu?congestion_control=bbr&udp_relay_mode=native&alpn=h3&sni=www.bing.com&insecure=1&allow_insecure=1#${sxname}tuic-$hostname"
 echo "$tuic5_link" >> "$HOME/science/jhsub.txt"
 echo "$tuic5_link"
 echo
