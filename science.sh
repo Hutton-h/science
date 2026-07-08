@@ -1,5 +1,14 @@
 #!/bin/sh
 export LANG=en_US.UTF-8
+
+# 中断处理：Ctrl+C 时清理临时文件
+cleanup_on_exit() {
+    echo ""
+    echo "脚本被中断，正在退出..."
+    exit 1
+}
+trap cleanup_on_exit INT TERM
+
 [ -z "${vlpt+x}" ] || vlp=yes
 [ -z "${vmpt+x}" ] || { vmp=yes; vmag=yes; }
 [ -z "${vwpt+x}" ] || { vwp=yes; vmag=yes; }
@@ -2379,7 +2388,7 @@ fi
 # 清理 /etc/nginx/conf.d 下的面板配置
 rm -f "/etc/nginx/conf.d/science-panel.conf"
 # 清理面板 htpasswd 密码文件（旧版残留）
-rm -f "/home/web/conf.d/.htpasswd" "/home/web/.htpasswd" "$HOME/science/.htpasswd" "$HOME/science/panel_pass"
+rm -f "/home/web/conf.d/.htpasswd" "/home/web/.htpasswd" "/home/web/conf.d/.htpasswd_science" "$HOME/science/.htpasswd" "$HOME/science/panel_pass" "$HOME/science/panel_user"
 # 清理面板 SSL 证书（仅清理 science 面板域名对应的证书，不动 kejilion 其他证书）
 if [ -f "$HOME/science/dnym.log" ]; then
   dnym_clean=$(cat $HOME/science/dnym.log)
@@ -2474,9 +2483,14 @@ echo "正在下载最新订阅面板……"
 if [ -s "$HOME/science/panel.html" ]; then
   echo "订阅面板下载成功！"
   if [ -s "$HOME/science/subport.log" ] && [ -s "$HOME/science/subtoken.log" ]; then
-    mkdir -p "$HOME/websbx/$(cat $HOME/science/subtoken.log)"
-    ln -sf "$HOME/science/panel.html" "$HOME/websbx/$(cat $HOME/science/subtoken.log)/index.html"
-    ln -sf "$HOME/science/status.json" "$HOME/websbx/$(cat $HOME/science/subtoken.log)/status.json"
+    subtoken=$(cat $HOME/science/subtoken.log)
+    mkdir -p "$HOME/websbx/$subtoken"
+    if [ ! -d "$HOME/websbx/$subtoken" ]; then
+      echo "警告：无法创建目录 $HOME/websbx/$subtoken，面板部署失败"
+      exit 1
+    fi
+    ln -sf "$HOME/science/panel.html" "$HOME/websbx/$subtoken/index.html"
+    ln -sf "$HOME/science/status.json" "$HOME/websbx/$subtoken/status.json"
     echo "面板已部署到订阅目录"
     subip=$(cat $HOME/science/server_ip.log 2>/dev/null)
     subport=$(cat $HOME/science/subport.log)
@@ -2516,14 +2530,23 @@ if [ "$1" = "nginx" ]; then
     [ -z "$dnym_now" ] && { echo "域名不能为空"; exit 1; }
   fi
   echo "面板域名: $dnym_now"
-  # 设置密码
-  if [ -s "$HOME/science/panel_pass" ]; then
+  # 设置账户密码
+  if [ -s "$HOME/science/panel_pass" ] && [ -s "$HOME/science/panel_user" ]; then
     panel_pw=$(cat $HOME/science/panel_pass)
+    panel_user=$(cat $HOME/science/panel_user)
+    echo "面板用户名: $panel_user (已有)"
   else
-    panel_pw=$(tr -dc 'a-zA-Z0-9' < /dev/urandom 2>/dev/null | head -c12)
+    read -p "请输入面板用户名（默认 admin）: " panel_user
+    [ -z "$panel_user" ] && panel_user="admin"
+    read -p "请输入面板密码（留空随机生成）: " panel_pw
+    if [ -z "$panel_pw" ]; then
+      panel_pw=$(tr -dc 'a-zA-Z0-9' < /dev/urandom 2>/dev/null | head -c12)
+      echo "随机生成密码: $panel_pw"
+    fi
     echo "$panel_pw" > "$HOME/science/panel_pass"
+    echo "$panel_user" > "$HOME/science/panel_user"
   fi
-  echo "面板用户名: admin"
+  echo "面板用户名: $panel_user"
   echo "面板密码: $panel_pw"
   # 检测 Docker nginx (kejilion 风格)
   if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q '^nginx$'; then
@@ -2539,6 +2562,10 @@ if [ "$1" = "nginx" ]; then
     # ====== 第0步：确保 nginx 容器能正常启动 ======
     echo "检查 nginx 容器状态……"
     mkdir -p /home/web/certs /home/web/letsencrypt
+    if [ ! -d /home/web/certs ]; then
+      echo "错误：无法创建 /home/web/certs 目录"
+      exit 1
+    fi
     if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -q '^nginx$'; then
       echo "nginx 容器未运行，正在修复……"
       grep -rh 'ssl_certificate ' /home/web/conf.d/ 2>/dev/null | \
@@ -2570,11 +2597,20 @@ if [ "$1" = "nginx" ]; then
     fi
 
     # ====== 第1步：写HTTP反向代理配置（kejilion 方式：proxy_pass 到 busybox httpd） ======
+    # 生成 htpasswd 文件
+    if command -v apk >/dev/null 2>&1; then
+      apk add apache2-utils >/dev/null 2>&1 2>/dev/null
+    fi
+    command -v htpasswd >/dev/null 2>&1 || { apt-get update -y && apt-get install -y apache2-utils >/dev/null 2>&1; } || { yum install -y httpd-tools >/dev/null 2>&1; }
+    NGX_HTPASSWD="/home/web/conf.d/.htpasswd_science"
+    htpasswd -bc "$NGX_HTPASSWD" "$panel_user" "$panel_pw" 2>/dev/null
     cat > "$NGX_CONF" << NGINXEOF
 server {
     listen 80;
     listen [::]:80;
     server_name $dnym_now;
+    auth_basic "Science Panel";
+    auth_basic_user_file /etc/nginx/conf.d/.htpasswd_science;
     location / {
         proxy_pass http://127.0.0.1:${subport};
         proxy_set_header Host \$host;
@@ -2583,6 +2619,7 @@ server {
         proxy_set_header X-Forwarded-Proto \$scheme;
     }
     location ^~ /.well-known/acme-challenge/ {
+        auth_basic off;
         default_type "text/plain";
         root /var/www/letsencrypt;
     }
@@ -2632,6 +2669,8 @@ server {
     ssl_certificate /etc/nginx/certs/${dnym_now}_cert.pem;
     ssl_certificate_key /etc/nginx/certs/${dnym_now}_key.pem;
     add_header Alt-Svc 'h3=":443"; ma=86400';
+    auth_basic "Science Panel";
+    auth_basic_user_file /etc/nginx/conf.d/.htpasswd_science;
     location / {
         proxy_pass http://127.0.0.1:${subport};
         proxy_set_header Host \$host;
@@ -2640,6 +2679,7 @@ server {
         proxy_set_header X-Forwarded-Proto \$scheme;
     }
     location ^~ /.well-known/acme-challenge/ {
+        auth_basic off;
         default_type "text/plain";
         root /var/www/letsencrypt;
     }
@@ -2654,6 +2694,7 @@ NGINXEOF
         ssl_ok=true
       else
         echo "SSL证书申请失败（可能是80端口未开放或域名未解析），保持HTTP模式"
+        echo "提示：请确保域名 $dnym_now 已正确解析到此服务器"
         $NGX_CHECK 2>/dev/null && $NGX_RELOAD 2>/dev/null
       fi
     else
@@ -2676,6 +2717,8 @@ server {
     ssl_certificate /etc/nginx/certs/${dnym_now}_cert.pem;
     ssl_certificate_key /etc/nginx/certs/${dnym_now}_key.pem;
     add_header Alt-Svc 'h3=":443"; ma=86400';
+    auth_basic "Science Panel";
+    auth_basic_user_file /etc/nginx/conf.d/.htpasswd_science;
     location / {
         proxy_pass http://127.0.0.1:${subport};
         proxy_set_header Host \$host;
@@ -2684,6 +2727,7 @@ server {
         proxy_set_header X-Forwarded-Proto \$scheme;
     }
     location ^~ /.well-known/acme-challenge/ {
+        auth_basic off;
         default_type "text/plain";
         root /var/www/letsencrypt;
     }
@@ -2710,7 +2754,7 @@ NGINXEOF
       echo "  地址: http://$dnym_now/$subtoken/index.html"
       echo "  （SSL未启用，请手动申请SSL后可使用HTTPS）"
     fi
-    echo "  用户名: admin"
+    echo "  用户名: $panel_user"
     echo "  密码: $panel_pw"
     echo ""
     echo "  订阅地址（无需密码）:"
@@ -2810,7 +2854,7 @@ NGINXEOF
   echo "  面板 HTTPS 部署完成！"
   echo "=============================="
   echo "  地址: https://$dnym_now/$subtoken/index.html"
-  echo "  用户名: admin"
+  echo "  用户名: $panel_user"
   echo "  密码: $panel_pw"
   echo ""
   echo "  订阅地址（无需密码）:"
@@ -2831,9 +2875,9 @@ if pgrep -f 'science/s' >/dev/null 2>&1; then sbox_status="running"; else sbox_s
 if pgrep -f 'science/c' >/dev/null 2>&1; then argo_status="running"; else argo_status="stopped"; fi
 # 节点数
 node_count=$(grep -c '://' "$HOME/science/jhsub.txt" 2>/dev/null || echo 0)
-# 流量统计 (字节)
-rx_bytes=$(awk '/eth0|ens|venet/{rx+=$2}END{print rx}' /proc/net/dev 2>/dev/null || echo 0)
-tx_bytes=$(awk '/eth0|ens|venet/{tx+=$10}END{print tx}' /proc/net/dev 2>/dev/null || echo 0)
+# 流量统计 (字节) - 统计所有网卡接口（排除 lo）
+rx_bytes=$(awk 'NR>2 && $1 !~ /^(lo|Inter|face):/ {rx+=$2} END{print rx+0}' /proc/net/dev 2>/dev/null)
+tx_bytes=$(awk 'NR>2 && $1 !~ /^(lo|Inter|face):/ {tx+=$10} END{print tx+0}' /proc/net/dev 2>/dev/null)
 # VPS信息
 hostname=$(uname -n)
 uptime_sec=$(awk '{print int($1)}' /proc/uptime 2>/dev/null || echo 0)
@@ -2888,6 +2932,12 @@ fi
 ins
 if [ -n "$sub" ]; then
 subtokenipsub(){
+# 如果已有 token 则保留，避免旧链接失效
+if [ -s "$HOME/science/subtoken.log" ]; then
+  subtoken=$(cat $HOME/science/subtoken.log)
+  echo "使用已有面板Token: $subtoken"
+  return
+fi
 if [ -z "$subid" ]; then
 subtoken="$(cat "$HOME/science/uuid")"
 else
