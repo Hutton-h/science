@@ -67,7 +67,7 @@ echo
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo "skpl Github项目 ：github.com/Hutton-h"
 echo "Science一键无交互小钢炮脚本💣"
-echo "当前版本：V26.5.10-fix9"
+echo "当前版本：V26.5.10-fix10"
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 hostname=$(uname -a | awk '{print $2}')
 op=$(cat /etc/redhat-release 2>/dev/null || cat /etc/os-release 2>/dev/null | grep -i pretty_name | cut -d \" -f2)
@@ -2355,13 +2355,16 @@ fi
 if [ "$1" = "del" ]; then
 echo "==================== Science 一键卸载 ===================="
 cleandel
-# 清理 nginx 面板配置（Docker kejilion 风格：science-panel.conf 或 <域名>.conf 含 Science Panel 的）
+# 清理 nginx 面板配置（Docker kejilion 风格：science-panel.conf 或 <域名>.conf）
 if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q '^nginx$'; then
-  for f in /home/web/conf.d/science-panel.conf; do
-    [ -f "$f" ] && rm -f "$f"
-  done
-  # 扫描所有域名配置，删除含 "Science Panel" 的
-  grep -rl 'Science Panel' /home/web/conf.d/*.conf 2>/dev/null | while read f; do
+  # 清理旧版 science-panel.conf
+  rm -f /home/web/conf.d/science-panel.conf
+  # 清理新版 <域名>.conf（通过 dnym.log 获取域名）
+  if [ -f "$HOME/science/dnym.log" ]; then
+    rm -f "/home/web/conf.d/$(cat $HOME/science/dnym.log).conf"
+  fi
+  # 清理所有含 proxy_pass 到 busybox httpd 的配置（保底扫描）
+  grep -rl 'proxy_pass http://127.0.0.1:' /home/web/conf.d/*.conf 2>/dev/null | while read f; do
     rm -f "$f"
     echo "[√] 已清理面板配置: $(basename $f)"
   done
@@ -2375,13 +2378,15 @@ if [ -f "/etc/nginx/sites-available/science-panel" ]; then
 fi
 # 清理 /etc/nginx/conf.d 下的面板配置
 rm -f "/etc/nginx/conf.d/science-panel.conf"
-# 清理面板 htpasswd 密码文件
+# 清理面板 htpasswd 密码文件（旧版残留）
 rm -f "/home/web/conf.d/.htpasswd" "/home/web/.htpasswd" "$HOME/science/.htpasswd" "$HOME/science/panel_pass"
-# 清理面板 SSL 证书副本
-for d in /home/web/certs "$HOME/science/ssl"; do
-  [ -d "$d" ] && rm -rf "$d"
-done
-# 清理面板 HTML 文件（Docker nginx 直接复制到 /home/web/html/ 的）
+# 清理面板 SSL 证书（仅清理 science 面板域名对应的证书，不动 kejilion 其他证书）
+if [ -f "$HOME/science/dnym.log" ]; then
+  dnym_clean=$(cat $HOME/science/dnym.log)
+  rm -f "/home/web/certs/${dnym_clean}_cert.pem" "/home/web/certs/${dnym_clean}_key.pem"
+fi
+rm -rf "$HOME/science/ssl"
+# 清理面板 HTML 文件（旧版残留）
 if [ -d "/home/web/html" ]; then
   rm -rf /home/web/html/* 2>/dev/null
 fi
@@ -2523,27 +2528,19 @@ if [ "$1" = "nginx" ]; then
   # 检测 Docker nginx (kejilion 风格)
   if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q '^nginx$'; then
     echo "检测到 Docker nginx（kejilion 风格）"
-    # kejilion docker-compose 挂载映射：
-    # /home/web/conf.d/ → /etc/nginx/conf.d/
-    # /home/web/certs/   → /etc/nginx/certs/
-    # /home/web/html/    → /var/www/html/
-    # /home/web/letsencrypt/ → /var/www/letsencrypt/
-    # 配置文件命名：/home/web/conf.d/<域名>.conf（完全遵循 kejilion 风格）
+    # kejilion docker-compose 使用 network_mode: host，nginx 可直接访问宿主机 127.0.0.1
+    # 挂载映射：/home/web/conf.d/ → /etc/nginx/conf.d/  /home/web/certs/ → /etc/nginx/certs/
     NGX_CONF="/home/web/conf.d/${dnym_now}.conf"
     NGX_CERT="/home/web/certs/${dnym_now}_cert.pem"
     NGX_KEY="/home/web/certs/${dnym_now}_key.pem"
-    NGX_HTPASSWD="/home/web/conf.d/.htpasswd"
     NGX_RELOAD="docker exec nginx nginx -s reload"
     NGX_CHECK="docker exec nginx nginx -t"
-    NGX_ROOT="/var/www/html"
-    NGX_HTPASSWD_CT="/etc/nginx/conf.d/.htpasswd"
 
-    # ====== 第0步：确保 nginx 容器能正常启动（kejilion 方式修复所有缺失证书） ======
+    # ====== 第0步：确保 nginx 容器能正常启动 ======
     echo "检查 nginx 容器状态……"
     mkdir -p /home/web/certs /home/web/letsencrypt
     if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -q '^nginx$'; then
       echo "nginx 容器未运行，正在修复……"
-      # 生成所有 conf.d 下配置文件引用的缺失证书（kejilion 的 default_server_ssl 模式）
       grep -rh 'ssl_certificate ' /home/web/conf.d/ 2>/dev/null | \
         sed 's/.*ssl_certificate *//;s/;$//;s|/etc/nginx/certs/||' | sort -u | while read certfile; do
         certpath="/home/web/certs/$certfile"
@@ -2556,7 +2553,6 @@ if [ "$1" = "nginx" ]; then
           echo "  [√] 已生成缺失证书: $domain"
         fi
       done
-      # 确保默认证书也存在
       if [ ! -f "/home/web/certs/default_server.crt" ]; then
         openssl req -x509 -nodes -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 \
           -keyout /home/web/certs/default_server.key \
@@ -2564,7 +2560,6 @@ if [ "$1" = "nginx" ]; then
           -days 5475 -subj "/CN=localhost" 2>/dev/null
         echo "  [√] 已生成默认SSL证书"
       fi
-      # 启动 nginx
       docker stop nginx >/dev/null 2>&1; sleep 1
       docker start nginx >/dev/null 2>&1; sleep 4
       if docker ps --format '{{.Names}}' 2>/dev/null | grep -q '^nginx$'; then
@@ -2574,35 +2569,19 @@ if [ "$1" = "nginx" ]; then
       fi
     fi
 
-    # 生成 htpasswd
-    if ! command -v htpasswd >/dev/null 2>&1; then
-       echo "正在安装 apache2-utils……"
-       if command -v apt >/dev/null 2>&1; then apt install -y apache2-utils 2>/dev/null
-       elif command -v apk >/dev/null 2>&1; then apk add apache2-utils 2>/dev/null
-       elif command -v yum >/dev/null 2>&1; then yum install -y httpd-tools 2>/dev/null; fi
-     fi
-    htpasswd -bc "$NGX_HTPASSWD" admin "$panel_pw" 2>/dev/null
-    # 复制面板文件到 nginx 容器可访问路径
-    mkdir -p "/home/web/html/$subtoken"
-    cp -r "$HOME/websbx/$subtoken/"* "/home/web/html/$subtoken/" 2>/dev/null
-    chmod -R 755 "/home/web/html/$subtoken" 2>/dev/null
-    chmod 755 /home/web /home/web/html 2>/dev/null
-    # kejilion 风格：chown 给 nginx 用户
-    docker exec nginx chown -R nginx:nginx /var/www/html 2>/dev/null
-    echo "面板文件已部署到 /home/web/html/$subtoken/"
-
-    # ====== 第1步：写HTTP配置（遵循 kejilion 命名：/home/web/conf.d/<域名>.conf） ======
+    # ====== 第1步：写HTTP反向代理配置（kejilion 方式：proxy_pass 到 busybox httpd） ======
     cat > "$NGX_CONF" << NGINXEOF
 server {
     listen 80;
     listen [::]:80;
     server_name $dnym_now;
-    root $NGX_ROOT;
-    location ~ ^/[^/]+/index\.html\$ {
-        auth_basic "Science Panel";
-        auth_basic_user_file $NGX_HTPASSWD_CT;
+    location / {
+        proxy_pass http://127.0.0.1:${subport};
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
     }
-    location / { try_files \$uri =404; }
     location ^~ /.well-known/acme-challenge/ {
         default_type "text/plain";
         root /var/www/letsencrypt;
@@ -2617,9 +2596,9 @@ NGINXEOF
     fi
     ssl_ok=false
 
-    # ====== 第2步：申请SSL证书（完全照搬 kejilion install_ssltls 逻辑） ======
+    # ====== 第2步：申请SSL证书 ======
     if [ ! -f "$NGX_CERT" ]; then
-      echo "正在申请SSL证书（Docker certbot standalone模式，与kejilion一致）……"
+      echo "正在申请SSL证书（Docker certbot standalone模式）……"
       mkdir -p /etc/letsencrypt
       docker stop nginx >/dev/null 2>&1
       sleep 1
@@ -2636,7 +2615,6 @@ NGINXEOF
         cp "/etc/letsencrypt/live/$dnym_now/fullchain.pem" "$NGX_CERT" 2>/dev/null
         cp "/etc/letsencrypt/live/$dnym_now/privkey.pem" "$NGX_KEY" 2>/dev/null
         echo "SSL证书申请成功！"
-        # 写HTTPS配置（kejilion 风格：quic + http2 + Alt-Svc）
         cat > "$NGX_CONF" << NGINXEOF
 server {
     listen 80;
@@ -2653,13 +2631,14 @@ server {
     server_name $dnym_now;
     ssl_certificate /etc/nginx/certs/${dnym_now}_cert.pem;
     ssl_certificate_key /etc/nginx/certs/${dnym_now}_key.pem;
-    root $NGX_ROOT;
     add_header Alt-Svc 'h3=":443"; ma=86400';
-    location ~ ^/[^/]+/index\.html\$ {
-        auth_basic "Science Panel";
-        auth_basic_user_file $NGX_HTPASSWD_CT;
+    location / {
+        proxy_pass http://127.0.0.1:${subport};
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
     }
-    location / { try_files \$uri =404; }
     location ^~ /.well-known/acme-challenge/ {
         default_type "text/plain";
         root /var/www/letsencrypt;
@@ -2671,17 +2650,14 @@ NGINXEOF
         else
           echo "警告：HTTPS nginx 配置检查失败"
         fi
-        # 自动续签crontab
         (crontab -l 2>/dev/null | grep -v 'certbot.*renew'; echo "0 3 * * * docker stop nginx >/dev/null 2>&1; sleep 1; docker run --rm -p 80:80 -v /etc/letsencrypt/:/etc/letsencrypt certbot/certbot renew --quiet; cp /etc/letsencrypt/live/$dnym_now/fullchain.pem $NGX_CERT; cp /etc/letsencrypt/live/$dnym_now/privkey.pem $NGX_KEY; docker start nginx >/dev/null 2>&1") | crontab - 2>/dev/null
         ssl_ok=true
       else
         echo "SSL证书申请失败（可能是80端口未开放或域名未解析），保持HTTP模式"
-        echo "提示：请确保防火墙已开放80端口，且域名已解析到服务器IP"
         $NGX_CHECK 2>/dev/null && $NGX_RELOAD 2>/dev/null
       fi
     else
       ssl_ok=true
-      # 证书已存在，直接写HTTPS配置
       echo "SSL证书已存在，直接启用HTTPS……"
       cat > "$NGX_CONF" << NGINXEOF
 server {
@@ -2699,13 +2675,14 @@ server {
     server_name $dnym_now;
     ssl_certificate /etc/nginx/certs/${dnym_now}_cert.pem;
     ssl_certificate_key /etc/nginx/certs/${dnym_now}_key.pem;
-    root $NGX_ROOT;
     add_header Alt-Svc 'h3=":443"; ma=86400';
-    location ~ ^/[^/]+/index\.html\$ {
-        auth_basic "Science Panel";
-        auth_basic_user_file $NGX_HTPASSWD_CT;
+    location / {
+        proxy_pass http://127.0.0.1:${subport};
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
     }
-    location / { try_files \$uri =404; }
     location ^~ /.well-known/acme-challenge/ {
         default_type "text/plain";
         root /var/www/letsencrypt;
