@@ -67,7 +67,7 @@ echo
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo "skpl Github项目 ：github.com/Hutton-h"
 echo "Science一键无交互小钢炮脚本💣"
-echo "当前版本：V26.5.10-fix3"
+echo "当前版本：V26.5.10-fix4"
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 hostname=$(uname -a | awk '{print $2}')
 op=$(cat /etc/redhat-release 2>/dev/null || cat /etc/os-release 2>/dev/null | grep -i pretty_name | cut -d \" -f2)
@@ -2539,8 +2539,46 @@ if [ "$1" = "nginx" ]; then
     cp -r "$HOME/websbx/$subtoken/"* "/home/web/html/$subtoken/" 2>/dev/null
     chmod -R 755 "/home/web/html/$subtoken" 2>/dev/null
     echo "面板文件已部署到 /home/web/html/$subtoken/"
-    # 写 nginx 配置
+    # 写 nginx 配置（先写HTTP，确保证书不存在时也能正常工作）
     cat > "$NGX_CONF" << NGINXEOF
+server {
+    listen 80;
+    listen [::]:80;
+    server_name $dnym_now;
+    root $NGX_ROOT;
+    # 面板页面 - 需要密码
+    location ~ ^/[^/]+/index\.html\$ {
+        auth_basic "Science Panel";
+        auth_basic_user_file $NGX_HTPASSWD_CT;
+    }
+    # 订阅文件 - 无需密码
+    location / { try_files \$uri =404; }
+}
+NGINXEOF
+    $NGX_CHECK && $NGX_RELOAD && echo "HTTP 面板已就绪" || echo "nginx 配置检查失败"
+    ssl_ok=false
+    
+    # SSL 证书 (kejilion方式: Docker certbot standalone，无需宿主机安装certbot/acme)
+    if [ ! -f "$NGX_CERT" ]; then
+      echo "正在申请SSL证书（Docker certbot standalone模式）……"
+      mkdir -p /home/web/certs /etc/letsencrypt
+      docker stop nginx >/dev/null 2>&1
+      sleep 1
+      # 使用Docker certbot standalone模式申请证书（与kejilion脚本完全一致）
+      docker run --rm -p 80:80 \
+        -v /etc/letsencrypt/:/etc/letsencrypt \
+        certbot/certbot certonly --standalone \
+        -d "$dnym_now" \
+        --email "your@email.com" \
+        --agree-tos --no-eff-email --force-renewal --key-type ecdsa
+      cert_ret=$?
+      docker start nginx >/dev/null 2>&1
+      if [ $cert_ret -eq 0 ] && [ -d "/etc/letsencrypt/live/$dnym_now" ]; then
+        cp "/etc/letsencrypt/live/$dnym_now/fullchain.pem" "$NGX_CERT" 2>/dev/null
+        cp "/etc/letsencrypt/live/$dnym_now/privkey.pem" "$NGX_KEY" 2>/dev/null
+        echo "SSL证书申请成功！"
+        # 更新为HTTPS配置
+        cat > "$NGX_CONF" << NGINXEOF
 server {
     listen 80;
     listen [::]:80;
@@ -2556,55 +2594,53 @@ server {
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
     root $NGX_ROOT;
-    # 面板页面 - 需要密码
     location ~ ^/[^/]+/index\.html\$ {
         auth_basic "Science Panel";
         auth_basic_user_file $NGX_HTPASSWD_CT;
     }
-    # 订阅文件 - 无需密码
     location / { try_files \$uri =404; }
 }
 NGINXEOF
-    # SSL 证书 (kejilion方式: Docker certbot standalone，无需宿主机安装certbot/acme)
-    if [ ! -f "$NGX_CERT" ]; then
-      echo "正在申请SSL证书（Docker certbot standalone模式）……"
-      mkdir -p /home/web/certs /etc/letsencrypt
-      # 停掉nginx释放80端口
-      docker stop nginx >/dev/null 2>&1
-      # 使用Docker certbot standalone模式申请证书（与kejilion脚本一致）
-      docker run --rm -p 80:80 \
-        -v /etc/letsencrypt/:/etc/letsencrypt \
-        certbot/certbot certonly --standalone \
-        -d "$dnym_now" \
-        --email "admin@${dnym_now#*.}" \
-        --agree-tos --no-eff-email --force-renewal --key-type ecdsa 2>/dev/null
-      if [ -d "/etc/letsencrypt/live/$dnym_now" ]; then
-        cp "/etc/letsencrypt/live/$dnym_now/fullchain.pem" "$NGX_CERT" 2>/dev/null
-        cp "/etc/letsencrypt/live/$dnym_now/privkey.pem" "$NGX_KEY" 2>/dev/null
-        echo "SSL证书申请成功！"
+        $NGX_CHECK && $NGX_RELOAD && echo "HTTPS 配置已生效" || echo "nginx 配置检查失败"
         # 自动续签crontab（每天凌晨3点检查）
-        (crontab -l 2>/dev/null | grep -v 'certbot.*renew'; echo "0 3 * * * docker stop nginx >/dev/null 2>&1; docker run --rm -p 80:80 -v /etc/letsencrypt/:/etc/letsencrypt certbot/certbot renew --quiet; cp /etc/letsencrypt/live/$dnym_now/fullchain.pem $NGX_CERT; cp /etc/letsencrypt/live/$dnym_now/privkey.pem $NGX_KEY; docker start nginx >/dev/null 2>&1") | crontab - 2>/dev/null
+        (crontab -l 2>/dev/null | grep -v 'certbot.*renew'; echo "0 3 * * * docker stop nginx >/dev/null 2>&1; sleep 1; docker run --rm -p 80:80 -v /etc/letsencrypt/:/etc/letsencrypt certbot/certbot renew --quiet; cp /etc/letsencrypt/live/$dnym_now/fullchain.pem $NGX_CERT; cp /etc/letsencrypt/live/$dnym_now/privkey.pem $NGX_KEY; docker start nginx >/dev/null 2>&1") | crontab - 2>/dev/null
+        ssl_ok=true
       else
-        echo "SSL证书申请失败，回退为HTTP模式"
-        # 重写为纯HTTP的nginx配置
-        cat > "$NGX_CONF" << NGINXEOF
-server {
-    listen 80;
-    listen [::]:80;
-    server_name $dnym_now;
-    root $NGX_ROOT;
-    location ~ ^/[^/]+/index\.html\$ {
-        auth_basic "Science Panel";
-        auth_basic_user_file $NGX_HTPASSWD_CT;
-    }
-    location / { try_files \$uri =404; }
-}
-NGINXEOF
+        echo "SSL证书申请失败（可能是80端口未开放或域名未解析），保持HTTP模式"
+        echo "提示：请确保防火墙已开放80端口，且域名已解析到服务器IP"
+        $NGX_CHECK && $NGX_RELOAD
       fi
-      # 重启nginx
-      docker start nginx >/dev/null 2>&1
+    else
+      ssl_ok=true
     fi
-    $NGX_CHECK && $NGX_RELOAD && echo "Docker nginx 已重载" || echo "nginx 配置检查失败"
+    # 输出访问信息
+    echo ""
+    echo "=============================="
+    if [ "$ssl_ok" = true ]; then
+      echo "  面板 HTTPS 部署完成！"
+      echo "=============================="
+      echo "  地址: https://$dnym_now/$subtoken/index.html"
+    else
+      echo "  面板 HTTP 部署完成！"
+      echo "=============================="
+      echo "  地址: http://$dnym_now/$subtoken/index.html"
+      echo "  （SSL未启用，请手动申请SSL后可使用HTTPS）"
+    fi
+    echo "  用户名: admin"
+    echo "  密码: $panel_pw"
+    echo ""
+    echo "  订阅地址（无需密码）:"
+    if [ "$ssl_ok" = true ]; then
+      echo "  https://$dnym_now/$subtoken/clmi.yaml"
+      echo "  https://$dnym_now/$subtoken/sbox.json"
+      echo "  https://$dnym_now/$subtoken/jhsub.txt"
+    else
+      echo "  http://$dnym_now/$subtoken/clmi.yaml"
+      echo "  http://$dnym_now/$subtoken/sbox.json"
+      echo "  http://$dnym_now/$subtoken/jhsub.txt"
+    fi
+    echo "=============================="
+    exit
   else
     # === 常规 nginx 模式 ===
     # 安装nginx
