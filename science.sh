@@ -67,7 +67,7 @@ echo
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo "skpl Github项目 ：github.com/Hutton-h"
 echo "Science一键无交互小钢炮脚本💣"
-echo "当前版本：V26.5.10-fix1"
+echo "当前版本：V26.5.10-fix2"
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 hostname=$(uname -a | awk '{print $2}')
 op=$(cat /etc/redhat-release 2>/dev/null || cat /etc/os-release 2>/dev/null | grep -i pretty_name | cut -d \" -f2)
@@ -2350,10 +2350,53 @@ nohup $HOME/science/sing-box run -c $HOME/science/sb.json >/dev/null 2>&1 &
 fi
 }
 if [ "$1" = "del" ]; then
+echo "==================== Science 一键卸载 ===================="
 cleandel
+# 清理 nginx 面板配置（Docker kejilion 风格）
+if [ -f "/home/web/conf.d/science-panel.conf" ]; then
+  rm -f "/home/web/conf.d/science-panel.conf"
+  docker exec nginx nginx -t >/dev/null 2>&1 && docker exec nginx nginx -s reload >/dev/null 2>&1
+  echo "[√] 已清理 Docker nginx 面板配置"
+fi
+# 清理 nginx 面板配置（常规 nginx）
+if [ -f "/etc/nginx/sites-available/science-panel" ]; then
+  rm -f "/etc/nginx/sites-available/science-panel" "/etc/nginx/sites-enabled/science-panel"
+  nginx -t >/dev/null 2>&1 && (systemctl reload nginx 2>/dev/null || nginx -s reload 2>/dev/null)
+  echo "[√] 已清理常规 nginx 面板配置"
+fi
+# 清理 /etc/nginx/conf.d 下的面板配置
+rm -f "/etc/nginx/conf.d/science-panel.conf"
+# 清理面板 htpasswd 密码文件
+rm -f "/home/web/.htpasswd" "$HOME/science/.htpasswd" "$HOME/science/panel_pass"
+# 清理面板 SSL 证书副本
+for d in /home/web/certs "$HOME/science/ssl"; do
+  [ -d "$d" ] && rm -rf "$d"
+done
+# 清理 token 软链接
+if [ -d "/home/web/html" ]; then
+  rm -f /home/web/html/* 2>/dev/null
+fi
+# 清理 certbot 自动续签 crontab
+crontab -l 2>/dev/null | grep -v 'certbot.*renew' | grep -v 'certbot/certbot' | grep -v 'auto_cert_renewal' | crontab - 2>/dev/null
+# 清理主目录残留
 rm -rf sbx_update "$HOME/science" "$HOME/websbx"
-echo "卸载完成"
-echo "欢迎继续使用skpl的Science一键无交互小钢炮脚本💣" && sleep 2
+# 清理 systemd 残留（iptables 规则）
+if pidof systemd >/dev/null 2>&1; then
+  iptables -t nat -F PREROUTING >/dev/null 2>&1
+  netfilter-persistent save >/dev/null 2>&1
+fi
+echo ""
+echo "==================== 卸载完成 ===================="
+echo "已清理内容："
+echo "  - 停止并删除所有 Science 进程（xray/sing-box/cloudflared）"
+echo "  - 删除 systemd 服务（xr/sb/argo）"
+echo "  - 删除 nginx 面板配置（Docker/常规）"
+echo "  - 删除面板密码与 SSL 证书"
+echo "  - 删除 crontab 定时任务"
+echo "  - 删除 ~/.bashrc 快捷命令"
+echo "  - 删除 $HOME/science/ / $HOME/websbx/ 目录"
+echo "  - 清空 iptables PREROUTING 规则"
+echo "========================================================"
 echo
 showmode
 exit
