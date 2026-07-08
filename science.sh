@@ -67,7 +67,7 @@ echo
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo "skpl Github项目 ：github.com/Hutton-h"
 echo "Science一键无交互小钢炮脚本💣"
-echo "当前版本：V26.5.10"
+echo "当前版本：V26.5.10-fix1"
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 hostname=$(uname -a | awk '{print $2}')
 op=$(cat /etc/redhat-release 2>/dev/null || cat /etc/os-release 2>/dev/null | grep -i pretty_name | cut -d \" -f2)
@@ -2517,44 +2517,44 @@ server {
     location / { try_files \$uri =404; }
 }
 NGINXEOF
-    # SSL 证书
+    # SSL 证书 (kejilion方式: Docker certbot standalone，无需宿主机安装certbot/acme)
     if [ ! -f "$NGX_CERT" ]; then
-      echo "正在申请SSL证书……"
-      mkdir -p /home/web/certs
-      if command -v certbot >/dev/null 2>&1; then
-        # 先用80端口验证（临时注释ssl）
-        sed -i 's/listen 443/#listen 443/' "$NGX_CONF"
-        sed -i 's/listen \[::\]:443/#listen [::]:443/' "$NGX_CONF"
-        $NGX_CHECK && $NGX_RELOAD
-        certbot certonly --webroot -w /home/web/html -d "$dnym_now" --non-interactive --agree-tos -m "admin@${dnym_now#*.}" 2>/dev/null
-        sed -i 's/#listen 443/listen 443/' "$NGX_CONF"
-        sed -i 's/#listen \[::\]:443/listen [::]:443/' "$NGX_CONF"
-        if [ -d "/etc/letsencrypt/live/$dnym_now" ]; then
-          cp "/etc/letsencrypt/live/$dnym_now/fullchain.pem" "$NGX_CERT" 2>/dev/null
-          cp "/etc/letsencrypt/live/$dnym_now/privkey.pem" "$NGX_KEY" 2>/dev/null
-        fi
-      elif command -v acme.sh >/dev/null 2>&1 || [ -f "$HOME/.acme.sh/acme.sh" ]; then
-        ACME="${HOME}/.acme.sh/acme.sh"
-        [ -f "$ACME" ] || ACME="acme.sh"
-        sed -i 's/listen 443/#listen 443/' "$NGX_CONF"
-        sed -i 's/listen \[::\]:443/#listen [::]:443/' "$NGX_CONF"
-        $NGX_CHECK && $NGX_RELOAD
-        $ACME --issue -d "$dnym_now" -w /home/web/html --force 2>/dev/null
-        sed -i 's/#listen 443/listen 443/' "$NGX_CONF"
-        sed -i 's/#listen \[::\]:443/listen [::]:443/' "$NGX_CONF"
-        if [ -d "$HOME/.acme.sh/${dnym_now}_ecc" ]; then
-          cp "$HOME/.acme.sh/${dnym_now}_ecc/fullchain.cer" "$NGX_CERT" 2>/dev/null
-          cp "$HOME/.acme.sh/${dnym_now}_ecc/${dnym_now}.key" "$NGX_KEY" 2>/dev/null
-        elif [ -d "$HOME/.acme.sh/${dnym_now}" ]; then
-          cp "$HOME/.acme.sh/${dnym_now}/fullchain.cer" "$NGX_CERT" 2>/dev/null
-          cp "$HOME/.acme.sh/${dnym_now}/${dnym_now}.key" "$NGX_KEY" 2>/dev/null
-        fi
+      echo "正在申请SSL证书（Docker certbot standalone模式）……"
+      mkdir -p /home/web/certs /etc/letsencrypt
+      # 停掉nginx释放80端口
+      docker stop nginx >/dev/null 2>&1
+      # 使用Docker certbot standalone模式申请证书（与kejilion脚本一致）
+      docker run --rm -p 80:80 \
+        -v /etc/letsencrypt/:/etc/letsencrypt \
+        certbot/certbot certonly --standalone \
+        -d "$dnym_now" \
+        --email "admin@${dnym_now#*.}" \
+        --agree-tos --no-eff-email --force-renewal --key-type ecdsa 2>/dev/null
+      if [ -d "/etc/letsencrypt/live/$dnym_now" ]; then
+        cp "/etc/letsencrypt/live/$dnym_now/fullchain.pem" "$NGX_CERT" 2>/dev/null
+        cp "/etc/letsencrypt/live/$dnym_now/privkey.pem" "$NGX_KEY" 2>/dev/null
+        echo "SSL证书申请成功！"
+        # 自动续签crontab（每天凌晨3点检查）
+        (crontab -l 2>/dev/null | grep -v 'certbot.*renew'; echo "0 3 * * * docker stop nginx >/dev/null 2>&1; docker run --rm -p 80:80 -v /etc/letsencrypt/:/etc/letsencrypt certbot/certbot renew --quiet; cp /etc/letsencrypt/live/$dnym_now/fullchain.pem $NGX_CERT; cp /etc/letsencrypt/live/$dnym_now/privkey.pem $NGX_KEY; docker start nginx >/dev/null 2>&1") | crontab - 2>/dev/null
       else
-        echo "未找到 certbot 或 acme.sh，跳过SSL，仅HTTP模式"
-        # 移除ssl server，只保留80
-        sed -i '/listen 443/,/^}/d' "$NGX_CONF"
-        sed -i '/#listen 443/,/^}/d' "$NGX_CONF"
+        echo "SSL证书申请失败，回退为HTTP模式"
+        # 重写为纯HTTP的nginx配置
+        cat > "$NGX_CONF" << NGINXEOF
+server {
+    listen 80;
+    listen [::]:80;
+    server_name $dnym_now;
+    root $NGX_ROOT;
+    location ~ ^/[^/]+/index\.html\$ {
+        auth_basic "Science Panel";
+        auth_basic_user_file $NGX_HTPASSWD_CT;
+    }
+    location / { try_files \$uri =404; }
+}
+NGINXEOF
       fi
+      # 重启nginx
+      docker start nginx >/dev/null 2>&1
     fi
     $NGX_CHECK && $NGX_RELOAD && echo "Docker nginx 已重载" || echo "nginx 配置检查失败"
   else
