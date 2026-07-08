@@ -2481,7 +2481,12 @@ if [ "$1" = "nginx" ]; then
     NGX_ROOT="/var/www/html"   # 容器内路径
     NGX_HTPASSWD_CT="/etc/nginx/.htpasswd"  # 容器内路径
     # 生成 htpasswd（放在 /home/web/ 下，容器可访问）
-    command -v htpasswd >/dev/null 2>&1 || { echo "请先安装 apache2-utils"; exit 1; }
+    if ! command -v htpasswd >/dev/null 2>&1; then
+       echo "正在安装 apache2-utils……"
+       if command -v apt >/dev/null 2>&1; then apt install -y apache2-utils 2>/dev/null
+       elif command -v apk >/dev/null 2>&1; then apk add apache2-utils 2>/dev/null
+       elif command -v yum >/dev/null 2>&1; then yum install -y httpd-tools 2>/dev/null; fi
+     fi
     htpasswd -bc "$NGX_HTPASSWD" admin "$panel_pw" 2>/dev/null
     # 确保 token 目录在容器内可访问：软链接到 /home/web/html/
     mkdir -p /home/web/html
