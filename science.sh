@@ -67,7 +67,7 @@ echo
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo "skpl Github项目 ：github.com/Hutton-h"
 echo "Science一键无交互小钢炮脚本💣"
-echo "当前版本：V26.5.10-fix8"
+echo "当前版本：V26.5.10-fix9"
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 hostname=$(uname -a | awk '{print $2}')
 op=$(cat /etc/redhat-release 2>/dev/null || cat /etc/os-release 2>/dev/null | grep -i pretty_name | cut -d \" -f2)
@@ -2653,8 +2653,6 @@ server {
     server_name $dnym_now;
     ssl_certificate /etc/nginx/certs/${dnym_now}_cert.pem;
     ssl_certificate_key /etc/nginx/certs/${dnym_now}_key.pem;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
     root $NGX_ROOT;
     add_header Alt-Svc 'h3=":443"; ma=86400';
     location ~ ^/[^/]+/index\.html\$ {
@@ -2683,6 +2681,42 @@ NGINXEOF
       fi
     else
       ssl_ok=true
+      # 证书已存在，直接写HTTPS配置
+      echo "SSL证书已存在，直接启用HTTPS……"
+      cat > "$NGX_CONF" << NGINXEOF
+server {
+    listen 80;
+    listen [::]:80;
+    server_name $dnym_now;
+    return 301 https://\$host\$request_uri;
+}
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    listen 443 quic;
+    listen [::]:443 quic;
+    http2 on;
+    server_name $dnym_now;
+    ssl_certificate /etc/nginx/certs/${dnym_now}_cert.pem;
+    ssl_certificate_key /etc/nginx/certs/${dnym_now}_key.pem;
+    root $NGX_ROOT;
+    add_header Alt-Svc 'h3=":443"; ma=86400';
+    location ~ ^/[^/]+/index\.html\$ {
+        auth_basic "Science Panel";
+        auth_basic_user_file $NGX_HTPASSWD_CT;
+    }
+    location / { try_files \$uri =404; }
+    location ^~ /.well-known/acme-challenge/ {
+        default_type "text/plain";
+        root /var/www/letsencrypt;
+    }
+}
+NGINXEOF
+      if $NGX_CHECK 2>/dev/null; then
+        $NGX_RELOAD 2>/dev/null && echo "HTTPS 配置已生效"
+      else
+        echo "警告：HTTPS nginx 配置检查失败"
+      fi
     fi
     # 输出访问信息
     echo ""
@@ -2748,8 +2782,6 @@ server {
     server_name $dnym_now;
     ssl_certificate $NGX_CERT;
     ssl_certificate_key $NGX_KEY;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
     root $NGX_ROOT;
     location ~ ^/[^/]+/index\.html\$ {
         auth_basic "Science Panel";
