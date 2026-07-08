@@ -2420,11 +2420,18 @@ if [ -s "$HOME/science/panel.html" ]; then
     mkdir -p "$HOME/websbx/$(cat $HOME/science/subtoken.log)"
     ln -sf "$HOME/science/panel.html" "$HOME/websbx/$(cat $HOME/science/subtoken.log)/index.html"
     ln -sf "$HOME/science/status.json" "$HOME/websbx/$(cat $HOME/science/subtoken.log)/status.json"
+    # 生成/更新面板密码
+    if [ ! -s "$HOME/science/panel_pass" ]; then
+      panel_pass=$(tr -dc 'a-zA-Z0-9' < /dev/urandom 2>/dev/null | head -c12 || cat /proc/sys/kernel/random/uuid 2>/dev/null | cut -d- -f1)
+      echo "$panel_pass" > "$HOME/science/panel_pass"
+    fi
+    ln -sf "$HOME/science/panel_pass" "$HOME/websbx/$(cat $HOME/science/subtoken.log)/panel_pass"
     echo "面板已部署到订阅目录"
     subip=$(cat $HOME/science/server_ip.log 2>/dev/null)
     subport=$(cat $HOME/science/subport.log)
     subtoken=$(cat $HOME/science/subtoken.log)
     echo "面板地址：http://$subip:$subport/$subtoken/index.html"
+    echo "面板密码：$(cat $HOME/science/panel_pass)"
     # 重启busybox httpd以加载新面板
     kill $(pgrep -f 'websbx' 2>/dev/null) 2>/dev/null
     sleep 1
@@ -2549,6 +2556,12 @@ ln -sf $HOME/science/sbox.json $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>
 ln -sf $HOME/science/jhsub.txt $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/jhsub.txt
 ln -sf $HOME/science/panel.html $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/index.html
 ln -sf $HOME/science/status.json $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/status.json
+# 生成/更新面板密码
+if [ ! -s "$HOME/science/panel_pass" ]; then
+  panel_pass=$(tr -dc 'a-zA-Z0-9' < /dev/urandom 2>/dev/null | head -c12 || cat /proc/sys/kernel/random/uuid 2>/dev/null | cut -d- -f1)
+  echo "$panel_pass" > "$HOME/science/panel_pass"
+fi
+ln -sf $HOME/science/panel_pass $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/panel_pass
 if command -v apk >/dev/null 2>&1; then
 busybox-extras httpd -f -p "$(cat $HOME/science/subport.log 2>/dev/null)" -h $HOME/websbx > /dev/null 2>&1 &
 else
