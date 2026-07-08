@@ -67,7 +67,7 @@ echo
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo "skpl Github项目 ：github.com/Hutton-h"
 echo "Science一键无交互小钢炮脚本💣"
-echo "当前版本：V26.5.10-fix7"
+echo "当前版本：V26.5.10-fix8"
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 hostname=$(uname -a | awk '{print $2}')
 op=$(cat /etc/redhat-release 2>/dev/null || cat /etc/os-release 2>/dev/null | grep -i pretty_name | cut -d \" -f2)
@@ -2355,11 +2355,17 @@ fi
 if [ "$1" = "del" ]; then
 echo "==================== Science 一键卸载 ===================="
 cleandel
-# 清理 nginx 面板配置（Docker kejilion 风格）
-if [ -f "/home/web/conf.d/science-panel.conf" ]; then
-  rm -f "/home/web/conf.d/science-panel.conf"
+# 清理 nginx 面板配置（Docker kejilion 风格：science-panel.conf 或 <域名>.conf 含 Science Panel 的）
+if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q '^nginx$'; then
+  for f in /home/web/conf.d/science-panel.conf; do
+    [ -f "$f" ] && rm -f "$f"
+  done
+  # 扫描所有域名配置，删除含 "Science Panel" 的
+  grep -rl 'Science Panel' /home/web/conf.d/*.conf 2>/dev/null | while read f; do
+    rm -f "$f"
+    echo "[√] 已清理面板配置: $(basename $f)"
+  done
   docker exec nginx nginx -t >/dev/null 2>&1 && docker exec nginx nginx -s reload >/dev/null 2>&1
-  echo "[√] 已清理 Docker nginx 面板配置"
 fi
 # 清理 nginx 面板配置（常规 nginx）
 if [ -f "/etc/nginx/sites-available/science-panel" ]; then
@@ -2517,11 +2523,13 @@ if [ "$1" = "nginx" ]; then
   # 检测 Docker nginx (kejilion 风格)
   if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q '^nginx$'; then
     echo "检测到 Docker nginx（kejilion 风格）"
-    # Docker nginx 路径（kejilion docker-compose 挂载映射）：
+    # kejilion docker-compose 挂载映射：
     # /home/web/conf.d/ → /etc/nginx/conf.d/
     # /home/web/certs/   → /etc/nginx/certs/
     # /home/web/html/    → /var/www/html/
-    NGX_CONF="/home/web/conf.d/science-panel.conf"
+    # /home/web/letsencrypt/ → /var/www/letsencrypt/
+    # 配置文件命名：/home/web/conf.d/<域名>.conf（完全遵循 kejilion 风格）
+    NGX_CONF="/home/web/conf.d/${dnym_now}.conf"
     NGX_CERT="/home/web/certs/${dnym_now}_cert.pem"
     NGX_KEY="/home/web/certs/${dnym_now}_key.pem"
     NGX_HTPASSWD="/home/web/conf.d/.htpasswd"
@@ -2532,7 +2540,7 @@ if [ "$1" = "nginx" ]; then
 
     # ====== 第0步：确保 nginx 容器能正常启动（kejilion 方式修复所有缺失证书） ======
     echo "检查 nginx 容器状态……"
-    mkdir -p /home/web/certs
+    mkdir -p /home/web/certs /home/web/letsencrypt
     if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -q '^nginx$'; then
       echo "nginx 容器未运行，正在修复……"
       # 生成所有 conf.d 下配置文件引用的缺失证书（kejilion 的 default_server_ssl 模式）
@@ -2574,15 +2582,16 @@ if [ "$1" = "nginx" ]; then
        elif command -v yum >/dev/null 2>&1; then yum install -y httpd-tools 2>/dev/null; fi
      fi
     htpasswd -bc "$NGX_HTPASSWD" admin "$panel_pw" 2>/dev/null
-    # 复制面板文件（不用软链接，容器内nginx用户无法跟随外部symlink）
+    # 复制面板文件到 nginx 容器可访问路径
     mkdir -p "/home/web/html/$subtoken"
     cp -r "$HOME/websbx/$subtoken/"* "/home/web/html/$subtoken/" 2>/dev/null
     chmod -R 755 "/home/web/html/$subtoken" 2>/dev/null
-    # 确保 nginx 容器用户（uid 101）能遍历父目录
     chmod 755 /home/web /home/web/html 2>/dev/null
+    # kejilion 风格：chown 给 nginx 用户
+    docker exec nginx chown -R nginx:nginx /var/www/html 2>/dev/null
     echo "面板文件已部署到 /home/web/html/$subtoken/"
 
-    # ====== 第1步：写HTTP配置先让面板能访问 ======
+    # ====== 第1步：写HTTP配置（遵循 kejilion 命名：/home/web/conf.d/<域名>.conf） ======
     cat > "$NGX_CONF" << NGINXEOF
 server {
     listen 80;
@@ -2594,6 +2603,10 @@ server {
         auth_basic_user_file $NGX_HTPASSWD_CT;
     }
     location / { try_files \$uri =404; }
+    location ^~ /.well-known/acme-challenge/ {
+        default_type "text/plain";
+        root /var/www/letsencrypt;
+    }
 }
 NGINXEOF
     if $NGX_CHECK 2>/dev/null; then
@@ -2623,7 +2636,7 @@ NGINXEOF
         cp "/etc/letsencrypt/live/$dnym_now/fullchain.pem" "$NGX_CERT" 2>/dev/null
         cp "/etc/letsencrypt/live/$dnym_now/privkey.pem" "$NGX_KEY" 2>/dev/null
         echo "SSL证书申请成功！"
-        # 写HTTPS配置
+        # 写HTTPS配置（kejilion 风格：quic + http2 + Alt-Svc）
         cat > "$NGX_CONF" << NGINXEOF
 server {
     listen 80;
@@ -2634,6 +2647,8 @@ server {
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
+    listen 443 quic;
+    listen [::]:443 quic;
     http2 on;
     server_name $dnym_now;
     ssl_certificate /etc/nginx/certs/${dnym_now}_cert.pem;
@@ -2641,11 +2656,16 @@ server {
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
     root $NGX_ROOT;
+    add_header Alt-Svc 'h3=":443"; ma=86400';
     location ~ ^/[^/]+/index\.html\$ {
         auth_basic "Science Panel";
         auth_basic_user_file $NGX_HTPASSWD_CT;
     }
     location / { try_files \$uri =404; }
+    location ^~ /.well-known/acme-challenge/ {
+        default_type "text/plain";
+        root /var/www/letsencrypt;
+    }
 }
 NGINXEOF
         if $NGX_CHECK 2>/dev/null; then
