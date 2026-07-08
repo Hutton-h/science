@@ -2420,18 +2420,11 @@ if [ -s "$HOME/science/panel.html" ]; then
     mkdir -p "$HOME/websbx/$(cat $HOME/science/subtoken.log)"
     ln -sf "$HOME/science/panel.html" "$HOME/websbx/$(cat $HOME/science/subtoken.log)/index.html"
     ln -sf "$HOME/science/status.json" "$HOME/websbx/$(cat $HOME/science/subtoken.log)/status.json"
-    # 生成/更新面板密码
-    if [ ! -s "$HOME/science/panel_pass" ]; then
-      panel_pass=$(tr -dc 'a-zA-Z0-9' < /dev/urandom 2>/dev/null | head -c12 || cat /proc/sys/kernel/random/uuid 2>/dev/null | cut -d- -f1)
-      echo "$panel_pass" > "$HOME/science/panel_pass"
-    fi
-    ln -sf "$HOME/science/panel_pass" "$HOME/websbx/$(cat $HOME/science/subtoken.log)/panel_pass"
     echo "面板已部署到订阅目录"
     subip=$(cat $HOME/science/server_ip.log 2>/dev/null)
     subport=$(cat $HOME/science/subport.log)
     subtoken=$(cat $HOME/science/subtoken.log)
     echo "面板地址：http://$subip:$subport/$subtoken/index.html"
-    echo "面板密码：$(cat $HOME/science/panel_pass)"
     # 重启busybox httpd以加载新面板
     kill $(pgrep -f 'websbx' 2>/dev/null) 2>/dev/null
     sleep 1
@@ -2452,6 +2445,126 @@ if [ -s "$HOME/science/panel.html" ]; then
 else
   echo "订阅面板下载失败，请检查网络"
 fi
+exit
+fi
+# 部署nginx反代面板（HTTPS + 密码保护）
+if [ "$1" = "nginx" ]; then
+  subport=$(cat $HOME/science/subport.log 2>/dev/null)
+  subtoken=$(cat $HOME/science/subtoken.log 2>/dev/null)
+  [ -z "$subport" ] || [ -z "$subtoken" ] && { echo "请先运行 sub=y 的部署脚本开启订阅"; exit 1; }
+  # 1. 安装nginx
+  if ! command -v nginx >/dev/null 2>&1; then
+    echo "正在安装 nginx……"
+    if command -v apt >/dev/null 2>&1; then
+      apt update -y && apt install -y nginx apache2-utils 2>/dev/null
+    elif command -v apk >/dev/null 2>&1; then
+      apk add nginx apache2-utils 2>/dev/null
+    elif command -v yum >/dev/null 2>&1; then
+      yum install -y nginx httpd-tools 2>/dev/null
+    fi
+  fi
+  command -v nginx >/dev/null 2>&1 || { echo "nginx 安装失败"; exit 1; }
+  # 2. 获取域名
+  dnym_now=$(cat $HOME/science/dnym.log 2>/dev/null)
+  if [ -z "$dnym_now" ]; then
+    read -p "请输入面板域名（如 s.hutton.dpdns.org）: " dnym_now
+    [ -z "$dnym_now" ] && { echo "域名不能为空"; exit 1; }
+  fi
+  echo "面板域名: $dnym_now"
+  # 3. 设置密码
+  if [ -s "$HOME/science/panel_pass" ]; then
+    panel_pw=$(cat $HOME/science/panel_pass)
+  else
+    panel_pw=$(tr -dc 'a-zA-Z0-9' < /dev/urandom 2>/dev/null | head -c12)
+    echo "$panel_pw" > "$HOME/science/panel_pass"
+  fi
+  htpasswd -bc "$HOME/science/.htpasswd" admin "$panel_pw" 2>/dev/null
+  echo "面板用户名: admin"
+  echo "面板密码: $panel_pw"
+  # 4. 写nginx配置
+  cat > /etc/nginx/sites-available/science-panel << NGINXEOF
+server {
+    listen 80;
+    server_name $dnym_now;
+    return 301 https://\$host\$request_uri;
+}
+server {
+    listen 443 ssl http2;
+    server_name $dnym_now;
+    ssl_certificate $HOME/science/ssl/fullchain.pem;
+    ssl_certificate_key $HOME/science/ssl/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    root $HOME/websbx;
+    # 面板页面 - 需要密码
+    location ~ ^/[^/]+/index\.html\$ {
+        auth_basic "Science Panel";
+        auth_basic_user_file $HOME/science/.htpasswd;
+    }
+    # 订阅文件 - 无需密码
+    location / { try_files \$uri =404; }
+}
+NGINXEOF
+  # 启用站点
+  mkdir -p /etc/nginx/sites-enabled 2>/dev/null
+  ln -sf /etc/nginx/sites-available/science-panel /etc/nginx/sites-enabled/science-panel 2>/dev/null
+  # 如果nginx默认配置在conf.d或sites-enabled，清理冲突
+  rm -f /etc/nginx/sites-enabled/default 2>/dev/null
+  rm -f /etc/nginx/conf.d/default.conf 2>/dev/null
+  # 5. 申请SSL证书
+  if [ ! -f "$HOME/science/ssl/fullchain.pem" ]; then
+    echo "正在申请SSL证书……"
+    mkdir -p "$HOME/science/ssl"
+    if ! command -v acme.sh >/dev/null 2>&1; then
+      curl -Ls https://get.acme.sh | sh -s email=admin@${dnym_now#*.} 2>/dev/null
+      [ -f "$HOME/.acme.sh/acme.sh" ] && alias acme.sh="$HOME/.acme.sh/acme.sh"
+    fi
+    # 先启动nginx（仅80端口，用于验证）
+    if nginx -t 2>/dev/null; then
+      # 临时注释掉ssl server，只用80验证
+      sed -i 's/listen 443/#listen 443/' /etc/nginx/sites-available/science-panel
+      systemctl start nginx 2>/dev/null || nginx 2>/dev/null
+      sleep 2
+      if command -v acme.sh >/dev/null 2>&1; then
+        acme.sh --issue -d "$dnym_now" -w "$HOME/websbx" --force 2>/dev/null
+      elif [ -f "$HOME/.acme.sh/acme.sh" ]; then
+        $HOME/.acme.sh/acme.sh --issue -d "$dnym_now" -w "$HOME/websbx" --force 2>/dev/null
+      fi
+      # 恢复ssl配置
+      sed -i 's/#listen 443/listen 443/' /etc/nginx/sites-available/science-panel
+      # 复制证书
+      if [ -d "$HOME/.acme.sh/${dnym_now}_ecc" ]; then
+        cp "$HOME/.acme.sh/${dnym_now}_ecc/fullchain.cer" "$HOME/science/ssl/fullchain.pem" 2>/dev/null
+        cp "$HOME/.acme.sh/${dnym_now}_ecc/${dnym_now}.key" "$HOME/science/ssl/privkey.pem" 2>/dev/null
+      elif [ -d "$HOME/.acme.sh/${dnym_now}" ]; then
+        cp "$HOME/.acme.sh/${dnym_now}/fullchain.cer" "$HOME/science/ssl/fullchain.pem" 2>/dev/null
+        cp "$HOME/.acme.sh/${dnym_now}/${dnym_now}.key" "$HOME/science/ssl/privkey.pem" 2>/dev/null
+      fi
+    fi
+  fi
+  # 6. 重启nginx
+  if nginx -t 2>/dev/null; then
+    systemctl reload nginx 2>/dev/null || nginx -s reload 2>/dev/null || (killall nginx 2>/dev/null; sleep 1; nginx 2>/dev/null)
+    echo "nginx 已启动"
+  else
+    echo "nginx 配置有误，请检查"
+    exit 1
+  fi
+  # 7. 停止busybox httpd（nginx替代它）
+  kill $(pgrep -f 'websbx' 2>/dev/null) 2>/dev/null
+  echo ""
+  echo "=============================="
+  echo "  面板 HTTPS 部署完成！"
+  echo "=============================="
+  echo "  地址: https://$dnym_now/$subtoken/index.html"
+  echo "  用户名: admin"
+  echo "  密码: $panel_pw"
+  echo ""
+  echo "  订阅地址（无需密码）:"
+  echo "  https://$dnym_now/$subtoken/clmi.yaml"
+  echo "  https://$dnym_now/$subtoken/sbox.json"
+  echo "  https://$dnym_now/$subtoken/jhsub.txt"
+  echo "=============================="
 exit
 fi
 # 生成状态监控JSON（供面板实时读取）
@@ -2556,12 +2669,6 @@ ln -sf $HOME/science/sbox.json $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>
 ln -sf $HOME/science/jhsub.txt $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/jhsub.txt
 ln -sf $HOME/science/panel.html $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/index.html
 ln -sf $HOME/science/status.json $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/status.json
-# 生成/更新面板密码
-if [ ! -s "$HOME/science/panel_pass" ]; then
-  panel_pass=$(tr -dc 'a-zA-Z0-9' < /dev/urandom 2>/dev/null | head -c12 || cat /proc/sys/kernel/random/uuid 2>/dev/null | cut -d- -f1)
-  echo "$panel_pass" > "$HOME/science/panel_pass"
-fi
-ln -sf $HOME/science/panel_pass $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/panel_pass
 if command -v apk >/dev/null 2>&1; then
 busybox-extras httpd -f -p "$(cat $HOME/science/subport.log 2>/dev/null)" -h $HOME/websbx > /dev/null 2>&1 &
 else
