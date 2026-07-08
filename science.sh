@@ -67,7 +67,7 @@ echo
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo "skpl Github项目 ：github.com/Hutton-h"
 echo "Science一键无交互小钢炮脚本💣"
-echo "当前版本：V26.5.10-fix2"
+echo "当前版本：V26.5.10-fix3"
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 hostname=$(uname -a | awk '{print $2}')
 op=$(cat /etc/redhat-release 2>/dev/null || cat /etc/os-release 2>/dev/null | grep -i pretty_name | cut -d \" -f2)
@@ -2367,14 +2367,14 @@ fi
 # 清理 /etc/nginx/conf.d 下的面板配置
 rm -f "/etc/nginx/conf.d/science-panel.conf"
 # 清理面板 htpasswd 密码文件
-rm -f "/home/web/.htpasswd" "$HOME/science/.htpasswd" "$HOME/science/panel_pass"
+rm -f "/home/web/conf.d/.htpasswd" "/home/web/.htpasswd" "$HOME/science/.htpasswd" "$HOME/science/panel_pass"
 # 清理面板 SSL 证书副本
 for d in /home/web/certs "$HOME/science/ssl"; do
   [ -d "$d" ] && rm -rf "$d"
 done
-# 清理 token 软链接
+# 清理面板 HTML 文件（Docker nginx 直接复制到 /home/web/html/ 的）
 if [ -d "/home/web/html" ]; then
-  rm -f /home/web/html/* 2>/dev/null
+  rm -rf /home/web/html/* 2>/dev/null
 fi
 # 清理 certbot 自动续签 crontab
 crontab -l 2>/dev/null | grep -v 'certbot.*renew' | grep -v 'certbot/certbot' | grep -v 'auto_cert_renewal' | crontab - 2>/dev/null
@@ -2514,16 +2514,19 @@ if [ "$1" = "nginx" ]; then
   # 检测 Docker nginx (kejilion 风格)
   if docker ps --format '{{.Names}}' 2>/dev/null | grep -q '^nginx$'; then
     echo "检测到 Docker nginx（kejilion 风格）"
-    # Docker nginx 路径
+    # Docker nginx 路径（kejilion docker-compose 挂载映射）：
+    # /home/web/conf.d/ → /etc/nginx/conf.d/
+    # /home/web/certs/   → /etc/nginx/certs/
+    # /home/web/html/    → /var/www/html/
     NGX_CONF="/home/web/conf.d/science-panel.conf"
     NGX_CERT="/home/web/certs/${dnym_now}_cert.pem"
     NGX_KEY="/home/web/certs/${dnym_now}_key.pem"
-    NGX_HTPASSWD="/home/web/.htpasswd"
+    NGX_HTPASSWD="/home/web/conf.d/.htpasswd"
     NGX_RELOAD="docker exec nginx nginx -s reload"
     NGX_CHECK="docker exec nginx nginx -t"
     NGX_ROOT="/var/www/html"   # 容器内路径
-    NGX_HTPASSWD_CT="/etc/nginx/.htpasswd"  # 容器内路径
-    # 生成 htpasswd（放在 /home/web/ 下，容器可访问）
+    NGX_HTPASSWD_CT="/etc/nginx/conf.d/.htpasswd"  # 容器内路径（挂载自 /home/web/conf.d/）
+    # 生成 htpasswd
     if ! command -v htpasswd >/dev/null 2>&1; then
        echo "正在安装 apache2-utils……"
        if command -v apt >/dev/null 2>&1; then apt install -y apache2-utils 2>/dev/null
@@ -2531,9 +2534,11 @@ if [ "$1" = "nginx" ]; then
        elif command -v yum >/dev/null 2>&1; then yum install -y httpd-tools 2>/dev/null; fi
      fi
     htpasswd -bc "$NGX_HTPASSWD" admin "$panel_pw" 2>/dev/null
-    # 确保 token 目录在容器内可访问：软链接到 /home/web/html/
-    mkdir -p /home/web/html
-    ln -sf "$HOME/websbx/$subtoken" "/home/web/html/$subtoken" 2>/dev/null
+    # 复制面板文件到 nginx 容器可访问的路径（不用软链接，容器内nginx用户无法跟随外部symlink）
+    mkdir -p "/home/web/html/$subtoken"
+    cp -r "$HOME/websbx/$subtoken/"* "/home/web/html/$subtoken/" 2>/dev/null
+    chmod -R 755 "/home/web/html/$subtoken" 2>/dev/null
+    echo "面板文件已部署到 /home/web/html/$subtoken/"
     # 写 nginx 配置
     cat > "$NGX_CONF" << NGINXEOF
 server {
