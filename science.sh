@@ -2452,105 +2452,184 @@ if [ "$1" = "nginx" ]; then
   subport=$(cat $HOME/science/subport.log 2>/dev/null)
   subtoken=$(cat $HOME/science/subtoken.log 2>/dev/null)
   [ -z "$subport" ] || [ -z "$subtoken" ] && { echo "请先运行 sub=y 的部署脚本开启订阅"; exit 1; }
-  # 1. 安装nginx
-  if ! command -v nginx >/dev/null 2>&1; then
-    echo "正在安装 nginx……"
-    if command -v apt >/dev/null 2>&1; then
-      apt update -y && apt install -y nginx apache2-utils 2>/dev/null
-    elif command -v apk >/dev/null 2>&1; then
-      apk add nginx apache2-utils 2>/dev/null
-    elif command -v yum >/dev/null 2>&1; then
-      yum install -y nginx httpd-tools 2>/dev/null
-    fi
-  fi
-  command -v nginx >/dev/null 2>&1 || { echo "nginx 安装失败"; exit 1; }
-  # 2. 获取域名
+  # 获取域名
   dnym_now=$(cat $HOME/science/dnym.log 2>/dev/null)
   if [ -z "$dnym_now" ]; then
     read -p "请输入面板域名（如 s.hutton.dpdns.org）: " dnym_now
     [ -z "$dnym_now" ] && { echo "域名不能为空"; exit 1; }
   fi
   echo "面板域名: $dnym_now"
-  # 3. 设置密码
+  # 设置密码
   if [ -s "$HOME/science/panel_pass" ]; then
     panel_pw=$(cat $HOME/science/panel_pass)
   else
     panel_pw=$(tr -dc 'a-zA-Z0-9' < /dev/urandom 2>/dev/null | head -c12)
     echo "$panel_pw" > "$HOME/science/panel_pass"
   fi
-  htpasswd -bc "$HOME/science/.htpasswd" admin "$panel_pw" 2>/dev/null
   echo "面板用户名: admin"
   echo "面板密码: $panel_pw"
-  # 4. 写nginx配置
-  cat > /etc/nginx/sites-available/science-panel << NGINXEOF
+  # 检测 Docker nginx (kejilion 风格)
+  if docker ps --format '{{.Names}}' 2>/dev/null | grep -q '^nginx$'; then
+    echo "检测到 Docker nginx（kejilion 风格）"
+    # Docker nginx 路径
+    NGX_CONF="/home/web/conf.d/science-panel.conf"
+    NGX_CERT="/home/web/certs/${dnym_now}_cert.pem"
+    NGX_KEY="/home/web/certs/${dnym_now}_key.pem"
+    NGX_HTPASSWD="/home/web/.htpasswd"
+    NGX_RELOAD="docker exec nginx nginx -s reload"
+    NGX_CHECK="docker exec nginx nginx -t"
+    NGX_ROOT="/var/www/html"   # 容器内路径
+    NGX_HTPASSWD_CT="/etc/nginx/.htpasswd"  # 容器内路径
+    # 生成 htpasswd（放在 /home/web/ 下，容器可访问）
+    command -v htpasswd >/dev/null 2>&1 || { echo "请先安装 apache2-utils"; exit 1; }
+    htpasswd -bc "$NGX_HTPASSWD" admin "$panel_pw" 2>/dev/null
+    # 确保 token 目录在容器内可访问：软链接到 /home/web/html/
+    mkdir -p /home/web/html
+    ln -sf "$HOME/websbx/$subtoken" "/home/web/html/$subtoken" 2>/dev/null
+    # 写 nginx 配置
+    cat > "$NGX_CONF" << NGINXEOF
 server {
     listen 80;
+    listen [::]:80;
     server_name $dnym_now;
     return 301 https://\$host\$request_uri;
 }
 server {
     listen 443 ssl http2;
+    listen [::]:443 ssl http2;
     server_name $dnym_now;
-    ssl_certificate $HOME/science/ssl/fullchain.pem;
-    ssl_certificate_key $HOME/science/ssl/privkey.pem;
+    ssl_certificate /etc/nginx/certs/${dnym_now}_cert.pem;
+    ssl_certificate_key /etc/nginx/certs/${dnym_now}_key.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
-    root $HOME/websbx;
+    root $NGX_ROOT;
     # 面板页面 - 需要密码
     location ~ ^/[^/]+/index\.html\$ {
         auth_basic "Science Panel";
-        auth_basic_user_file $HOME/science/.htpasswd;
+        auth_basic_user_file $NGX_HTPASSWD_CT;
     }
     # 订阅文件 - 无需密码
     location / { try_files \$uri =404; }
 }
 NGINXEOF
-  # 启用站点
-  mkdir -p /etc/nginx/sites-enabled 2>/dev/null
-  ln -sf /etc/nginx/sites-available/science-panel /etc/nginx/sites-enabled/science-panel 2>/dev/null
-  # 如果nginx默认配置在conf.d或sites-enabled，清理冲突
-  rm -f /etc/nginx/sites-enabled/default 2>/dev/null
-  rm -f /etc/nginx/conf.d/default.conf 2>/dev/null
-  # 5. 申请SSL证书
-  if [ ! -f "$HOME/science/ssl/fullchain.pem" ]; then
-    echo "正在申请SSL证书……"
-    mkdir -p "$HOME/science/ssl"
-    if ! command -v acme.sh >/dev/null 2>&1; then
-      curl -Ls https://get.acme.sh | sh -s email=admin@${dnym_now#*.} 2>/dev/null
-      [ -f "$HOME/.acme.sh/acme.sh" ] && alias acme.sh="$HOME/.acme.sh/acme.sh"
-    fi
-    # 先启动nginx（仅80端口，用于验证）
-    if nginx -t 2>/dev/null; then
-      # 临时注释掉ssl server，只用80验证
-      sed -i 's/listen 443/#listen 443/' /etc/nginx/sites-available/science-panel
-      systemctl start nginx 2>/dev/null || nginx 2>/dev/null
-      sleep 2
-      if command -v acme.sh >/dev/null 2>&1; then
-        acme.sh --issue -d "$dnym_now" -w "$HOME/websbx" --force 2>/dev/null
-      elif [ -f "$HOME/.acme.sh/acme.sh" ]; then
-        $HOME/.acme.sh/acme.sh --issue -d "$dnym_now" -w "$HOME/websbx" --force 2>/dev/null
+    # SSL 证书
+    if [ ! -f "$NGX_CERT" ]; then
+      echo "正在申请SSL证书……"
+      mkdir -p /home/web/certs
+      if command -v certbot >/dev/null 2>&1; then
+        # 先用80端口验证（临时注释ssl）
+        sed -i 's/listen 443/#listen 443/' "$NGX_CONF"
+        sed -i 's/listen \[::\]:443/#listen [::]:443/' "$NGX_CONF"
+        $NGX_CHECK && $NGX_RELOAD
+        certbot certonly --webroot -w /home/web/html -d "$dnym_now" --non-interactive --agree-tos -m "admin@${dnym_now#*.}" 2>/dev/null
+        sed -i 's/#listen 443/listen 443/' "$NGX_CONF"
+        sed -i 's/#listen \[::\]:443/listen [::]:443/' "$NGX_CONF"
+        if [ -d "/etc/letsencrypt/live/$dnym_now" ]; then
+          cp "/etc/letsencrypt/live/$dnym_now/fullchain.pem" "$NGX_CERT" 2>/dev/null
+          cp "/etc/letsencrypt/live/$dnym_now/privkey.pem" "$NGX_KEY" 2>/dev/null
+        fi
+      elif command -v acme.sh >/dev/null 2>&1 || [ -f "$HOME/.acme.sh/acme.sh" ]; then
+        ACME="${HOME}/.acme.sh/acme.sh"
+        [ -f "$ACME" ] || ACME="acme.sh"
+        sed -i 's/listen 443/#listen 443/' "$NGX_CONF"
+        sed -i 's/listen \[::\]:443/#listen [::]:443/' "$NGX_CONF"
+        $NGX_CHECK && $NGX_RELOAD
+        $ACME --issue -d "$dnym_now" -w /home/web/html --force 2>/dev/null
+        sed -i 's/#listen 443/listen 443/' "$NGX_CONF"
+        sed -i 's/#listen \[::\]:443/listen [::]:443/' "$NGX_CONF"
+        if [ -d "$HOME/.acme.sh/${dnym_now}_ecc" ]; then
+          cp "$HOME/.acme.sh/${dnym_now}_ecc/fullchain.cer" "$NGX_CERT" 2>/dev/null
+          cp "$HOME/.acme.sh/${dnym_now}_ecc/${dnym_now}.key" "$NGX_KEY" 2>/dev/null
+        elif [ -d "$HOME/.acme.sh/${dnym_now}" ]; then
+          cp "$HOME/.acme.sh/${dnym_now}/fullchain.cer" "$NGX_CERT" 2>/dev/null
+          cp "$HOME/.acme.sh/${dnym_now}/${dnym_now}.key" "$NGX_KEY" 2>/dev/null
+        fi
+      else
+        echo "未找到 certbot 或 acme.sh，跳过SSL，仅HTTP模式"
+        # 移除ssl server，只保留80
+        sed -i '/listen 443/,/^}/d' "$NGX_CONF"
+        sed -i '/#listen 443/,/^}/d' "$NGX_CONF"
       fi
-      # 恢复ssl配置
-      sed -i 's/#listen 443/listen 443/' /etc/nginx/sites-available/science-panel
-      # 复制证书
-      if [ -d "$HOME/.acme.sh/${dnym_now}_ecc" ]; then
-        cp "$HOME/.acme.sh/${dnym_now}_ecc/fullchain.cer" "$HOME/science/ssl/fullchain.pem" 2>/dev/null
-        cp "$HOME/.acme.sh/${dnym_now}_ecc/${dnym_now}.key" "$HOME/science/ssl/privkey.pem" 2>/dev/null
-      elif [ -d "$HOME/.acme.sh/${dnym_now}" ]; then
-        cp "$HOME/.acme.sh/${dnym_now}/fullchain.cer" "$HOME/science/ssl/fullchain.pem" 2>/dev/null
-        cp "$HOME/.acme.sh/${dnym_now}/${dnym_now}.key" "$HOME/science/ssl/privkey.pem" 2>/dev/null
-      fi
     fi
-  fi
-  # 6. 重启nginx
-  if nginx -t 2>/dev/null; then
-    systemctl reload nginx 2>/dev/null || nginx -s reload 2>/dev/null || (killall nginx 2>/dev/null; sleep 1; nginx 2>/dev/null)
-    echo "nginx 已启动"
+    $NGX_CHECK && $NGX_RELOAD && echo "Docker nginx 已重载" || echo "nginx 配置检查失败"
   else
-    echo "nginx 配置有误，请检查"
-    exit 1
+    # === 常规 nginx 模式 ===
+    # 安装nginx
+    if ! command -v nginx >/dev/null 2>&1; then
+      echo "正在安装 nginx……"
+      if command -v apt >/dev/null 2>&1; then
+        apt update -y && apt install -y nginx apache2-utils 2>/dev/null
+      elif command -v apk >/dev/null 2>&1; then
+        apk add nginx apache2-utils 2>/dev/null
+      elif command -v yum >/dev/null 2>&1; then
+        yum install -y nginx httpd-tools 2>/dev/null
+      fi
+    fi
+    command -v nginx >/dev/null 2>&1 || { echo "nginx 安装失败"; exit 1; }
+    NGX_CONF="/etc/nginx/sites-available/science-panel"
+    NGX_CERT="$HOME/science/ssl/fullchain.pem"
+    NGX_KEY="$HOME/science/ssl/privkey.pem"
+    NGX_HTPASSWD="$HOME/science/.htpasswd"
+    NGX_ROOT="$HOME/websbx"
+    NGX_RELOAD="systemctl reload nginx 2>/dev/null || nginx -s reload 2>/dev/null || (killall nginx 2>/dev/null; sleep 1; nginx 2>/dev/null)"
+    NGX_CHECK="nginx -t"
+    htpasswd -bc "$NGX_HTPASSWD" admin "$panel_pw" 2>/dev/null
+    cat > "$NGX_CONF" << NGINXEOF
+server {
+    listen 80;
+    listen [::]:80;
+    server_name $dnym_now;
+    return 301 https://\$host\$request_uri;
+}
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name $dnym_now;
+    ssl_certificate $NGX_CERT;
+    ssl_certificate_key $NGX_KEY;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    root $NGX_ROOT;
+    location ~ ^/[^/]+/index\.html\$ {
+        auth_basic "Science Panel";
+        auth_basic_user_file $NGX_HTPASSWD;
+    }
+    location / { try_files \$uri =404; }
+}
+NGINXEOF
+    mkdir -p /etc/nginx/sites-enabled 2>/dev/null
+    ln -sf "$NGX_CONF" /etc/nginx/sites-enabled/science-panel 2>/dev/null
+    rm -f /etc/nginx/sites-enabled/default 2>/dev/null
+    rm -f /etc/nginx/conf.d/default.conf 2>/dev/null
+    # SSL 证书
+    if [ ! -f "$NGX_CERT" ]; then
+      echo "正在申请SSL证书……"
+      mkdir -p "$HOME/science/ssl"
+      if ! command -v acme.sh >/dev/null 2>&1 && [ ! -f "$HOME/.acme.sh/acme.sh" ]; then
+        curl -Ls https://get.acme.sh | sh -s email=admin@${dnym_now#*.} 2>/dev/null
+      fi
+      ACME="${HOME}/.acme.sh/acme.sh"
+      [ -f "$ACME" ] || ACME="acme.sh"
+      if $NGX_CHECK 2>/dev/null; then
+        sed -i 's/listen 443/#listen 443/' "$NGX_CONF"
+        sed -i 's/listen \[::\]:443/#listen [::]:443/' "$NGX_CONF"
+        systemctl start nginx 2>/dev/null || nginx 2>/dev/null
+        sleep 2
+        $ACME --issue -d "$dnym_now" -w "$HOME/websbx" --force 2>/dev/null
+        sed -i 's/#listen 443/listen 443/' "$NGX_CONF"
+        sed -i 's/#listen \[::\]:443/listen [::]:443/' "$NGX_CONF"
+        if [ -d "$HOME/.acme.sh/${dnym_now}_ecc" ]; then
+          cp "$HOME/.acme.sh/${dnym_now}_ecc/fullchain.cer" "$NGX_CERT" 2>/dev/null
+          cp "$HOME/.acme.sh/${dnym_now}_ecc/${dnym_now}.key" "$NGX_KEY" 2>/dev/null
+        elif [ -d "$HOME/.acme.sh/${dnym_now}" ]; then
+          cp "$HOME/.acme.sh/${dnym_now}/fullchain.cer" "$NGX_CERT" 2>/dev/null
+          cp "$HOME/.acme.sh/${dnym_now}/${dnym_now}.key" "$NGX_KEY" 2>/dev/null
+        fi
+      fi
+    fi
+    $NGX_CHECK && eval "$NGX_RELOAD" && echo "nginx 已启动" || echo "nginx 配置有误"
   fi
-  # 7. 停止busybox httpd（nginx替代它）
+  # 停止busybox httpd（nginx替代它）
   kill $(pgrep -f 'websbx' 2>/dev/null) 2>/dev/null
   echo ""
   echo "=============================="
