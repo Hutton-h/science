@@ -2695,6 +2695,8 @@ NGINXEOF
         echo "警告：HTTPS nginx 配置检查失败"
       fi
     fi
+    # 确保status.json已生成
+    $HOME/science/science.sh statusgen 2>/dev/null
     # 输出访问信息
     echo ""
     echo "=============================="
@@ -2798,6 +2800,8 @@ NGINXEOF
       fi
     fi
     $NGX_CHECK && eval "$NGX_RELOAD" && echo "nginx 已启动" || echo "nginx 配置有误"
+    # 确保status.json已生成
+    $HOME/science/science.sh statusgen 2>/dev/null
   fi
   # 停止busybox httpd（nginx替代它）
   kill $(pgrep -f 'websbx' 2>/dev/null) 2>/dev/null
@@ -2940,6 +2944,8 @@ crontab /tmp/crontab.tmp >/dev/null 2>&1
 rm /tmp/crontab.tmp
 fi
 echo "本地IP订阅链接已更新完成"
+# 立即生成一次status.json供面板读取
+$HOME/science/science.sh statusgen
 # 启动状态监控cron（每2分钟更新status.json供面板实时读取）
 (crontab -l 2>/dev/null | grep -v 'science/statusgen'; echo "*/2 * * * * $HOME/science/science.sh statusgen >/dev/null 2>&1") | crontab - 2>/dev/null
 echo "已启动面板状态监控（每2分钟更新）"
