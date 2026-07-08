@@ -67,7 +67,7 @@ echo
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo "skpl Github项目 ：github.com/Hutton-h"
 echo "Science一键无交互小钢炮脚本💣"
-echo "当前版本：V26.5.10-fix4"
+echo "当前版本：V26.5.10-fix5"
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 hostname=$(uname -a | awk '{print $2}')
 op=$(cat /etc/redhat-release 2>/dev/null || cat /etc/os-release 2>/dev/null | grep -i pretty_name | cut -d \" -f2)
@@ -2539,6 +2539,15 @@ if [ "$1" = "nginx" ]; then
     cp -r "$HOME/websbx/$subtoken/"* "/home/web/html/$subtoken/" 2>/dev/null
     chmod -R 755 "/home/web/html/$subtoken" 2>/dev/null
     echo "面板文件已部署到 /home/web/html/$subtoken/"
+    # 确保 kejilion 的默认证书存在（否则 nginx -t 会失败）
+    if [ ! -f "/home/web/certs/default_server.crt" ]; then
+      mkdir -p /home/web/certs
+      openssl req -x509 -nodes -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 \
+        -keyout /home/web/certs/default_server.key \
+        -out /home/web/certs/default_server.crt \
+        -days 5475 -subj "/C=US/ST=State/L=City/O=Organization/OU=Unit/CN=localhost" 2>/dev/null
+      echo "已生成默认SSL证书"
+    fi
     # 写 nginx 配置（先写HTTP，确保证书不存在时也能正常工作）
     cat > "$NGX_CONF" << NGINXEOF
 server {
@@ -2586,8 +2595,9 @@ server {
     return 301 https://\$host\$request_uri;
 }
 server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
     server_name $dnym_now;
     ssl_certificate /etc/nginx/certs/${dnym_now}_cert.pem;
     ssl_certificate_key /etc/nginx/certs/${dnym_now}_key.pem;
@@ -2671,8 +2681,9 @@ server {
     return 301 https://\$host\$request_uri;
 }
 server {
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
     server_name $dnym_now;
     ssl_certificate $NGX_CERT;
     ssl_certificate_key $NGX_KEY;
