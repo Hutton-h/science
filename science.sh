@@ -2578,6 +2578,8 @@ if [ "$1" = "nginx" ]; then
     mkdir -p "/home/web/html/$subtoken"
     cp -r "$HOME/websbx/$subtoken/"* "/home/web/html/$subtoken/" 2>/dev/null
     chmod -R 755 "/home/web/html/$subtoken" 2>/dev/null
+    # 确保 nginx 容器用户（uid 101）能遍历父目录
+    chmod 755 /home/web /home/web/html 2>/dev/null
     echo "面板文件已部署到 /home/web/html/$subtoken/"
 
     # ====== 第1步：写HTTP配置先让面板能访问 ======
