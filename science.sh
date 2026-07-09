@@ -2884,7 +2884,7 @@ NGINXEOF
   echo "=============================="
 exit
 fi
-# ====== CF优选IP获取（供面板展示） ======
+# ====== CF优选IP获取（含三大运营商分类，供面板展示） ======
 if [ "$1" = "bestip" ]; then
 SAVE_FILE="$HOME/science/bestip.json"
 bp_ip=""; bp_delay=""; bp_speed=""; bp_updated=""
@@ -2904,7 +2904,6 @@ fetch_bestip() {
       [ -n "$bp_ip" ] && break
     fi
   done
-  # 如果API都失败，用CFST本地测速
   if [ -z "$bp_ip" ]; then
     cfst_bin="$HOME/science/cfst"
     if [ -x "$cfst_bin" ]; then
@@ -2924,9 +2923,48 @@ for api_url in "https://ip.164746.xyz" "https://cf.090227.xyz"; do
     [ -n "$bp_list" ] && break
   fi
 done
+
+# ====== 三大运营商分类优选IP ======
+# 从API返回中按运营商标签分类：电信/联通/移动
+parse_operator_ips() {
+  _op="$1"  # 电信 or 联通 or 移动
+  _result=""
+  for api_url in "https://ip.164746.xyz" "https://cf.090227.xyz"; do
+    resp=$(curl -sk --connect-timeout 8 --max-time 15 "$api_url" 2>/dev/null)
+    if [ -n "$resp" ]; then
+      _result=$(echo "$resp" | grep -i "$_op" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+#[^ ]*' | head -3 | tr '\n' ',' | sed 's/,$//')
+      [ -n "$_result" ] && break
+    fi
+  done
+  # 如果API没返回运营商标签，从通用列表取前3个作为兜底
+  if [ -z "$_result" ]; then
+    _result=$(echo "$bp_list" | cut -d',' -f1-3 2>/dev/null)
+  fi
+  echo "$_result"
+}
+
+bp_telecom=$(parse_operator_ips "电信")
+bp_unicom=$(parse_operator_ips "联通")
+bp_mobile=$(parse_operator_ips "移动")
+
+# 提取各运营商最佳IP
+extract_best_ip() { echo "$1" | cut -d',' -f1 | cut -d'#' -f1; }
+extract_best_tag() { echo "$1" | cut -d',' -f1 | cut -d'#' -f2-; }
+
+bp_telecom_ip=$(extract_best_ip "$bp_telecom")
+bp_telecom_tag=$(extract_best_tag "$bp_telecom")
+bp_unicom_ip=$(extract_best_ip "$bp_unicom")
+bp_unicom_tag=$(extract_best_tag "$bp_unicom")
+bp_mobile_ip=$(extract_best_ip "$bp_mobile")
+bp_mobile_tag=$(extract_best_tag "$bp_mobile")
+
 bp_updated=$(date '+%Y-%m-%d %H:%M:%S')
-printf '{"best_ip":"%s","best_delay":"%s","best_speed":"%s","ip_list":"%s","updated":"%s"}\n' \
-  "${bp_ip:-无}" "${bp_delay:-0}" "${bp_speed:-0}" "${bp_list}" "$bp_updated" > "$SAVE_FILE"
+printf '{"best_ip":"%s","best_delay":"%s","best_speed":"%s","ip_list":"%s","telecom_ip":"%s","telecom_tag":"%s","telecom_list":"%s","unicom_ip":"%s","unicom_tag":"%s","unicom_list":"%s","mobile_ip":"%s","mobile_tag":"%s","mobile_list":"%s","updated":"%s"}\n' \
+  "${bp_ip:-无}" "${bp_delay:-0}" "${bp_speed:-0}" "${bp_list}" \
+  "${bp_telecom_ip:-无}" "${bp_telecom_tag:-}" "${bp_telecom}" \
+  "${bp_unicom_ip:-无}" "${bp_unicom_tag:-}" "${bp_unicom}" \
+  "${bp_mobile_ip:-无}" "${bp_mobile_tag:-}" "${bp_mobile}" \
+  "$bp_updated" > "$SAVE_FILE"
 echo "优选IP已更新: ${bp_ip:-获取失败} (延迟:${bp_delay:-N/A}ms, 速度:${bp_speed:-N/A})"
 # 更新 cdnip 文件
 if [ -n "$bp_ip" ] && [ "$bp_ip" != "无" ]; then

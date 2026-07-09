@@ -96,8 +96,32 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
     </div>
   </div>
   <div class="card">
-    <h3>CF优选IP <span class="bestip-refresh" id="bestipUpdated"></span></h3>
-    <div style="font-size:12px;color:var(--sub);margin-bottom:4px;">最佳IP: <strong id="bestipBest" style="font-family:monospace;font-size:13px;">加载中...</strong> <span id="bestipDelay"></span> <span id="bestipSpeed"></span></div>
+    <h3>CF优选IP - 运营商分类 <span class="bestip-refresh" id="bestipUpdated"></span></h3>
+    <div class="grid grid-3">
+      <div class="stat" style="border-color:#2e7d32;">
+        <div class="l" style="color:#2e7d32;">电信推荐</div>
+        <div class="v" style="font-size:14px;font-family:monospace;" id="telecomIp">—</div>
+        <div class="l" style="font-size:10px;color:var(--muted);" id="telecomTag"></div>
+      </div>
+      <div class="stat" style="border-color:#e65100;">
+        <div class="l" style="color:#e65100;">联通推荐</div>
+        <div class="v" style="font-size:14px;font-family:monospace;" id="unicomIp">—</div>
+        <div class="l" style="font-size:10px;color:var(--muted);" id="unicomTag"></div>
+      </div>
+      <div class="stat" style="border-color:#1565c0;">
+        <div class="l" style="color:#1565c0;">移动推荐</div>
+        <div class="v" style="font-size:14px;font-family:monospace;" id="mobileIp">—</div>
+        <div class="l" style="font-size:10px;color:var(--muted);" id="mobileTag"></div>
+      </div>
+    </div>
+    <div style="font-size:12px;margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="sm" id="btn-copyTelecom">复制电信IP</button>
+      <button class="sm" id="btn-copyUnicom">复制联通IP</button>
+      <button class="sm" id="btn-copyMobile">复制移动IP</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>通用优选IP列表</h3>
     <table class="ip-table" id="bestipTable">
       <thead><tr><th>IP地址</th><th>备注</th><th>操作</th></tr></thead>
       <tbody id="bestipBody"><tr><td colspan="3" style="color:var(--muted);text-align:center;">等待数据...</td></tr></tbody>
@@ -417,31 +441,53 @@ function copyEl(id, btn) {
 
 function renderBestIP(d) {
   var bip = d.bestip || {};
-  var bestEl = document.getElementById('bestipBest');
-  var delayEl = document.getElementById('bestipDelay');
-  var speedEl = document.getElementById('bestipSpeed');
   var updatedEl = document.getElementById('bestipUpdated');
   var bodyEl = document.getElementById('bestipBody');
-  if (!bestEl) return;
-  var bestIp = bip.best_ip || '';
-  if (!bestIp || bestIp === '无') {
-    bestEl.textContent = '暂无数据';
-    delayEl.textContent = '';
-    speedEl.textContent = '';
-    updatedEl.textContent = '';
-    bodyEl.innerHTML = '<tr><td colspan="3" style="color:var(--muted);text-align:center;">请先在服务器执行: science bestip</td></tr>';
-    return;
+  
+  // 运营商IP
+  var telIp = bip.telecom_ip || bip.best_ip || '';
+  var telTag = bip.telecom_tag || '';
+  var uniIp = bip.unicom_ip || bip.best_ip || '';
+  var uniTag = bip.unicom_tag || '';
+  var mobIp = bip.mobile_ip || bip.best_ip || '';
+  var mobTag = bip.mobile_tag || '';
+  
+  var telEl = document.getElementById('telecomIp');
+  var telTagEl = document.getElementById('telecomTag');
+  var uniEl = document.getElementById('unicomIp');
+  var uniTagEl = document.getElementById('unicomTag');
+  var mobEl = document.getElementById('mobileIp');
+  var mobTagEl = document.getElementById('mobileTag');
+  
+  if (telEl) {
+    telEl.textContent = telIp && telIp !== '无' ? telIp : '暂无';
+    if (telTagEl) telTagEl.textContent = telTag || '';
   }
-  bestEl.textContent = bestIp;
-  var dly = bip.best_delay || '0';
-  delayEl.innerHTML = '<span class="bestip-tag">延迟 ' + escHtml(dly) + 'ms</span>';
-  speedEl.innerHTML = '<span class="bestip-tag">速度 ' + escHtml(bip.best_speed || 'N/A') + '</span>';
-  updatedEl.textContent = '更新于 ' + (bip.updated || '');
-  // 渲染IP列表
+  if (uniEl) {
+    uniEl.textContent = uniIp && uniIp !== '无' ? uniIp : '暂无';
+    if (uniTagEl) uniTagEl.textContent = uniTag || '';
+  }
+  if (mobEl) {
+    mobEl.textContent = mobIp && mobIp !== '无' ? mobIp : '暂无';
+    if (mobTagEl) mobTagEl.textContent = mobTag || '';
+  }
+  
+  updatedEl.textContent = bip.updated ? '更新于 ' + bip.updated : '';
+  
+  // 复制按钮
+  var btnTel = document.getElementById('btn-copyTelecom');
+  var btnUni = document.getElementById('btn-copyUnicom');
+  var btnMob = document.getElementById('btn-copyMobile');
+  if (btnTel) btnTel.onclick = function(){ copyText(telIp, this); };
+  if (btnUni) btnUni.onclick = function(){ copyText(uniIp, this); };
+  if (btnMob) btnMob.onclick = function(){ copyText(mobIp, this); };
+  
+  // 通用IP列表
+  if (!bodyEl) return;
   var ipList = bip.ip_list || '';
   var items = ipList ? ipList.split(',') : [];
   if (!items.length) {
-    bodyEl.innerHTML = '<tr><td colspan="3" style="color:var(--muted);">暂无列表</td></tr>';
+    bodyEl.innerHTML = '<tr><td colspan="3" style="color:var(--muted);text-align:center;">请先在服务器执行: science bestip</td></tr>';
     return;
   }
   var h = '';
@@ -453,7 +499,6 @@ function renderBestIP(d) {
     h += '<tr><td>' + ip + '</td><td style="color:var(--sub);">' + remark + '</td><td><span class="ip-copy" data-ip="' + escHtml(ip) + '">复制</span></td></tr>';
   }
   bodyEl.innerHTML = h || '<tr><td colspan="3" style="color:var(--muted);">暂无列表</td></tr>';
-  // 绑定复制事件
   var copies = bodyEl.querySelectorAll('.ip-copy');
   for (var j = 0; j < copies.length; j++) {
     copies[j].addEventListener('click', function(){
