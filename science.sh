@@ -2942,25 +2942,18 @@ fetch_bestip() {
   fi
 }
 fetch_bestip
-# 获取前5个优选IP列表
+# 获取前5个优选IP列表（去重）
 bp_list=""
 for api_url in "https://ip.164746.xyz" "https://cf.090227.xyz"; do
   resp=$(curl -sk --connect-timeout 8 --max-time 15 "$api_url" 2>/dev/null)
   if [ -n "$resp" ]; then
-    bp_list=$(echo "$resp" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+#[^ ]*' | head -5 | tr '\n' ',' | sed 's/,$//')
+    # 优先从 copyIP('...') 提取（HTML API格式）
+    bp_list=$(echo "$resp" | grep -oE "copyIP\('[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'\)" | sed "s/copyIP('//g; s/')//g" | sort -u | head -5 | tr '\n' ',' | sed 's/,$//')
+    # 如果 copyIP 没提取到，用通用正则 + 去重
+    [ -z "$bp_list" ] && bp_list=$(echo "$resp" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | sort -u | head -5 | tr '\n' ',' | sed 's/,$//')
     [ -n "$bp_list" ] && break
   fi
 done
-# 兜底：如果API没返回带#标签的格式，提取纯IP
-if [ -z "$bp_list" ]; then
-  for api_url in "https://ip.164746.xyz" "https://cf.090227.xyz"; do
-    resp=$(curl -sk --connect-timeout 8 --max-time 15 "$api_url" 2>/dev/null)
-    if [ -n "$resp" ]; then
-      bp_list=$(echo "$resp" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -5 | tr '\n' ',' | sed 's/,$//')
-      [ -n "$bp_list" ] && break
-    fi
-  done
-fi
 
 # ====== 三大运营商分类优选IP ======
 # 从API返回中按运营商标签分类：电信/联通/移动
@@ -2970,8 +2963,11 @@ parse_operator_ips() {
   for api_url in "https://ip.164746.xyz" "https://cf.090227.xyz"; do
     resp=$(curl -sk --connect-timeout 8 --max-time 15 "$api_url" 2>/dev/null)
     if [ -n "$resp" ]; then
-      _result=$(echo "$resp" | grep -i "$_op" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+#[^ ]*' | head -3 | tr '\n' ',' | sed 's/,$//')
-      [ -n "$_result" ] && break
+      # 如果HTML包含运营商关键词，提取该行附近的IP
+      if echo "$resp" | grep -qi "$_op"; then
+        _result=$(echo "$resp" | grep -i "$_op" | grep -oE "copyIP\('[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'\)" | sed "s/copyIP('//g; s/')//g" | sort -u | head -3 | tr '\n' ',' | sed 's/,$//')
+        [ -n "$_result" ] && break
+      fi
     fi
   done
   # 如果API没返回运营商标签，从通用列表取前3个作为兜底
@@ -2985,9 +2981,9 @@ bp_telecom=$(parse_operator_ips "电信")
 bp_unicom=$(parse_operator_ips "联通")
 bp_mobile=$(parse_operator_ips "移动")
 
-# 提取各运营商最佳IP
+# 提取各运营商最佳IP（IP可能带#tag或纯IP）
 extract_best_ip() { echo "$1" | cut -d',' -f1 | cut -d'#' -f1; }
-extract_best_tag() { echo "$1" | cut -d',' -f1 | cut -d'#' -f2-; }
+extract_best_tag() { echo "$1" | cut -d',' -f1 | cut -d'#' -f2- 2>/dev/null; }
 
 bp_telecom_ip=$(extract_best_ip "$bp_telecom")
 bp_telecom_tag=$(extract_best_tag "$bp_telecom")
