@@ -444,13 +444,14 @@ function renderBestIP(d) {
   var updatedEl = document.getElementById('bestipUpdated');
   var bodyEl = document.getElementById('bestipBody');
   
-  // 运营商IP
-  var telIp = bip.telecom_ip || bip.best_ip || '';
-  var telTag = bip.telecom_tag || '';
-  var uniIp = bip.unicom_ip || bip.best_ip || '';
-  var uniTag = bip.unicom_tag || '';
-  var mobIp = bip.mobile_ip || bip.best_ip || '';
-  var mobTag = bip.mobile_tag || '';
+  // 运营商IP（"无"字符串是truthy需显式排除）
+  var best = bip.best_ip || '';
+  var telIp = (bip.telecom_ip && bip.telecom_ip !== '无') ? bip.telecom_ip : best;
+  var telTag = (bip.telecom_tag && bip.telecom_tag !== '无') ? bip.telecom_tag : '';
+  var uniIp = (bip.unicom_ip && bip.unicom_ip !== '无') ? bip.unicom_ip : best;
+  var uniTag = (bip.unicom_tag && bip.unicom_tag !== '无') ? bip.unicom_tag : '';
+  var mobIp = (bip.mobile_ip && bip.mobile_ip !== '无') ? bip.mobile_ip : best;
+  var mobTag = (bip.mobile_tag && bip.mobile_tag !== '无') ? bip.mobile_tag : '';
   
   var telEl = document.getElementById('telecomIp');
   var telTagEl = document.getElementById('telecomTag');
@@ -486,6 +487,10 @@ function renderBestIP(d) {
   if (!bodyEl) return;
   var ipList = bip.ip_list || '';
   var items = ipList ? ipList.split(',') : [];
+  // 如果列表为空但有best_ip，至少显示它
+  if (!items.length && best) {
+    items = [best + '#通用优选'];
+  }
   if (!items.length) {
     bodyEl.innerHTML = '<tr><td colspan="3" style="color:var(--muted);text-align:center;">请先在服务器执行: science bestip</td></tr>';
     return;

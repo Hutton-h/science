@@ -2951,6 +2951,16 @@ for api_url in "https://ip.164746.xyz" "https://cf.090227.xyz"; do
     [ -n "$bp_list" ] && break
   fi
 done
+# 兜底：如果API没返回带#标签的格式，提取纯IP
+if [ -z "$bp_list" ]; then
+  for api_url in "https://ip.164746.xyz" "https://cf.090227.xyz"; do
+    resp=$(curl -sk --connect-timeout 8 --max-time 15 "$api_url" 2>/dev/null)
+    if [ -n "$resp" ]; then
+      bp_list=$(echo "$resp" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -5 | tr '\n' ',' | sed 's/,$//')
+      [ -n "$bp_list" ] && break
+    fi
+  done
+fi
 
 # ====== 三大运营商分类优选IP ======
 # 从API返回中按运营商标签分类：电信/联通/移动
