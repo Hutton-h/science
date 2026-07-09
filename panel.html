@@ -56,6 +56,13 @@ input[type="checkbox"] { accent-color:var(--ink); }
 .help { font-size:12px; color:var(--sub); line-height:1.8; }
 .help code { background:var(--bg2); padding:1px 5px; border-radius:3px; font-size:11px; border:1px solid var(--line); }
 .help strong { color:var(--ink); }
+  .ip-table { width:100%; border-collapse:collapse; font-size:12px; margin-top:6px; }
+  .ip-table th { background:var(--bg2); padding:6px 8px; text-align:left; font-weight:600; border-bottom:1px solid var(--line); color:var(--sub); }
+  .ip-table td { padding:6px 8px; border-bottom:1px solid var(--line); font-family:monospace; }
+  .ip-table .ip-copy { cursor:pointer; color:var(--ink); font-size:11px; padding:2px 6px; border:1px solid var(--line); border-radius:3px; background:var(--bg2); }
+  .ip-table .ip-copy:hover { background:var(--line); }
+  .bestip-tag { display:inline-block; background:#e8f5e9; color:#2e7d32; font-size:10px; padding:1px 5px; border-radius:3px; margin-left:4px; }
+  .bestip-refresh { font-size:11px; color:var(--muted); margin-left:8px; }
 footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
 </style>
 </head>
@@ -87,6 +94,14 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
       <div style="font-size:12px;display:flex;justify-content:space-between;margin:2px 0"><span>CPU</span><span id="cpuV">—</span></div>
       <div style="font-size:12px;display:flex;justify-content:space-between;margin:2px 0"><span>内存</span><span id="memV">—</span></div>
     </div>
+  </div>
+  <div class="card">
+    <h3>CF优选IP <span class="bestip-refresh" id="bestipUpdated"></span></h3>
+    <div style="font-size:12px;color:var(--sub);margin-bottom:4px;">最佳IP: <strong id="bestipBest" style="font-family:monospace;font-size:13px;">加载中...</strong> <span id="bestipDelay"></span> <span id="bestipSpeed"></span></div>
+    <table class="ip-table" id="bestipTable">
+      <thead><tr><th>IP地址</th><th>备注</th><th>操作</th></tr></thead>
+      <tbody id="bestipBody"><tr><td colspan="3" style="color:var(--muted);text-align:center;">等待数据...</td></tr></tbody>
+    </table>
   </div>
   <div class="card">
     <h3>一键部署</h3>
@@ -328,6 +343,8 @@ function fetchDash() {
         var ma = parseInt(d.memory && d.memory.available) || 0;
         var mu = mt - ma;
         document.getElementById('memV').textContent = fmtSize(mu * 1024) + ' / ' + fmtSize(mt * 1024);
+        // 渲染优选IP
+        renderBestIP(d);
         fetchNodes();
       } catch(e) { setStatus('数据解析失败', 'err'); }
     } else { setStatus('无法连接: ' + srv, 'err'); }
@@ -396,6 +413,54 @@ function copyEl(id, btn) {
   var t = e.textContent || e.innerText || '';
   if (t === '请先连接' || !t) return;
   copyText(t, btn);
+}
+
+function renderBestIP(d) {
+  var bip = d.bestip || {};
+  var bestEl = document.getElementById('bestipBest');
+  var delayEl = document.getElementById('bestipDelay');
+  var speedEl = document.getElementById('bestipSpeed');
+  var updatedEl = document.getElementById('bestipUpdated');
+  var bodyEl = document.getElementById('bestipBody');
+  if (!bestEl) return;
+  var bestIp = bip.best_ip || '';
+  if (!bestIp || bestIp === '无') {
+    bestEl.textContent = '暂无数据';
+    delayEl.textContent = '';
+    speedEl.textContent = '';
+    updatedEl.textContent = '';
+    bodyEl.innerHTML = '<tr><td colspan="3" style="color:var(--muted);text-align:center;">请先在服务器执行: science bestip</td></tr>';
+    return;
+  }
+  bestEl.textContent = bestIp;
+  var dly = bip.best_delay || '0';
+  delayEl.innerHTML = '<span class="bestip-tag">延迟 ' + escHtml(dly) + 'ms</span>';
+  speedEl.innerHTML = '<span class="bestip-tag">速度 ' + escHtml(bip.best_speed || 'N/A') + '</span>';
+  updatedEl.textContent = '更新于 ' + (bip.updated || '');
+  // 渲染IP列表
+  var ipList = bip.ip_list || '';
+  var items = ipList ? ipList.split(',') : [];
+  if (!items.length) {
+    bodyEl.innerHTML = '<tr><td colspan="3" style="color:var(--muted);">暂无列表</td></tr>';
+    return;
+  }
+  var h = '';
+  for (var i = 0; i < items.length && i < 5; i++) {
+    var parts = items[i].split('#');
+    var ip = escHtml(parts[0] || '');
+    var remark = escHtml(parts[1] || '—');
+    if (!ip) continue;
+    h += '<tr><td>' + ip + '</td><td style="color:var(--sub);">' + remark + '</td><td><span class="ip-copy" data-ip="' + escHtml(ip) + '">复制</span></td></tr>';
+  }
+  bodyEl.innerHTML = h || '<tr><td colspan="3" style="color:var(--muted);">暂无列表</td></tr>';
+  // 绑定复制事件
+  var copies = bodyEl.querySelectorAll('.ip-copy');
+  for (var j = 0; j < copies.length; j++) {
+    copies[j].addEventListener('click', function(){
+      var ip = this.getAttribute('data-ip');
+      copyText(ip, this);
+    });
+  }
 }
 
 function fmtSize(b) {

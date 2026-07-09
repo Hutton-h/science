@@ -2509,6 +2509,8 @@ if [ -s "$HOME/science/panel.html" ]; then
     $HOME/science/science.sh statusgen
     # 启动状态监控cron
     (crontab -l 2>/dev/null | grep -v 'science/statusgen'; echo "*/2 * * * * $HOME/science/science.sh statusgen >/dev/null 2>&1") | crontab - 2>/dev/null
+    # 添加优选IP自动更新cron（每30分钟）
+    (crontab -l 2>/dev/null | grep -v 'science/bestip'; echo "*/30 * * * * $HOME/science/science.sh bestip >/dev/null 2>&1") | crontab - 2>/dev/null
     echo "已启动每2分钟自动更新状态监控"
   else
     echo "提示：订阅功能未开启，请先运行 sub=y 的主脚本启用订阅"
@@ -2864,6 +2866,60 @@ NGINXEOF
   echo "=============================="
 exit
 fi
+# ====== CF优选IP获取（供面板展示） ======
+if [ "$1" = "bestip" ]; then
+SAVE_FILE="$HOME/science/bestip.json"
+bp_ip=""; bp_delay=""; bp_speed=""; bp_updated=""
+# 尝试从多个公开API获取优选IP
+fetch_bestip() {
+  for api_url in \
+    "https://ip.164746.xyz" \
+    "https://cf.090227.xyz" \
+    "https://proxy.freecdn.workers.dev" \
+    "https://cdn.shanggan.pp.ua" \
+  ; do
+    resp=$(curl -sk --connect-timeout 8 --max-time 15 "$api_url" 2>/dev/null)
+    if [ -n "$resp" ]; then
+      bp_ip=$(echo "$resp" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+      bp_delay=$(echo "$resp" | grep -oE '[0-9]+\s*ms' | head -1 | grep -oE '[0-9]+')
+      bp_speed=$(echo "$resp" | grep -oE '[0-9]+\.[0-9]+\s*(MB|KB)' | head -1)
+      [ -n "$bp_ip" ] && break
+    fi
+  done
+  # 如果API都失败，用CFST本地测速
+  if [ -z "$bp_ip" ]; then
+    cfst_bin="$HOME/science/cfst"
+    if [ -x "$cfst_bin" ]; then
+      result=$($cfst_bin -n 50 -t 2 -dn 1 -tl 200 -p 0 2>/dev/null)
+      bp_ip=$(echo "$result" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+      bp_delay=$(echo "$result" | grep -oE '[0-9]+\.[0-9]+' | head -1)
+    fi
+  fi
+}
+fetch_bestip
+# 获取前5个优选IP列表
+bp_list=""
+for api_url in "https://ip.164746.xyz" "https://cf.090227.xyz"; do
+  resp=$(curl -sk --connect-timeout 8 --max-time 15 "$api_url" 2>/dev/null)
+  if [ -n "$resp" ]; then
+    bp_list=$(echo "$resp" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+#[^ ]*' | head -5 | tr '\n' ',' | sed 's/,$//')
+    [ -n "$bp_list" ] && break
+  fi
+done
+bp_updated=$(date '+%Y-%m-%d %H:%M:%S')
+printf '{"best_ip":"%s","best_delay":"%s","best_speed":"%s","ip_list":"%s","updated":"%s"}\n' \
+  "${bp_ip:-无}" "${bp_delay:-0}" "${bp_speed:-0}" "${bp_list}" "$bp_updated" > "$SAVE_FILE"
+echo "优选IP已更新: ${bp_ip:-获取失败} (延迟:${bp_delay:-N/A}ms, 速度:${bp_speed:-N/A})"
+# 更新 cdnip 文件
+if [ -n "$bp_ip" ] && [ "$bp_ip" != "无" ]; then
+  echo "$bp_ip" > "$HOME/science/cdnip1" 2>/dev/null
+  # 第二优IP
+  bp2=$(echo "$bp_list" | cut -d',' -f2 | cut -d'#' -f1)
+  [ -n "$bp2" ] && echo "$bp2" > "$HOME/science/cdnip2" 2>/dev/null
+fi
+exit
+fi
+
 # 生成状态监控JSON（供面板实时读取）
 if [ "$1" = "statusgen" ]; then
 mkdir -p "$HOME/websbx/$(cat $HOME/science/subtoken.log 2>/dev/null)" 2>/dev/null
@@ -2898,7 +2954,8 @@ cat > "$wsdir/status.json" <<EOF
   "node_count": $node_count,
   "last_update": "$last_update",
   "server_ip": "$(cat $HOME/science/server_ip.log 2>/dev/null)",
-  "dnym": "${dnym:-}"
+  "dnym": "${dnym:-}",
+  "bestip": $(cat "$HOME/science/bestip.json" 2>/dev/null || echo '{"best_ip":"","best_delay":"0","best_speed":"","ip_list":"","updated":""}')
 }
 EOF
 exit
@@ -2998,6 +3055,8 @@ echo "本地IP订阅链接已更新完成"
 $HOME/science/science.sh statusgen
 # 启动状态监控cron（每2分钟更新status.json供面板实时读取）
 (crontab -l 2>/dev/null | grep -v 'science/statusgen'; echo "*/2 * * * * $HOME/science/science.sh statusgen >/dev/null 2>&1") | crontab - 2>/dev/null
+# 添加优选IP自动更新cron（每30分钟）
+(crontab -l 2>/dev/null | grep -v 'science/bestip'; echo "*/30 * * * * $HOME/science/science.sh bestip >/dev/null 2>&1") | crontab - 2>/dev/null
 echo "已启动面板状态监控（每2分钟更新）"
 fi
 if [ -n "$hyjpt" ] && [ -n "$hyp" ]; then
