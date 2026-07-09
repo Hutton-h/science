@@ -1044,44 +1044,54 @@ fi
 if [ "$argo" = "vmpt" ]; then argoport=$(cat "$HOME/science/port_vm_ws" 2>/dev/null); echo "Vmess" > "$HOME/science/vlvm"; elif [ "$argo" = "vwpt" ]; then argoport=$(cat "$HOME/science/port_vw" 2>/dev/null); echo "Vless" > "$HOME/science/vlvm"; fi; echo "$argoport" > "$HOME/science/argoport.log"
 if [ -n "${ARGO_DOMAIN}" ] && [ -n "${ARGO_AUTH}" ]; then
 argoname='固定'
-if pidof systemd >/dev/null 2>&1 && [ "$EUID" -eq 0 ]; then
-cat > /etc/systemd/system/argo.service <<EOF
+# 支持多隧道：逗号分隔多个 token
+argo_tokens=$(echo "${ARGO_AUTH}" | tr ',' '\n')
+argo_count=0
+echo "${ARGO_AUTH}" > "$HOME/science/sbargotoken.log"
+for atk in $argo_tokens; do
+  [ -z "$atk" ] && continue
+  argo_count=$((argo_count + 1))
+  svc_name="argo"
+  [ $argo_count -gt 1 ] && svc_name="argo${argo_count}"
+  if pidof systemd >/dev/null 2>&1 && [ "$EUID" -eq 0 ]; then
+    cat > "/etc/systemd/system/${svc_name}.service" << EOF
 [Unit]
-Description=argo service
+Description=${svc_name} service
 After=network.target
 [Service]
 Type=simple
 NoNewPrivileges=yes
 TimeoutStartSec=0
-ExecStart=/root/science/cloudflared tunnel --no-autoupdate --edge-ip-version auto --protocol http2 run --token "${ARGO_AUTH}"
+ExecStart=/root/science/cloudflared tunnel --no-autoupdate --edge-ip-version auto --protocol http2 run --token "${atk}"
 Restart=on-failure
 RestartSec=5s
 [Install]
 WantedBy=multi-user.target
 EOF
-systemctl daemon-reload >/dev/null 2>&1
-systemctl enable argo >/dev/null 2>&1
-systemctl start argo >/dev/null 2>&1
-elif command -v rc-service >/dev/null 2>&1 && [ "$EUID" -eq 0 ]; then
-cat > /etc/init.d/argo <<EOF
+    systemctl daemon-reload >/dev/null 2>&1
+    systemctl enable "${svc_name}" >/dev/null 2>&1
+    systemctl start "${svc_name}" >/dev/null 2>&1
+  elif command -v rc-service >/dev/null 2>&1 && [ "$EUID" -eq 0 ]; then
+    cat > "/etc/init.d/${svc_name}" << EOF
 #!/sbin/openrc-run
-description="argo service"
+description="${svc_name} service"
 command="/root/science/cloudflared tunnel"
-command_args="--no-autoupdate --edge-ip-version auto --protocol http2 run --token ${ARGO_AUTH}"
-pidfile="/run/argo.pid"
+command_args="--no-autoupdate --edge-ip-version auto --protocol http2 run --token ${atk}"
+pidfile="/run/${svc_name}.pid"
 command_background="yes"
 depend() {
 need net
 }
 EOF
-chmod +x /etc/init.d/argo >/dev/null 2>&1
-rc-update add argo default >/dev/null 2>&1
-rc-service argo start >/dev/null 2>&1
-else
-nohup "$HOME/science/cloudflared" tunnel --no-autoupdate --edge-ip-version auto --protocol http2 run --token "${ARGO_AUTH}" >/dev/null 2>&1 &
-fi
+    chmod +x "/etc/init.d/${svc_name}" >/dev/null 2>&1
+    rc-update add "${svc_name}" default >/dev/null 2>&1
+    rc-service "${svc_name}" start >/dev/null 2>&1
+  else
+    nohup "$HOME/science/cloudflared" tunnel --no-autoupdate --edge-ip-version auto --protocol http2 run --token "${atk}" >/dev/null 2>&1 &
+  fi
+done
 echo "${ARGO_DOMAIN}" > "$HOME/science/sbargoym.log"
-echo "${ARGO_AUTH}" > "$HOME/science/sbargotoken.log"
+echo "启动 ${argo_count} 个Argo固定隧道"
 else
 argoname='临时'
 nohup "$HOME/science/cloudflared" tunnel --url http://localhost:$(cat $HOME/science/argoport.log) --edge-ip-version auto --no-autoupdate --protocol http2 > $HOME/science/argo.log 2>&1 &
@@ -1137,7 +1147,7 @@ sed -i '/science\/cloudflared/d' /tmp/crontab.tmp
 if [ -n "$argo" ] && [ -n "$vmag" ]; then
 if [ -n "${ARGO_DOMAIN}" ] && [ -n "${ARGO_AUTH}" ]; then
 if ! pidof systemd >/dev/null 2>&1 && ! command -v rc-service >/dev/null 2>&1; then
-echo '@reboot sleep 10 && /bin/sh -c "nohup $HOME/science/cloudflared tunnel --no-autoupdate --edge-ip-version auto --protocol http2 run --token $(cat $HOME/science/sbargotoken.log 2>/dev/null) >/dev/null 2>&1 &"' >> /tmp/crontab.tmp
+  echo '@reboot sleep 10 && /bin/sh -c "for atk in $(cat $HOME/science/sbargotoken.log 2>/dev/null | tr ',' ' '); do [ -n \"\$atk\" ] && nohup $HOME/science/cloudflared tunnel --no-autoupdate --edge-ip-version auto --protocol http2 run --token \"\$atk\" >/dev/null 2>&1 &; done"' >> /tmp/crontab.tmp
 fi
 else
 if command -v apk >/dev/null 2>&1; then
@@ -2324,17 +2334,17 @@ crontab /tmp/crontab.tmp >/dev/null 2>&1
 rm /tmp/crontab.tmp
 rm -rf  "$HOME/bin/science"
 if pidof systemd >/dev/null 2>&1; then
-for svc in xr sb argo; do
+for svc in xr sb argo argo2 argo3 argo4 argo5; do
 systemctl stop "$svc" >/dev/null 2>&1
 systemctl disable "$svc" >/dev/null 2>&1
 done
-rm -rf /etc/systemd/system/{xr.service,sb.service,argo.service}
+rm -rf /etc/systemd/system/{xr.service,sb.service,argo.service,argo2.service,argo3.service,argo4.service,argo5.service}
 elif command -v rc-service >/dev/null 2>&1; then
-for svc in sing-box xray argo; do
+for svc in sing-box xray argo argo2 argo3 argo4 argo5; do
 rc-service "$svc" stop >/dev/null 2>&1
 rc-update del "$svc" default >/dev/null 2>&1
 done
-rm -rf /etc/init.d/{sing-box,xray,argo} /etc/local.d/alpinescience.start /etc/local.d/alpinesubsbx.start
+rm -rf /etc/init.d/{sing-box,xray,argo,argo2,argo3,argo4,argo5} /etc/local.d/alpinescience.start /etc/local.d/alpinesubsbx.start
 iptables -t nat -F PREROUTING >/dev/null 2>&1
 netfilter-persistent save >/dev/null 2>&1
 rc-service iptables save >/dev/null 2>&1
@@ -2457,14 +2467,22 @@ xrestart
 *"/science/c"*)
 kill "$(basename "$P")" 2>/dev/null
 kill -15 $(pgrep -f 'science/c' 2>/dev/null) >/dev/null 2>&1
-if [ -e "$HOME/science/sbargotoken.log" ]; then
-if pidof systemd >/dev/null 2>&1; then
-systemctl restart argo >/dev/null 2>&1
-elif command -v rc-service >/dev/null 2>&1; then
-rc-service argo restart >/dev/null 2>&1
-else
-nohup $HOME/science/cloudflared tunnel --no-autoupdate --edge-ip-version auto --protocol http2 run --token $(cat $HOME/science/sbargotoken.log 2>/dev/null) >/dev/null 2>&1 &
-fi
+if [ -s "$HOME/science/sbargotoken.log" ]; then
+  argo_tokens=$(tr ',' '\n' < "$HOME/science/sbargotoken.log" 2>/dev/null)
+  atk_idx=0
+  for atk in $argo_tokens; do
+    [ -z "$atk" ] && continue
+    atk_idx=$((atk_idx + 1))
+    svc_name="argo"
+    [ $atk_idx -gt 1 ] && svc_name="argo${atk_idx}"
+    if pidof systemd >/dev/null 2>&1; then
+      systemctl restart "${svc_name}" >/dev/null 2>&1
+    elif command -v rc-service >/dev/null 2>&1; then
+      rc-service "${svc_name}" restart >/dev/null 2>&1
+    else
+      nohup $HOME/science/cloudflared tunnel --no-autoupdate --edge-ip-version auto --protocol http2 run --token "$atk" >/dev/null 2>&1 &
+    fi
+  done
 else
 nohup $HOME/science/cloudflared tunnel --url http://localhost:$(cat $HOME/science/argoport.log 2>/dev/null) --edge-ip-version auto --no-autoupdate --protocol http2 > $HOME/science/argo.log 2>&1 &
 fi
