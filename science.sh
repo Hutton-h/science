@@ -2948,7 +2948,7 @@ for api_url in "https://ip.164746.xyz" "https://cf.090227.xyz"; do
   resp=$(curl -sk --connect-timeout 8 --max-time 15 "$api_url" 2>/dev/null)
   if [ -n "$resp" ]; then
     # 优先从 copyIP('...') 提取（HTML API格式）
-    bp_list=$(echo "$resp" | grep -oE "copyIP\('[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'\)" | sed "s/copyIP('//g; s/')//g" | sort -u | head -5 | tr '\n' ',' | sed 's/,$//')
+    bp_list=$(echo "$resp" | grep -oE "copyIP\(\'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\'\)" | sed "s/copyIP('//g; s/')//g" | sort -u | head -5 | tr '\n' ',' | sed 's/,$//')
     # 如果 copyIP 没提取到，用通用正则 + 去重
     [ -z "$bp_list" ] && bp_list=$(echo "$resp" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | sort -u | head -5 | tr '\n' ',' | sed 's/,$//')
     [ -n "$bp_list" ] && break
@@ -2965,7 +2965,7 @@ parse_operator_ips() {
     if [ -n "$resp" ]; then
       # 如果HTML包含运营商关键词，提取该行附近的IP
       if echo "$resp" | grep -qi "$_op"; then
-        _result=$(echo "$resp" | grep -i "$_op" | grep -oE "copyIP\('[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'\)" | sed "s/copyIP('//g; s/')//g" | sort -u | head -3 | tr '\n' ',' | sed 's/,$//')
+        _result=$(echo "$resp" | grep -i "$_op" | grep -oE "copyIP\(\'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\'\)" | sed "s/copyIP('//g; s/')//g" | sort -u | head -3 | tr '\n' ',' | sed 's/,$//')
         [ -n "$_result" ] && break
       fi
     fi
