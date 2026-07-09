@@ -2629,9 +2629,9 @@ server {
     listen 80;
     listen [::]:80;
     server_name $dnym_now;
-    auth_basic "Science Panel";
-    auth_basic_user_file /etc/nginx/conf.d/.htpasswd_science;
     location / {
+        auth_basic "Science Panel";
+        auth_basic_user_file /etc/nginx/conf.d/.htpasswd_science;
         proxy_pass http://127.0.0.1:${subport};
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
@@ -2689,9 +2689,9 @@ server {
     ssl_certificate /etc/nginx/certs/${dnym_now}_cert.pem;
     ssl_certificate_key /etc/nginx/certs/${dnym_now}_key.pem;
     add_header Alt-Svc 'h3=":443"; ma=86400';
-    auth_basic "Science Panel";
-    auth_basic_user_file /etc/nginx/conf.d/.htpasswd_science;
     location / {
+        auth_basic "Science Panel";
+        auth_basic_user_file /etc/nginx/conf.d/.htpasswd_science;
         proxy_pass http://127.0.0.1:${subport};
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
@@ -2737,9 +2737,9 @@ server {
     ssl_certificate /etc/nginx/certs/${dnym_now}_cert.pem;
     ssl_certificate_key /etc/nginx/certs/${dnym_now}_key.pem;
     add_header Alt-Svc 'h3=":443"; ma=86400';
-    auth_basic "Science Panel";
-    auth_basic_user_file /etc/nginx/conf.d/.htpasswd_science;
     location / {
+        auth_basic "Science Panel";
+        auth_basic_user_file /etc/nginx/conf.d/.htpasswd_science;
         proxy_pass http://127.0.0.1:${subport};
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
@@ -2829,6 +2829,10 @@ server {
     location ~ ^/[^/]+/index\.html\$ {
         auth_basic "Science Panel";
         auth_basic_user_file $NGX_HTPASSWD;
+    }
+    location ~ ^/[^/]+/.*\.((yaml|json|txt))$ {
+        auth_basic off;
+        try_files \$uri =404;
     }
     location / { try_files \$uri =404; }
 }
