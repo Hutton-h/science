@@ -1627,7 +1627,7 @@ fi
 if grep anytls-sb "$HOME/science/sb.json" >/dev/null 2>&1; then
 echo "💣【 AnyTLS 】节点信息如下："
 port_an=$(cat "$HOME/science/port_an")
-an_link="anytls://$uuid@$server_ip:$port_an?insecure=0&allowInsecure=0&pinSHA256=CscOWd+UAAC/azzKJSJ54TTjrCDvy0Do9yw9dmOJlvk=#${sxname}anytls-$hostname"
+an_link="anytls://$uuid@$server_ip:$port_an?insecure=1&allowInsecure=1#${sxname}anytls-$hostname"
 echo "$an_link" >> "$HOME/science/jhsub.txt"
 echo "$an_link"
 echo
@@ -1644,11 +1644,8 @@ cat <<EOF
             "min_idle_session": 5,
             "tls": {
                 "enabled": true,
-                "insecure": false,
-                "server_name": "$dnym_now",
-                "pinned_peer_certificate_chain_sha256": [
-                    "sha256:CscOWd+UAAC/azzKJSJ54TTjrCDvy0Do9yw9dmOJlvk="
-                ]
+                "insecure": true,
+                "server_name": "www.bing.com"
             }
          },
 EOF
@@ -1667,9 +1664,8 @@ cat <<EOF
   udp: true
   idle-session-check-interval: 30
   idle-session-timeout: 30
-  sni: $dnym_now
-  skip-cert-verify: false
-  pin-sha256: CscOWd+UAAC/azzKJSJ54TTjrCDvy0Do9yw9dmOJlvk=
+  sni: www.bing.com
+  skip-cert-verify: true
 EOF
 }
 clanpt1(){
@@ -1748,8 +1744,8 @@ $(sbhy2ports 2>/dev/null)
         "password": "$uuid",
         "tls": {
             "enabled": true,
-            "server_name": "$dnym_now",
-            "certificate_path": "/root/science/cert.crt",
+            "server_name": "www.bing.com",
+            "insecure": true,
             "alpn": [
                 "h3"
             ]
@@ -1770,9 +1766,8 @@ cat <<EOF
   password: $uuid                          
   alpn:
     - h3
-  sni: $dnym_now
-  skip-cert-verify: false
-  pin-sha256: CscOWd+UAAC/azzKJSJ54TTjrCDvy0Do9yw9dmOJlvk=
+  sni: www.bing.com
+  skip-cert-verify: true
   fast-open: true
 EOF
 }
@@ -1783,7 +1778,7 @@ fi
 if grep tuic5-sb "$HOME/science/sb.json" >/dev/null 2>&1; then
 echo "💣【 Tuic 】节点信息如下："
 port_tu=$(cat "$HOME/science/port_tu")
-tuic5_link="tuic://$uuid:$uuid@$server_ip:$port_tu?congestion_control=bbr&udp_relay_mode=native&alpn=h3&sni=$dnym_now&insecure=0&allow_insecure=0&pinSHA256=CscOWd+UAAC/azzKJSJ54TTjrCDvy0Do9yw9dmOJlvk=#${sxname}tuic-$hostname"
+tuic5_link="tuic://$uuid:$uuid@$server_ip:$port_tu?congestion_control=bbr&udp_relay_mode=native&alpn=h3&sni=www.bing.com&insecure=1&allow_insecure=1#${sxname}tuic-$hostname"
 echo "$tuic5_link" >> "$HOME/science/jhsub.txt"
 echo "$tuic5_link"
 echo
@@ -1803,8 +1798,8 @@ cat <<EOF
             "heartbeat": "10s",
             "tls":{
                 "enabled": true,
-                "server_name": "$dnym_now",
-                "certificate_path": "/root/science/cert.crt",
+                "server_name": "www.bing.com",
+                "insecure": true,
                 "alpn": [
                     "h3"
                 ]
@@ -1828,9 +1823,8 @@ cat <<EOF
   reduce-rtt: true
   udp-relay-mode: native
   congestion-controller: bbr
-  sni: $dnym_now
-  skip-cert-verify: false
-  pin-sha256: CscOWd+UAAC/azzKJSJ54TTjrCDvy0Do9yw9dmOJlvk=
+  sni: www.bing.com
+  skip-cert-verify: true
 EOF
 }
 cltupt1(){
