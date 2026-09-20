@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 export LANG=en_US.UTF-8
 
 # 中断处理：Ctrl+C 时清理临时文件
@@ -21,14 +21,17 @@ trap cleanup_on_exit INT TERM
 [ -z "${arpt+x}" ] || arp=yes
 [ -z "${sopt+x}" ] || sop=yes
 [ -z "${warp+x}" ] || wap=yes
-# 一键全协议预设：all=y 自动开启7大协议+Hysteria2端口跳跃+SOCKS5+订阅（Argo需额外指定agn和agk）
-[ -z "${all+x}" ] || { vlp=yes; vmp=yes; vmag=yes; hyp=yes; hyjpt="10000:20000"; tup=yes; xhp=yes; vxp=yes; ssp=yes; sop=yes; sub=y; vmag=yes; }
+[ -z "${nvpt+x}" ] || nvp=yes
+[ -z "${xupt+x}" ] || xup=yes
+[ -z "${xcpt+x}" ] || xcp=yes
+# 一键全协议预设：all=y 自动开启12大协议+Hysteria2端口跳跃+SOCKS5+订阅（Argo需额外指定agn和agk）
+[ -z "${all+x}" ] || { vlp=yes; vmp=yes; vmag=yes; hyp=yes; hyjpt="10000:20000"; tup=yes; xhp=yes; vxp=yes; ssp=yes; sop=yes; nvp=yes; xup=yes; xcp=yes; sub=y; vmag=yes; }
 if find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(s|x)' || pgrep -f 'science/(s|x)' >/dev/null 2>&1; then
 if [ "$1" = "rep" ]; then
-[ "$vwp" = yes ] || [ "$sop" = yes ] || [ "$vxp" = yes ] || [ "$ssp" = yes ] || [ "$vlp" = yes ] || [ "$vmp" = yes ] || [ "$hyp" = yes ] || [ "$tup" = yes ] || [ "$xhp" = yes ] || [ "$anp" = yes ] || [ "$arp" = yes ] || { echo "提示：rep重置协议时，请在脚本前至少设置一个协议变量哦，再见！💣"; exit; }
+[ "$xcp" = yes ] || [ "$xup" = yes ] || [ "$nvp" = yes ] || [ "$vwp" = yes ] || [ "$sop" = yes ] || [ "$vxp" = yes ] || [ "$ssp" = yes ] || [ "$vlp" = yes ] || [ "$vmp" = yes ] || [ "$hyp" = yes ] || [ "$tup" = yes ] || [ "$xhp" = yes ] || [ "$anp" = yes ] || [ "$arp" = yes ] || { echo "提示：rep重置协议时，请在脚本前至少设置一个协议变量哦，再见！💣"; exit; }
 fi
 else
-[ "$1" = "del" ] || [ "$1" = "panel" ] || [ "$1" = "statusgen" ] || [ "$1" = "list" ] || [ "$vwp" = yes ] || [ "$sop" = yes ] || [ "$vxp" = yes ] || [ "$ssp" = yes ] || [ "$vlp" = yes ] || [ "$vmp" = yes ] || [ "$hyp" = yes ] || [ "$tup" = yes ] || [ "$xhp" = yes ] || [ "$anp" = yes ] || [ "$arp" = yes ] || { echo "提示：未安装science脚本，请在脚本前至少设置一个协议变量哦，再见！💣"; exit; }
+[ "$1" = "del" ] || [ "$1" = "panel" ] || [ "$1" = "statusgen" ] || [ "$1" = "list" ] || [ "$xcp" = yes ] || [ "$xup" = yes ] || [ "$nvp" = yes ] || [ "$vwp" = yes ] || [ "$sop" = yes ] || [ "$vxp" = yes ] || [ "$ssp" = yes ] || [ "$vlp" = yes ] || [ "$vmp" = yes ] || [ "$hyp" = yes ] || [ "$tup" = yes ] || [ "$xhp" = yes ] || [ "$anp" = yes ] || [ "$arp" = yes ] || { echo "提示：未安装science脚本，请在脚本前至少设置一个协议变量哦，再见！💣"; exit; }
 fi
 export uuid=${uuid:-''}
 export port_vl_re=${vlpt:-''}
@@ -42,6 +45,9 @@ export port_an=${anpt:-''}
 export port_ar=${arpt:-''}
 export port_ss=${sspt:-''}
 export port_so=${sopt:-''}
+export port_nv=${nvpt:-''}
+export port_xu=${xupt:-''}
+export port_xc=${xcpt:-''}
 export ym_vl_re=${reym:-''}
 export cdnym=${cdnym:-''}
 export argo=${argo:-''}
@@ -66,7 +72,8 @@ echo "卸载脚本命令：science del 【或者】 主脚本 del"
 echo "部署/更新面板命令：science panel 【或者】 主脚本 panel"
 echo "一键全协议命令：all=y dnym=\"域名\" bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)"
 echo "一键全协议+Argo：all=y dnym=\"域名\" argo=vmpt agn=\"CF域名\" agk=\"ey开头的token\" bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)"
-echo "（all=y 自动开启9协议：VLESS-Reality/XHTTP-Reality/XHTTP-ENC/Hysteria2(端口跳跃)/Tuic/SS-2022/VMess-WS/SOCKS5）"
+echo "（all=y 自动开启12协议：VLESS-Reality/XHTTP-Reality/XHTTP-ENC/Hysteria2(端口跳跃)/Tuic/SS-2022/VMess-WS/SOCKS5/Naiveproxy/Xhttp-tls-UDP/Xhttp-tls-TCP）"
+echo "申请本地IP域名证书脚本：bash <(curl -Ls https://raw.githubusercontent.com/yonggekkk/acme-yg/main/acme.sh)"
 echo "订阅面板(需开启sub=y)：http://服务器IP或域名:订阅端口/订阅Token/index.html"
 echo "隐藏IP用域名变量：dnym=\"你的域名\" (需先在DNS将域名解析到服务器IP)"
 echo "双栈VPS显示IPv4/IPv6节点配置命令：ippz=4或6 science list 【或者】 ippz=4或6 主脚本 list"
@@ -76,7 +83,7 @@ echo
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo "skpl Github项目 ：github.com/Hutton-h"
 echo "Science一键无交互小钢炮脚本💣"
-echo "当前版本：V26.5.10-fix10"
+echo "当前版本：V26.7.16"
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 hostname=$(uname -a | awk '{print $2}')
 op=$(cat /etc/redhat-release 2>/dev/null || cat /etc/os-release 2>/dev/null | grep -i pretty_name | cut -d \" -f2)
@@ -103,7 +110,7 @@ fi
 v4v6(){
 v4=$( (command -v curl >/dev/null 2>&1 && curl -s4m5 -k "$v46url" 2>/dev/null) || (command -v wget >/dev/null 2>&1 && timeout 3 wget -4 --tries=2 -qO- "$v46url" 2>/dev/null) )
 v6=$( (command -v curl >/dev/null 2>&1 && curl -s6m5 -k "$v46url" 2>/dev/null) || (command -v wget >/dev/null 2>&1 && timeout 3 wget -6 --tries=2 -qO- "$v46url" 2>/dev/null) )
-v4dq=$( (command -v curl >/dev/null 2>&1 && curl -s4m5 -k https://myip.ipip.net/ | awk -F'来自于：' '{print $2}' 2>/dev/null) || (command -v wget >/dev/null 2>&1 && timeout 3 wget -4 --tries=2 -qO- https://myip.ipip.net/ | awk -F'来自于：' '{print $2}' 2>/dev/null) )
+v4dq=$( (command -v curl >/dev/null 2>&1 && curl -s4m5 -k https://ip.fm | sed -n 's/.*Location: //p' 2>/dev/null) || (command -v wget >/dev/null 2>&1 && timeout 3 wget -4 --tries=2 -qO- https://ip.fm | grep '<span class="has-text-grey-light">Location:' | tail -n1 | sed -E 's/.*>Location: <\/span>([^<]+)<.*/\1/' 2>/dev/null) )
 v6dq=$( (command -v curl >/dev/null 2>&1 && curl -s6m5 -k https://ip.fm | sed -n 's/.*Location: //p' 2>/dev/null) || (command -v wget >/dev/null 2>&1 && timeout 3 wget -6 --tries=2 -qO- https://ip.fm | grep '<span class="has-text-grey-light">Location:' | tail -n1 | sed -E 's/.*>Location: <\/span>([^<]+)<.*/\1/' 2>/dev/null) )
 }
 warpsx(){
@@ -373,6 +380,114 @@ EOF
 else
 vxp=vxptargo
 fi
+if [ -n "$xup" ]; then
+xup=xupt
+if [ -z "$port_xu" ] && [ ! -e "$HOME/science/port_xu" ]; then
+port_xu=$(shuf -i 10000-65535 -n 1)
+echo "$port_xu" > "$HOME/science/port_xu"
+elif [ -n "$port_xu" ]; then
+echo "$port_xu" > "$HOME/science/port_xu"
+fi
+port_xu=$(cat "$HOME/science/port_xu")
+echo "Vless-xhttp-tls-UDP端口：$port_xu"
+cat >> "$HOME/science/xr.json" <<EOF
+{
+  "tag": "xhttp-h3",
+  "listen": "::",
+  "port": ${port_xu},
+  "protocol": "vless",
+  "settings": {
+    "clients": [
+      {
+        "id": "${uuid}",
+        "flow": ""
+      }
+    ],
+    "decryption": "none"
+  },
+  "streamSettings": {
+    "network": "xhttp",
+    "security": "tls",
+    "xhttpSettings": {
+    "mode": "auto",
+    "path": "${uuid}-xu"
+    },
+    "tlsSettings": {
+      "alpn": [
+        "h3"
+      ],
+      "certificates": [
+        {
+          "certificateFile": "$certificateHTA",
+          "keyFile": "$keyHTA"
+        }
+      ]
+    }
+  },
+  "sniffing": {
+    "enabled": true,
+    "destOverride": ["http", "tls", "quic"],
+   "metadataOnly": false
+  }
+},	
+EOF
+else
+xup=xuptargo
+fi
+if [ -n "$xcp" ]; then
+xcp=xcpt
+if [ -z "$port_xc" ] && [ ! -e "$HOME/science/port_xc" ]; then
+port_xc=$(shuf -i 10000-65535 -n 1)
+echo "$port_xc" > "$HOME/science/port_xc"
+elif [ -n "$port_xc" ]; then
+echo "$port_xc" > "$HOME/science/port_xc"
+fi
+port_xc=$(cat "$HOME/science/port_xc")
+echo "Vless-xhttp-tls-TCP/UDP端口：$port_xc"
+cat >> "$HOME/science/xr.json" <<EOF
+{
+  "tag": "xhttp-h23",
+  "listen": "::",
+  "port": ${port_xc},
+  "protocol": "vless",
+  "settings": {
+    "clients": [
+      {
+        "id": "${uuid}",
+        "flow": ""
+      }
+    ],
+    "decryption": "none"
+  },
+  "streamSettings": {
+    "network": "xhttp",
+    "security": "tls",
+    "xhttpSettings": {
+    "mode": "auto",
+    "path": "${uuid}-xc"
+    },
+    "tlsSettings": {
+     "alpn": [
+      "h2","http/1.1"
+       ],
+      "certificates": [
+        {
+          "certificateFile": "$certificateHTA",
+          "keyFile": "$keyHTA"
+        }
+      ]
+    }
+  },
+  "sniffing": {
+    "enabled": true,
+    "destOverride": ["http", "tls", "quic"],
+   "metadataOnly": false
+  }
+},	
+EOF
+else
+xcp=xcptargo
+fi
 if [ -n "$vwp" ]; then
 vwp=vwpt
 if [ -z "$port_vw" ] && [ ! -e "$HOME/science/port_vw" ]; then
@@ -484,52 +599,37 @@ cat > "$HOME/science/sb.json" <<EOF
   "inbounds": [
 EOF
 insuuid
-if [ ! -f "$HOME/science/SHA256.txt" ]; then
-command -v openssl >/dev/null 2>&1 && openssl ecparam -genkey -name prime256v1 -out "$HOME/science/private.key" >/dev/null 2>&1
-command -v openssl >/dev/null 2>&1 && openssl req -new -x509 -days 36500 -key "$HOME/science/private.key" -out "$HOME/science/cert.crt" -subj "/CN=www.bing.com" >/dev/null 2>&1
-#if [ ! -f "$HOME/science/private.key" ]; then
-#url="https://github.com/Hutton-h/science/releases/download/science/private.key"; out="$HOME/science/private.key"; (command -v curl>/dev/null 2>&1 && curl -Ls -o "$out" --retry 2 "$url") || (command -v wget>/dev/null 2>&1 && timeout 3 wget -q -O "$out" --tries=2 "$url")
-#url="https://github.com/Hutton-h/science/releases/download/science/cert.crt"; out="$HOME/science/cert.crt"; (command -v curl>/dev/null 2>&1 && curl -Ls -o "$out" --retry 2 "$url") || (command -v wget>/dev/null 2>&1 && timeout 3 wget -q -O "$out" --tries=2 "$url")
-#echo "fc6dca8cfc4081102aa9655d0d4805c27d7266f605541d242ad66ad00a284a35" > "$HOME/science/SHA256.txt"
-#else
-SHA256=$(openssl x509 -in $HOME/science/cert.crt -outform DER | sha256sum | awk '{print $1}')
-echo "$SHA256" > "$HOME/science/SHA256.txt"
-#fi
+if [ -s "/root/ygkkkca/private.key" ] && [ -n "$nvp" ]; then
+nvp=nvpt
+if [ -z "$port_nv" ] && [ ! -e "$HOME/science/port_nv" ]; then
+port_nv=$(shuf -i 10000-65535 -n 1)
+echo "$port_nv" > "$HOME/science/port_nv"
+elif [ -n "$port_nv" ]; then
+echo "$port_nv" > "$HOME/science/port_nv"
 fi
-if [ -n "$hyp" ]; then
-hyp=hypt
-if [ -z "$port_hy2" ] && [ ! -e "$HOME/science/port_hy2" ]; then
-port_hy2=$(shuf -i 10000-65535 -n 1)
-echo "$port_hy2" > "$HOME/science/port_hy2"
-elif [ -n "$port_hy2" ]; then
-echo "$port_hy2" > "$HOME/science/port_hy2"
-fi
-port_hy2=$(cat "$HOME/science/port_hy2")
-echo "Hysteria2端口：$port_hy2"
+port_nv=$(cat "$HOME/science/port_nv")
+echo "Naiveproxy端口：$port_nv"
 cat >> "$HOME/science/sb.json" <<EOF
     {
-        "type": "hysteria2",
-        "tag": "hy2-sb",
+        "type": "naive",
+        "tag": "naive-sb",
         "listen": "::",
-        "listen_port": ${port_hy2},
+        "listen_port": ${port_nv},
         "users": [
             {
+                "username": "${uuid}",
                 "password": "${uuid}"
             }
         ],
-        "ignore_client_bandwidth":false,
         "tls": {
             "enabled": true,
-            "alpn": [
-                "h3"
-            ],
-            "certificate_path": "$HOME/science/cert.crt",
-            "key_path": "$HOME/science/private.key"
+            "certificate_path": "/root/ygkkkca/cert.crt",
+            "key_path": "/root/ygkkkca/private.key"
         }
     },
 EOF
 else
-hyp=hyptargo
+nvp=nvptargo
 fi
 if [ -n "$tup" ]; then
 tup=tupt
@@ -559,8 +659,8 @@ cat >> "$HOME/science/sb.json" <<EOF
                 "alpn": [
                     "h3"
                 ],
-                "certificate_path": "$HOME/science/cert.crt",
-                "key_path": "$HOME/science/private.key"
+                "certificate_path": "$certificateHTA",
+                "key_path": "$keyHTA"
             }
         },
 EOF
@@ -591,8 +691,8 @@ cat >> "$HOME/science/sb.json" <<EOF
             "padding_scheme":[],
             "tls":{
                 "enabled": true,
-                "certificate_path": "$HOME/science/cert.crt",
-                "key_path": "$HOME/science/private.key"
+                "certificate_path": "$certificateHTA",
+                "key_path": "$keyHTA"
             }
         },
 EOF
@@ -686,7 +786,81 @@ else
 ssp=ssptargo
 fi
 }
-
+xrsbhy2(){
+if [ -n "$hyp" ]; then
+hyp=hypt
+if [ -z "$port_hy2" ] && [ ! -e "$HOME/science/port_hy2" ]; then
+port_hy2=$(shuf -i 10000-65535 -n 1)
+echo "$port_hy2" > "$HOME/science/port_hy2"
+elif [ -n "$port_hy2" ]; then
+echo "$port_hy2" > "$HOME/science/port_hy2"
+fi
+port_hy2=$(cat "$HOME/science/port_hy2")
+echo "Hysteria2端口：$port_hy2"
+if [ -e "$HOME/science/xr.json" ]; then
+cat >> "$HOME/science/xr.json" <<EOF
+    {
+      "tag": "hy2-xr",
+      "protocol": "hysteria",
+      "port": ${port_hy2},
+      "settings": {
+        "version": 2,
+        "clients": [
+          {
+            "auth": "${uuid}"
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "hysteria",
+        "security": "tls",
+        "tlsSettings": {
+		  "alpn": [
+             "h3"
+            ],
+          "certificates": [
+            {
+              "certificateFile": "$certificateHTA",
+              "keyFile": "$keyHTA"
+            }
+          ]
+        }
+      },
+	   "sniffing": {
+       "enabled": true,
+       "destOverride": ["http", "tls", "quic"],
+       "metadataOnly": false
+       }
+    },
+EOF
+else
+cat >> "$HOME/science/sb.json" <<EOF
+    {
+        "type": "hysteria2",
+        "tag": "hy2-sb",
+        "listen": "::",
+        "listen_port": ${port_hy2},
+        "users": [
+            {
+                "password": "${uuid}"
+            }
+        ],
+        "ignore_client_bandwidth":false,
+        "tls": {
+            "enabled": true,
+            "alpn": [
+                "h3"
+            ],
+            "certificate_path": "$certificateHTA",
+            "key_path": "$keyHTA"
+        }
+    },
+EOF
+fi
+else
+hyp=hyptargo
+fi
+}
 xrsbvm(){
 if [ -n "$vmp" ]; then
 vmp=vmpt
@@ -1010,23 +1184,26 @@ fi
 fi
 }
 ins(){
-if [ "$hyp" != yes ] && [ "$tup" != yes ] && [ "$anp" != yes ] && [ "$arp" != yes ] && [ "$ssp" != yes ]; then
+if [ "$nvp" != yes ] && [ "$tup" != yes ] && [ "$anp" != yes ] && [ "$arp" != yes ] && [ "$ssp" != yes ]; then
 installxray
+xrsbhy2
 xrsbvm
 xrsbso
 warpsx
 xrsbout
-hyp="hyptargo"; tup="tuptargo"; anp="anptargo"; arp="arptargo"; ssp="ssptargo"
-elif [ "$xhp" != yes ] && [ "$vlp" != yes ] && [ "$vxp" != yes ] && [ "$vwp" != yes ]; then
+tup="tuptargo"; anp="anptargo"; arp="arptargo"; ssp="ssptargo"; nvp="nvptargo"
+elif [ "$xhp" != yes ] && [ "$vlp" != yes ] && [ "$vxp" != yes ] && [ "$vwp" != yes ] && [ "$xup" != yes ] && [ "$xcp" != yes ]; then
 installsb
+xrsbhy2
 xrsbvm
 xrsbso
 warpsx
 xrsbout
-xhp="xhptargo"; vlp="vlptargo"; vxp="vxptargo"; vwp="vwptargo"
+xhp="xhptargo"; vlp="vlptargo"; vxp="vxptargo"; vwp="vwptargo"; xup="xuptargo"; xcp="xcptargo"
 else
 installsb
 installxray
+xrsbhy2
 xrsbvm
 xrsbso
 warpsx
@@ -1130,7 +1307,7 @@ echo "快捷命令 science 已就绪 (重新登录SSH后生效，或执行 sourc
 # ====== 进程检测：仅当进程运行时才配置自启动恢复 ======
 if find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(s|x)' || pgrep -f 'science/(s|x)' >/dev/null 2>&1 ; then
 if ! pidof systemd >/dev/null 2>&1 && ! command -v rc-service >/dev/null 2>&1; then
-echo "if ! find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(s|x)' && ! pgrep -f 'science/(s|x)' >/dev/null 2>&1; then echo '检测到系统可能中断过，或者变量格式错误？建议在SSH对话框输入 reboot 重启下服务器。现在自动执行Science脚本的节点恢复操作，请稍等……'; sleep 6; export cfip=\"${cfip}\" hyjpt=\"${hyjpt}\" cdnym=\"${cdnym}\" name=\"${name}\" ippz=\"${ippz}\" argo=\"${argo}\" uuid=\"${uuid}\" $wap=\"${warp}\" $xhp=\"${port_xh}\" $vxp=\"${port_vx}\" $ssp=\"${port_ss}\" $sop=\"${port_so}\" $anp=\"${port_an}\" $arp=\"${port_ar}\" $vlp=\"${port_vl_re}\" $vwp=\"${port_vw}\" $vmp=\"${port_vm_ws}\" $hyp=\"${port_hy2}\" $tup=\"${port_tu}\" reym=\"${ym_vl_re}\" agn=\"${ARGO_DOMAIN}\" agk=\"${ARGO_AUTH}\"; bash "$HOME/bin/science"; fi" >> ~/.bashrc
+echo "if ! find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(s|x)' && ! pgrep -f 'science/(s|x)' >/dev/null 2>&1; then echo '检测到系统可能中断过，或者变量格式错误？建议在SSH对话框输入 reboot 重启下服务器。现在自动执行Science脚本的节点恢复操作，请稍等……'; sleep 6; export alns=\"${alns}\" cfip=\"${cfip}\" hyjpt=\"${hyjpt}\" cdnym=\"${cdnym}\" name=\"${name}\" ippz=\"${ippz}\" argo=\"${argo}\" uuid=\"${uuid}\" $wap=\"${warp}\" $xhp=\"${port_xh}\" $xup=\"${port_xu}\" $vxp=\"${port_vx}\" $ssp=\"${port_ss}\" $sop=\"${port_so}\" $anp=\"${port_an}\" $arp=\"${port_ar}\" $vlp=\"${port_vl_re}\" $vwp=\"${port_vw}\" $vmp=\"${port_vm_ws}\" $hyp=\"${port_hy2}\" $tup=\"${port_tu}\" $xcp=\"${port_xc}\" $nvp=\"${port_nv}\" reym=\"${ym_vl_re}\" agn=\"${ARGO_DOMAIN}\" agk=\"${ARGO_AUTH}\"; bash "$HOME/bin/science"; fi" >> ~/.bashrc
 fi
 crontab -l > /tmp/crontab.tmp 2>/dev/null
 if ! pidof systemd >/dev/null 2>&1 && ! command -v rc-service >/dev/null 2>&1; then
@@ -1293,6 +1470,17 @@ sxname=$(cat "$HOME/science/name" 2>/dev/null)
 xvvmcdnym=$(cat "$HOME/science/cdnym" 2>/dev/null)
 cdnip1=$(cat "$HOME/science/cdnip1" 2>/dev/null)
 cdnip2=$(cat "$HOME/science/cdnip2" 2>/dev/null)
+if grep -q 'science/private.key' "$HOME/science/sb.json" >/dev/null 2>&1 || grep -q 'science/private.key' "$HOME/science/xr.json" >/dev/null 2>&1; then
+sni=www.bing.com
+add=$server_ip
+jhins=1
+msins=true
+else
+sni=$(cat /root/ygkkkca/ca.log 2>/dev/null)
+add=$(cat /root/ygkkkca/ca.log 2>/dev/null)
+jhins=0
+msins=false
+fi
 echo "*********************************************************"
 echo "*********************************************************"
 echo "Science脚本输出节点配置如下："
@@ -1452,6 +1640,146 @@ echo "$vl_vw_cdn_link"
 echo
 fi
 fi
+if grep xhttp-h23 "$HOME/science/xr.json" >/dev/null 2>&1; then
+port_xc=$(cat "$HOME/science/port_xc")
+xhttpclmh(){
+clxcpt(){
+cat <<EOF
+- name: ${sxname}Xhttp-TCP-$hostname
+  type: vless
+  server: $add
+  port: $port_xc
+  uuid: $uuid
+  udp: true
+  tls: true
+  network: xhttp
+  servername: $sni
+  client-fingerprint: chrome
+  skip-cert-verify: $msins
+  xhttp-opts:
+    path: "$uuid-xc"
+    mode: auto
+EOF
+}
+clxcpt1(){
+echo "- ${sxname}Xhttp-TCP-$hostname"
+}
+}
+if ! grep -A 26 'xhttp-h23' "$HOME/science/xr.json" | grep -q 'ygkkkca' >/dev/null 2>&1; then
+sha=$(cat "$HOME/science/SHA256.txt")
+echo "💣【 Vless-xhttp-tls-TCP 】节点信息如下："
+vl_xc2_link="vless://$uuid@$add:$port_xc?encryption=none&security=tls&sni=$sni&insecure=0&allowInsecure=0&hpkp=$sha&pcs=$sha&type=xhttp&path=$uuid-xc&mode=auto#${sxname}Vless-xhttp-tls-TCP-$hostname"
+echo "$vl_xc2_link" >> "$HOME/science/jhsub.txt"
+echo "$vl_xc2_link"
+xhttpclmh
+else
+if [ "$sni" != "$(printf '%s' "$server_ip" | tr -d '[]')" ]; then
+case "$port_xc" in
+443|2053|2083|2087|2096|8443)
+echo "💣【 Vless-xhttp-tls-CDN-TCP 】节点信息如下："
+echo "可自行更换优选IP域名"
+vl_xc2_link="vless://$uuid@$cdnip1:$port_xc?encryption=none&security=tls&sni=$sni&insecure=0&allowInsecure=0&type=xhttp&path=$uuid-xc&mode=auto#${sxname}Vless-xhttp-tls-CDN-TCP-$hostname"
+echo "$vl_xc2_link" >> "$HOME/science/jhsub.txt"
+echo "$vl_xc2_link"
+echo
+echo "💣【 Vless-xhttp-tls-CDN-UDP 】节点信息如下："
+echo "可自行更换优选IP域名"
+vl_xc3_link="vless://$uuid@$cdnip2:$port_xc?encryption=none&security=tls&sni=$sni&alpn=h3&insecure=0&allowInsecure=0&type=xhttp&path=$uuid-xc&mode=auto#${sxname}Vless-xhttp-tls-CDN-UDP-$hostname"
+echo "$vl_xc3_link" >> "$HOME/science/jhsub.txt"
+echo "$vl_xc3_link"
+echo
+clxcpt(){
+cat <<EOF
+- name: ${sxname}Xhttp-CDN-TCP-$hostname
+  type: vless
+  server: $cdnip1
+  port: $port_xc
+  uuid: $uuid
+  udp: true
+  tls: true
+  network: xhttp
+  servername: $sni
+  client-fingerprint: chrome
+  skip-cert-verify: $msins
+  xhttp-opts:
+    path: "$uuid-xc"
+    mode: auto
+
+- name: ${sxname}Xhttp-CDN-UDP-$hostname
+  type: vless
+  server: $cdnip2
+  port: $port_xc
+  uuid: $uuid
+  udp: true
+  tls: true
+  network: xhttp
+  alpn:
+    - h3
+  servername: $sni
+  client-fingerprint: chrome
+  skip-cert-verify: $msins
+  xhttp-opts:
+    path: "$uuid-xc"
+    mode: auto
+EOF
+}
+clxcpt1(){
+echo "- ${sxname}Xhttp-CDN-TCP-$hostname"
+echo "- ${sxname}Xhttp-CDN-UDP-$hostname"
+}
+;;
+*)
+echo "💣【 Vless-xhttp-tls-TCP 】节点信息如下："
+vl_xc1_link="vless://$uuid@$add:$port_xc?encryption=none&security=tls&sni=$sni&insecure=0&allowInsecure=0&type=xhttp&path=$uuid-xc&mode=auto#${sxname}Vless-xhttp-tls-TCP-$hostname"
+echo "$vl_xc1_link" >> "$HOME/science/jhsub.txt"
+echo "$vl_xc1_link"
+xhttpclmh
+;;
+esac
+else
+echo "💣【 Vless-xhttp-tls-TCP 】节点信息如下："
+vl_xc1_link="vless://$uuid@$add:$port_xc?encryption=none&security=tls&sni=$sni&insecure=0&allowInsecure=0&type=xhttp&path=$uuid-xc&mode=auto#${sxname}Vless-xhttp-tls-TCP-$hostname"
+echo "$vl_xc1_link" >> "$HOME/science/jhsub.txt"
+echo "$vl_xc1_link"
+xhttpclmh
+fi
+fi
+echo
+fi
+if grep xhttp-h3 "$HOME/science/xr.json" >/dev/null 2>&1; then
+echo "💣【 Vless-xhttp-tls-UDP 】节点信息如下："
+port_xu=$(cat "$HOME/science/port_xu")
+if ! grep -A 26 'xhttp-h3' "$HOME/science/xr.json" | grep -q 'ygkkkca' >/dev/null 2>&1; then
+sha=$(cat "$HOME/science/SHA256.txt")
+fi
+vl_xu_link="vless://$uuid@$add:$port_xu?encryption=none&security=tls&sni=$sni&alpn=h3&insecure=0&allowInsecure=0&hpkp=$sha&pcs=$sha&type=xhttp&path=$uuid-xu&mode=auto#${sxname}Vless-xhttp-tls-UDP-$hostname"
+echo "$vl_xu_link" >> "$HOME/science/jhsub.txt"
+echo "$vl_xu_link"
+echo
+cludpxcpt(){
+cat <<EOF
+- name: ${sxname}Xhttp-UDP-$hostname
+  type: vless
+  server: $add
+  port: $port_xu
+  uuid: $uuid
+  udp: true
+  tls: true
+  network: xhttp
+  alpn:
+    - h3
+  servername: $sni
+  client-fingerprint: chrome
+  skip-cert-verify: $msins
+  xhttp-opts:
+    path: "$uuid-xu"
+    mode: auto
+EOF
+}
+cludpxcpt1(){
+echo "- ${sxname}Xhttp-UDP-$hostname"
+}
+fi
 if grep reality-vision "$HOME/science/xr.json" >/dev/null 2>&1; then
 echo "💣【 Vless-tcp-reality-vision 】节点信息如下："
 port_vl_re=$(cat "$HOME/science/port_vl_re")
@@ -1574,7 +1902,6 @@ cat <<EOF
                     "fingerprint": "chrome"
                 }
             },
-            "packet_encoding": "packetaddr",
             "transport": {
                 "headers": {
                     "Host": [
@@ -1624,10 +1951,69 @@ echo "$vm_cdn_link"
 echo
 fi
 fi
+if grep naive-sb "$HOME/science/sb.json" >/dev/null 2>&1; then
+echo "💣【 Naiveproxy 】节点信息如下："
+port_nv=$(cat "$HOME/science/port_nv")
+nv1_link="naive+https://$uuid:$uuid@$(cat /root/ygkkkca/ca.log 2>/dev/null):$port_nv?security=tls&sni=$(cat /root/ygkkkca/ca.log 2>/dev/null)&insecure=0&allowInsecure=0#${sxname}naive-h2-$hostname"
+nv2_link="naive+quic://$uuid:$uuid@$(cat /root/ygkkkca/ca.log 2>/dev/null):$port_nv?congestion_control=bbr&security=tls&sni=$(cat /root/ygkkkca/ca.log 2>/dev/null)&insecure=0&allowInsecure=0#${sxname}naive-h3-$hostname"
+nv3_link="http2://$uuid:$uuid@$(cat /root/ygkkkca/ca.log 2>/dev/null):$port_nv?security=tls&sni=$(cat /root/ygkkkca/ca.log 2>/dev/null)&insecure=0&allowInsecure=0&padding=1&tfo=1#${sxname}naive-h2-$hostname"
+nv4_link="http3://$uuid:$uuid@$(cat /root/ygkkkca/ca.log 2>/dev/null):$port_nv?security=tls&sni=$(cat /root/ygkkkca/ca.log 2>/dev/null)&insecure=0&allowInsecure=0&padding=1&tfo=1#${sxname}naive-h3-$hostname"
+echo "$nv1_link" >> "$HOME/science/jhsub.txt"
+echo "$nv2_link" >> "$HOME/science/jhsub.txt"
+echo "$nv3_link" >> "$HOME/science/jhsub.txt"
+echo "$nv4_link" >> "$HOME/science/jhsub.txt"
+echo "V2rayN/Karing/Nekobox单节点分享："
+echo "$nv1_link" 
+echo "$nv2_link"
+echo
+echo "Shadowrocket小火箭单节点分享："
+echo "$nv3_link"
+echo "$nv4_link"
+echo
+sbnvpt(){
+cat <<EOF
+         {
+            "type": "naive",
+            "tag": "${sxname}naive-h3-$hostname",
+            "server": "$(cat /root/ygkkkca/ca.log 2>/dev/null)",
+            "server_port": $port_nv,
+            "username": "$uuid",
+            "password": "$uuid",
+            "udp_over_tcp": false,
+            "quic": true,
+            "quic_congestion_control": "bbr",
+            "tls": {
+                "enabled": true,
+                "insecure": false,
+                "server_name": "$(cat /root/ygkkkca/ca.log 2>/dev/null)"
+            }
+         },
+		 {
+            "type": "naive",
+            "tag": "${sxname}naive-h2-$hostname",
+            "server": "$(cat /root/ygkkkca/ca.log 2>/dev/null)",
+            "server_port": $port_nv,
+            "username": "$uuid",
+            "password": "$uuid",
+            "udp_over_tcp": true,
+            "quic": false,
+            "tls": {
+                "enabled": true,
+                "insecure": false,
+                "server_name": "$(cat /root/ygkkkca/ca.log 2>/dev/null)"
+            }
+         },
+EOF
+}
+sbnvpt1(){
+echo "\"${sxname}naive-h3-$hostname\","
+echo "\"${sxname}naive-h2-$hostname\","
+}
+fi
 if grep anytls-sb "$HOME/science/sb.json" >/dev/null 2>&1; then
 echo "💣【 AnyTLS 】节点信息如下："
 port_an=$(cat "$HOME/science/port_an")
-an_link="anytls://$uuid@$server_ip:$port_an?insecure=1&allowInsecure=1#${sxname}anytls-$hostname"
+an_link="anytls://$uuid@$add:$port_an?sni=$sni&insecure=$jhins&allowInsecure=$jhins#${sxname}anytls-$hostname"
 echo "$an_link" >> "$HOME/science/jhsub.txt"
 echo "$an_link"
 echo
@@ -1636,7 +2022,7 @@ cat <<EOF
          {
             "type": "anytls",
             "tag": "${sxname}anytls-$hostname",
-            "server": "$server_ip",
+            "server": "$add",
             "server_port": $port_an,
             "password": "$uuid",
             "idle_session_check_interval": "30s",
@@ -1644,8 +2030,8 @@ cat <<EOF
             "min_idle_session": 5,
             "tls": {
                 "enabled": true,
-                "insecure": true,
-                "server_name": "www.bing.com"
+                "insecure": $msins,
+                "server_name": "$sni"
             }
          },
 EOF
@@ -1657,15 +2043,15 @@ clanpt(){
 cat <<EOF
 - name: ${sxname}anytls-$hostname
   type: anytls
-  server: $server_ip
+  server: $add
   port: $port_an
   password: $uuid
   client-fingerprint: chrome
   udp: true
   idle-session-check-interval: 30
   idle-session-timeout: 30
-  sni: www.bing.com
-  skip-cert-verify: true
+  sni: $sni
+  skip-cert-verify: $msins
 EOF
 }
 clanpt1(){
@@ -1710,9 +2096,11 @@ sbarpt1(){
 echo "\"${sxname}any-reality-$hostname\","
 }
 fi
-if grep hy2-sb "$HOME/science/sb.json" >/dev/null 2>&1; then
+if grep -q 'hy2-sb' "$HOME/science/sb.json" >/dev/null 2>&1 || grep -q 'hy2-xr' "$HOME/science/xr.json" >/dev/null 2>&1; then
 echo "💣【 Hysteria2 】节点信息如下："
-SHA256=$(cat "$HOME/science/SHA256.txt")
+if { [ -f "$HOME/science/sb.json" ] && grep -q 'hy2-sb' "$HOME/science/sb.json" && ! grep -A 14 'hy2-sb' "$HOME/science/sb.json" | grep -q 'ygkkkca'; } || { [ -f "$HOME/science/xr.json" ] && grep -q 'hy2-xr' "$HOME/science/xr.json" && ! grep -A 20 'hy2-xr' "$HOME/science/xr.json" | grep -q 'ygkkkca'; }; then
+sha=$(cat "$HOME/science/SHA256.txt")
+fi
 port_hy2=$(cat "$HOME/science/port_hy2")
 hy2_ports=$(iptables -t nat -nL --line 2>/dev/null | grep -w "$port_hy2" | awk '{print $8}' | sed 's/dpts://; s/dpt://' | tr '\n' ',' | sed 's/,$//')
 if [ -n "$hy2_ports" ] || [ -n "$hyjpt" ]; then
@@ -1729,7 +2117,7 @@ else
 hyps=
 fi
 #hy2_link="hysteria2://$uuid@$server_ip:$port_hy2?security=tls&alpn=h3&insecure=1&allowInsecure=1$hyps&sni=www.bing.com#${sxname}hy2-$hostname"
-hy2_link="hysteria2://$uuid@$server_ip:$port_hy2?security=tls&alpn=h3&insecure=0&allowInsecure=0$hyps&sni=www.bing.com&pinSHA256=$SHA256#${sxname}hy2-$hostname"
+hy2_link="hysteria2://$uuid@$add:$port_hy2?security=tls&alpn=h3&insecure=0&allowInsecure=0$hyps&sni=$sni&pinSHA256=$sha#${sxname}hy2-$hostname"
 echo "$hy2_link" >> "$HOME/science/jhsub.txt"
 echo "$hy2_link"
 echo
@@ -1738,14 +2126,14 @@ cat <<EOF
     {
         "type": "hysteria2",
         "tag": "${sxname}hy2-$hostname",
-        "server": "$server_ip",
+        "server": "$add",
         "server_port": $port_hy2,
 $(sbhy2ports 2>/dev/null)
         "password": "$uuid",
         "tls": {
             "enabled": true,
-            "server_name": "www.bing.com",
-            "insecure": true,
+            "server_name": "$sni",
+            "insecure": $msins,
             "alpn": [
                 "h3"
             ]
@@ -1760,14 +2148,14 @@ clhypt(){
 cat <<EOF
 - name: ${sxname}hysteria2-$hostname                            
   type: hysteria2                                      
-  server: $server_ip                              
+  server: $add                              
   port: $port_hy2
   ports: $cmhy2pt
   password: $uuid                          
   alpn:
     - h3
-  sni: www.bing.com
-  skip-cert-verify: true
+  sni: $sni                               
+  skip-cert-verify: $msins
   fast-open: true
 EOF
 }
@@ -1778,7 +2166,7 @@ fi
 if grep tuic5-sb "$HOME/science/sb.json" >/dev/null 2>&1; then
 echo "💣【 Tuic 】节点信息如下："
 port_tu=$(cat "$HOME/science/port_tu")
-tuic5_link="tuic://$uuid:$uuid@$server_ip:$port_tu?congestion_control=bbr&udp_relay_mode=native&alpn=h3&sni=www.bing.com&insecure=1&allow_insecure=1#${sxname}tuic-$hostname"
+tuic5_link="tuic://$uuid:$uuid@$add:$port_tu?congestion_control=bbr&udp_relay_mode=native&alpn=h3&sni=$sni&insecure=$jhins&allowInsecure=$jhins&allow_insecure=$jhins#${sxname}tuic-$hostname"
 echo "$tuic5_link" >> "$HOME/science/jhsub.txt"
 echo "$tuic5_link"
 echo
@@ -1787,7 +2175,7 @@ cat <<EOF
         {
             "type":"tuic",
             "tag": "${sxname}tuic5-$hostname",
-            "server": "$server_ip",
+            "server": "$add",
             "server_port": $port_tu,
             "uuid": "$uuid",
             "password": "$uuid",
@@ -1798,8 +2186,8 @@ cat <<EOF
             "heartbeat": "10s",
             "tls":{
                 "enabled": true,
-                "server_name": "www.bing.com",
-                "insecure": true,
+                "server_name": "$sni",
+                "insecure": $msins,
                 "alpn": [
                     "h3"
                 ]
@@ -1813,7 +2201,7 @@ echo "\"${sxname}tuic5-$hostname\","
 cltupt(){
 cat <<EOF
 - name: ${sxname}tuic5-$hostname
-  server: $server_ip
+  server: $add
   port: $port_tu
   type: tuic
   uuid: $uuid
@@ -1823,8 +2211,8 @@ cat <<EOF
   reduce-rtt: true
   udp-relay-mode: native
   congestion-controller: bbr
-  sni: www.bing.com
-  skip-cert-verify: true
+  sni: $sni
+  skip-cert-verify: $msins
 EOF
 }
 cltupt1(){
@@ -1917,7 +2305,6 @@ cat <<EOF
                     "fingerprint": "chrome"
                 }
             },
-            "packet_encoding": "packetaddr",
             "transport": {
                 "headers": {
                     "Host": [
@@ -1944,7 +2331,6 @@ cat <<EOF
                     "fingerprint": "chrome"
                 }
             },
-            "packet_encoding": "packetaddr",
             "transport": {
                 "headers": {
                     "Host": [
@@ -2034,187 +2420,191 @@ out=$($f)
 [ -n "$out" ] && printf "%s\n" "$out"
 fi
 }
-sbxy="$(get_func sbvlpt; get_func sbsspt; get_func sbanpt; get_func sbarpt; get_func sbvmpt; get_func sbhypt; get_func sbtupt; get_func sbxhpt; get_func sbvxpt; get_func sbsopt; get_func sbvmargopt)"
-clxy="$(get_func clvlpt; get_func clsspt; get_func clanpt; get_func clvmpt; get_func clhypt; get_func cltupt; get_func clxhpt; get_func clvxpt; get_func clsopt; get_func clvmargopt)"
-sbgz="$(get_func sbvlpt1; get_func sbsspt1; get_func sbanpt1; get_func sbarpt1; get_func sbvmpt1; get_func sbhypt1; get_func sbtupt1; get_func sbxhpt1; get_func sbvxpt1; get_func sbsopt1; get_func sbvmargopt1)"
-clgz="$({ get_func clvlpt1; get_func clsspt1; get_func clanpt1; get_func clvmpt1; get_func clhypt1; get_func cltupt1; get_func clxhpt1; get_func clvxpt1; get_func clsopt1; get_func clvmargopt1; } | sed '2,$s/^/    /')"
+sbxy="$(get_func sbvlpt; get_func sbsspt; get_func sbanpt; get_func sbarpt; get_func sbvmpt; get_func sbhypt; get_func sbtupt; get_func sbnvpt; get_func sbxhpt; get_func sbvxpt; get_func sbsopt; get_func sbvmargopt)"
+clxy="$(get_func cludpxcpt; get_func clxcpt; get_func clvlpt; get_func clsspt; get_func clanpt; get_func clvmpt; get_func clhypt; get_func cltupt; get_func clxhpt; get_func clvxpt; get_func clsopt; get_func clvmargopt)"
+sbgz="$(get_func sbvlpt1; get_func sbsspt1; get_func sbanpt1; get_func sbarpt1; get_func sbvmpt1; get_func sbhypt1; get_func sbtupt1; get_func sbnvpt1; get_func sbxhpt1; get_func sbvxpt1; get_func sbsopt1; get_func sbvmargopt1)"
+clgz="$({ get_func cludpxcpt1; get_func clxcpt1; get_func clvlpt1; get_func clsspt1; get_func clanpt1; get_func clvmpt1; get_func clhypt1; get_func cltupt1; get_func clxhpt1; get_func clvxpt1; get_func clsopt1; get_func clvmargopt1; } | sed '2,$s/^/    /')"
 sbgz=$(printf "%s\n" "$sbgz" | sed '$ s/,$//')
 cat > $HOME/science/sbox.json <<EOF
 {
-    "log": {
-        "disabled": false,
-        "level": "info",
-        "timestamp": true
-    },
-    "experimental": {
-        "cache_file": {
-            "enabled": true,
-            "path": "./cache.db",
-            "store_fakeip": true
-        },
-        "clash_api": {
-            "external_controller": "127.0.0.1:9090",
-            "external_ui": "ui",
-            "default_mode": "Rule"
-        }
-    },
-    "dns": {
-        "servers": [
-            {
-                "tag": "aliDns",
-                "type": "https",
-                "server": "dns.alidns.com",
-                "path": "/dns-query",
-                "domain_resolver": "local"
-            },
-            {
-                "tag": "local",
-                "type": "udp",
-                "server": "223.5.5.5"
-            },
-            {
-                "tag": "proxyDns",
-                "type": "https",
-                "server": "dns.google",
-                "path": "/dns-query",
-	              "domain_resolver": "aliDns",
-                "detour": "proxy"
-            },
-           {
+  "log": {
+    "level": "info",
+    "timestamp": true
+  },
+  "http_clients": [
+    {
+      "tag": "rule-set-direct"
+    }
+  ],
+  "dns": {
+    "servers": [
+      {
         "type": "fakeip",
         "tag": "fakeip",
         "inet4_range": "198.18.0.0/15",
         "inet6_range": "fc00::/18"
+      },
+      {
+        "type": "udp",
+        "tag": "dns-cn",
+        "server": "223.5.5.5",
+        "server_port": 53
+      },
+      {
+        "type": "https",
+        "tag": "dns-proxy",
+        "server": "dns.google",
+        "domain_resolver": "dns-cn",
+        "detour": "proxy"
       }
+    ],
+    "rules": [
+      {
+        "rule_set": [
+          "geosite-cn"
         ],
-        "rules": [
-            {
-                "rule_set": "geosite-cn",
-                "clash_mode": "Rule",
-                "server": "aliDns"
-            },
-            {
-                "clash_mode": "Direct",
-                "server": "local"
-            },
-            {
-                "clash_mode": "Global",
-                "server": "proxyDns"
-            },
-            {
+        "action": "route",
+        "server": "dns-cn"
+      },
+      {
         "query_type": [
           "A",
           "AAAA"
         ],
+        "action": "route",
         "server": "fakeip"
       }
-        ],
-        "final": "proxyDns",
-        "strategy": "prefer_ipv4"
-    },
-    "inbounds": [
-        {
-            "type": "tun",
-            "tag": "tun-in",
-            "address": [
-                "172.19.0.1/30",
-                "fd00::1/126"
-            ],
-            "auto_route": true,
-            "strict_route": true
-        }
     ],
-    "route": {
-        "rules": [
-            {
-	 "inbound": "tun-in",
-                "action": "sniff"
-            },
-            {
-                "type": "logical",
-                "mode": "or",
-                "rules": [
-                    {
-                        "port": 53
-                    },
-                    {
-                        "protocol": "dns"
-                    }
-                ],
-                "action": "hijack-dns"
-            },
-         {
-          "clash_mode": "Global",
-          "outbound": "proxy"
-         },
-        {
-        "rule_set": "geosite-cn",
-        "clash_mode": "Rule",
-        "outbound": "direct"
-       },
-     {
-    "rule_set": "geoip-cn",
-    "clash_mode": "Rule",
-    "outbound": "direct"
-      },
-     {
-    "ip_is_private": true,
-    "clash_mode": "Rule",
-    "outbound": "direct"
+    "final": "dns-proxy",
+    "strategy": "prefer_ipv4",
+    "cache_capacity": 8192,
+    "optimistic": {
+      "enabled": true,
+      "timeout": "1h"
     },
-     {
-      "clash_mode": "Direct",
-      "outbound": "direct"
-     }		
-        ],
-        "rule_set": [
-            {
-                "tag": "geosite-cn",
-                "type": "remote",
-                "format": "binary",
-                "url": "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/geolocation-cn.srs",
-                "download_detour": "direct"
-            },
-            {
-                "tag": "geoip-cn",
-                "type": "remote",
-                "format": "binary",
-                "url": "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip/cn.srs",
-                "download_detour": "direct"
-            }
-        ],
-        "final": "proxy",
-        "auto_detect_interface": true,
-        "default_domain_resolver": {
-        "server": "aliDns"
-        }
-    },
+    "timeout": "10s",
+    "reverse_mapping": true
+  },
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "address": [
+        "172.19.0.1/30",
+        "fdfe:dcba:9876::1/126"
+      ],
+      "auto_route": true,
+      "strict_route": true,
+      "stack": "gvisor",
+      "mtu": 1420
+    }
+  ],
   "outbounds": [
    $sbxy
-        {
-            "tag": "proxy",
-            "type": "selector",
-            "default": "auto",
-            "outbounds": [
+    {
+      "type": "selector",
+      "tag": "proxy",
+      "default": "auto",
+      "outbounds": [
         "auto",
         $sbgz
-            ]
-        },
-        {
-            "tag": "auto",
-            "type": "urltest",
-            "outbounds": [
-            $sbgz
-            ],
-            "url": "http://www.gstatic.com/generate_204",
-            "interval": "10m",
-            "tolerance": 50
-        },
-        {
-            "type": "direct",
-            "tag": "direct"
-        }
-    ]
+      ]
+    },
+    {
+      "type": "urltest",
+      "tag": "auto",
+      "outbounds": [
+      $sbgz
+      ],
+      "url": "https://www.gstatic.com/generate_204",
+      "interval": "10m",
+      "tolerance": 30,
+      "idle_timeout": "30m"
+    },
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "route": {
+    "default_http_client": "rule-set-direct",
+    "default_domain_resolver": "dns-cn",
+    "auto_detect_interface": true,
+    "rule_set": [
+      {
+        "tag": "geosite-cn",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geosite/cn.srs"
+      },
+      {
+        "tag": "geoip-cn",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip/cn.srs"
+      }
+    ],
+    "rules": [
+      {
+        "inbound": [
+          "tun-in"
+        ],
+        "protocol": [
+          "dns"
+        ],
+        "action": "hijack-dns"
+      },
+      {
+        "clash_mode": "Global",
+        "action": "route",
+        "outbound": "proxy"
+      },
+      {
+        "ip_is_private": true,
+        "action": "route",
+        "outbound": "direct"
+      },
+      {
+        "rule_set": [
+          "geosite-cn"
+        ],
+        "action": "route",
+        "outbound": "direct"
+      },
+      {
+        "rule_set": [
+          "geoip-cn"
+        ],
+        "action": "route",
+        "outbound": "direct"
+      },
+      {
+        "clash_mode": "Direct",
+        "action": "route",
+        "outbound": "direct"
+      },
+      {
+        "network": [
+          "tcp",
+          "udp"
+        ],
+        "port": 853,
+        "action": "reject"
+      }
+    ],
+    "final": "proxy"
+  },
+  "experimental": {
+    "cache_file": {
+      "enabled": true,
+      "store_dns": true
+    },
+    "clash_api": {
+      "external_controller": "127.0.0.1:9090",
+      "external_ui": "ui",
+      "default_mode": "Rule"
+    }
+  }
 }
 EOF
 
@@ -2346,6 +2736,7 @@ rc-update del "$svc" default >/dev/null 2>&1
 done
 rm -rf /etc/init.d/{sing-box,xray,argo,argo2,argo3,argo4,argo5} /etc/local.d/alpinescience.start /etc/local.d/alpinesubsbx.start
 iptables -t nat -F PREROUTING >/dev/null 2>&1
+ip6tables -t nat -F PREROUTING >/dev/null 2>&1
 netfilter-persistent save >/dev/null 2>&1
 rc-service iptables save >/dev/null 2>&1
 rc-service ip6tables save >/dev/null 2>&1
@@ -2416,6 +2807,7 @@ rm -rf sbx_update "$HOME/science" "$HOME/websbx"
 # 清理 systemd 残留（iptables 规则）
 if pidof systemd >/dev/null 2>&1; then
   iptables -t nat -F PREROUTING >/dev/null 2>&1
+  ip6tables -t nat -F PREROUTING >/dev/null 2>&1
   netfilter-persistent save >/dev/null 2>&1
 fi
 echo ""
@@ -3075,6 +3467,31 @@ iptables -F >/dev/null 2>&1
 netfilter-persistent save >/dev/null 2>&1
 echo
 echo "iptables执行开放所有端口"
+fi
+if [ ! -f "$HOME/science/SHA256.txt" ]; then
+command -v openssl >/dev/null 2>&1 && openssl ecparam -genkey -name prime256v1 -out "$HOME/science/private.key" >/dev/null 2>&1
+command -v openssl >/dev/null 2>&1 && openssl req -new -x509 -days 36500 -key "$HOME/science/private.key" -out "$HOME/science/cert.crt" -subj "/CN=www.bing.com" >/dev/null 2>&1
+#if [ ! -f "$HOME/science/private.key" ]; then
+#url="https://github.com/Hutton-h/science/releases/download/science/private.key"; out="$HOME/science/private.key"; (command -v curl>/dev/null 2>&1 && curl -Ls -o "$out" --retry 2 "$url") || (command -v wget>/dev/null 2>&1 && timeout 3 wget -q -O "$out" --tries=2 "$url")
+#url="https://github.com/Hutton-h/science/releases/download/science/cert.crt"; out="$HOME/science/cert.crt"; (command -v curl>/dev/null 2>&1 && curl -Ls -o "$out" --retry 2 "$url") || (command -v wget>/dev/null 2>&1 && timeout 3 wget -q -O "$out" --tries=2 "$url")
+#echo "fc6dca8cfc4081102aa9655d0d4805c27d7266f605541d242ad66ad00a284a35" > "$HOME/science/SHA256.txt"
+#else
+SHA256=$(openssl x509 -in $HOME/science/cert.crt -outform DER | sha256sum | awk '{print $1}')
+echo "$SHA256" > "$HOME/science/SHA256.txt"
+fi
+#fi
+if [ -n "$alns" ] && [ ! -s "/root/ygkkkca/private.key" ]; then
+bash <(curl -Ls https://raw.githubusercontent.com/yonggekkk/acme-yg/main/acme.sh)
+fi
+echo
+if [ -n "$alns" ] && [ -s "/root/ygkkkca/private.key" ]; then
+certificateHTA="/root/ygkkkca/cert.crt"
+keyHTA="/root/ygkkkca/private.key"
+echo "HY2/TUIC/Naive/Anytls/Xhttp-tls将使用IP证书或域名证书的TLS"
+else
+certificateHTA="$HOME/science/cert.crt"
+keyHTA="$HOME/science/private.key"
+echo "HY2/TUIC/Anytls/Xhttp-tls将使用自签证书的TLS"
 fi
 ins
 if [ -n "$sub" ]; then

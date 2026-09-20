@@ -17,7 +17,7 @@
 #### 5、客户端支持方面，各类单协议分享、clash/mihomo/singbox聚合订阅分享都可支持
 
 #### 6、所有代理协议都无需域名（除了argo固定隧道、IP端口CDN），支持单个或多个代理协议任意组合并快速重置更换
-【 已支持：AnyTLS、Any-reality、Vless-xhttp-reality-vison-enc、Vless-tcp-reality-vision、Vless-xhttp-vison-enc、Vless-ws-vision-enc、Shadowsocks-2022、Vmess-ws、Socks5、Hysteria2、Tuic、Argo临时/固定隧道支持Vless-ws-vision-enc或Vmess-ws 】
+【 已支持：AnyTLS、Any-reality、Vless-xhttp-reality-vison-enc、Vless-tcp-reality-vision、Vless-xhttp-vison-enc、Vless-ws-vision-enc、Shadowsocks-2022、Vmess-ws、Socks5、Hysteria2、Tuic、Naiveproxy、Vless-xhttp-tls-UDP、Vless-xhttp-tls-TCP/UDP、Argo临时/固定隧道支持Vless-ws-vision-enc或Vmess-ws 】
 
 #### 7、建议配合SSH一键脚本命令生成器网页使用：https://Hutton-h.github.io/science/
 
@@ -64,6 +64,10 @@
 | 25、hysteria2端口跳跃 | hyjpt | 范围端口或者单端口或者一起混用 | 关闭端口跳跃 | 关闭端口跳跃 | 可选，范围端口格式为小数字:大数字，每组端口之间留空格 |
 | 26、【仅容器类docker】监听端口，网页查询 | PORT | 端口指定 | 3000 | 3000 | 可选 |
 | 27、【仅容器类docker】启用vless-ws-tls | DOMAIN | 服务器域名 | 关闭vless-ws-tls | 关闭vless-ws-tls | 可选，vless-ws-tls可独立存在，uuid变量必须启用 |
+| 28、启用naiveproxy | nvpt | 端口指定 | 关闭naiveproxy | 端口随机 | 可选，需开启alns申请IP/域名证书后生效 【singbox内核：TCP+UDP】 |
+| 29、启用vless-xhttp-tls-UDP | xupt | 端口指定 | 关闭vless-xhttp-tls-UDP | 端口随机 | 可选 【xray内核：UDP】 |
+| 30、启用vless-xhttp-tls-TCP/UDP | xcpt | 端口指定 | 关闭vless-xhttp-tls-TCP/UDP | 端口随机 | 可选 【xray内核：TCP+UDP】 |
+| 31、IP/域名证书开关 | alns | 填写y | 使用自签证书 | 使用自签证书 | 可选，开启后HY2/TUIC/Naive/Anytls/Xhttp-tls使用真实证书 |
 
 ------------------------------------------------------------------
 
