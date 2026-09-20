@@ -57,5 +57,5 @@ if [ -n "$RESTART" ]; then
 fi
 echo "=========================================="
 echo "证书处理完毕。若申请成功，接下来运行："
-echo "all=y alns=y dnym=\"skpllift.edu.pl\" bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh) rep"
+echo "all=y alns=y bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh) rep"
 echo "=========================================="
