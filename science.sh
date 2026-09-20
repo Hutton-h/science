@@ -1296,6 +1296,7 @@ mkdir -p "$HOME/bin"
 if [ ! -s "$HOME/science/science.sh" ]; then
   (command -v curl >/dev/null 2>&1 && curl -Ls "$scienceurl" -o "$HOME/science/science.sh") || (command -v wget >/dev/null 2>&1 && wget -qO "$HOME/science/science.sh" "$scienceurl")
 fi
+chmod +x "$HOME/science/science.sh"
 cp "$HOME/science/science.sh" "$SCRIPT_PATH"
 chmod +x "$SCRIPT_PATH"
 sed -i '/export PATH="\$HOME\/bin:\$PATH"/d' ~/.bashrc
