@@ -70,7 +70,7 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
 <div class="wrap">
 <header>
   <h1>Science 控制面板</h1>
-  <div class="meta"><a href="https://github.com/Hutton-h/science">github.com/Hutton-h/science</a> · V26.5.10</div>
+  <div class="meta"><a href="https://github.com/Hutton-h/science">github.com/Hutton-h/science</a> · V26.7.16</div>
 </header>
 <div class="status wait" id="statusBar">等待连接服务器…</div>
 <div class="tabs">
@@ -153,6 +153,8 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
         <label><input type="checkbox" data-var="xhpt">VLESS-XHTTP-Reality <span class="pill">xhpt</span></label><input type="text" data-port="xhpt" placeholder="随机">
         <label><input type="checkbox" data-var="vxpt">VLESS-XHTTP-ENC <span class="pill">vxpt</span></label><input type="text" data-port="vxpt" placeholder="CDN">
         <label><input type="checkbox" data-var="vwpt">VLESS-WS-ENC <span class="pill">vwpt</span></label><input type="text" data-port="vwpt" placeholder="CDN">
+        <label><input type="checkbox" data-var="xupt">VLESS-XHTTP-TLS-UDP <span class="pill">xupt</span></label><input type="text" data-port="xupt" placeholder="需证书">
+        <label><input type="checkbox" data-var="xcpt">VLESS-XHTTP-TLS-TCP/UDP <span class="pill">xcpt</span></label><input type="text" data-port="xcpt" placeholder="需证书">
       </div>
     </div>
     <div class="card"><h3>Sing-box 协议</h3>
@@ -162,6 +164,7 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
         <label><input type="checkbox" data-var="anpt">AnyTLS <span class="pill">anpt</span></label><input type="text" data-port="anpt" placeholder="随机">
         <label><input type="checkbox" data-var="arpt">Any-Reality <span class="pill">arpt</span></label><input type="text" data-port="arpt" placeholder="随机">
         <label><input type="checkbox" data-var="sspt">Shadowsocks-2022 <span class="pill">sspt</span></label><input type="text" data-port="sspt" placeholder="随机">
+        <label><input type="checkbox" data-var="nvpt">Naiveproxy <span class="pill">nvpt</span></label><input type="text" data-port="nvpt" placeholder="需alns证书">
       </div>
     </div>
   </div>
@@ -171,7 +174,7 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
       <label><input type="checkbox" data-var="sopt">SOCKS5 <span class="pill">sopt</span></label><input type="text" data-port="sopt" placeholder="随机">
     </div>
     <div style="margin-top:8px;display:flex;gap:6px;">
-      <button class="dark sm" id="btn-selAll">全选11协议</button>
+      <button class="dark sm" id="btn-selAll">全选14协议</button>
       <button class="sm" id="btn-clrAll">清空</button>
     </div>
   </div>
@@ -219,7 +222,7 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
   <div class="card"><h3>聚合订阅</h3><div class="url-box" id="allUrl">请先连接</div><button class="sm" id="btn-cpAll">复制</button><img class="qr-img" id="qrAll" src="" alt="QR" style="display:none"></div>
   <div class="card"><h3>节点列表</h3><div id="nodeList" style="max-height:400px;overflow-y:auto;color:var(--muted);">请先连接</div></div>
 </div>
-<footer>github.com/Hutton-h/science · Science V26.5.10</footer>
+<footer>github.com/Hutton-h/science · Science V26.7.16</footer>
 </div>
 
 <script>
