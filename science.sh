@@ -3481,9 +3481,6 @@ SHA256=$(openssl x509 -in $HOME/science/cert.crt -outform DER | sha256sum | awk 
 echo "$SHA256" > "$HOME/science/SHA256.txt"
 fi
 #fi
-if [ -n "$alns" ] && [ ! -s "/root/ygkkkca/private.key" ]; then
-bash <(curl -Ls https://raw.githubusercontent.com/yonggekkk/acme-yg/main/acme.sh)
-fi
 echo
 if [ -n "$alns" ] && [ -s "/root/ygkkkca/private.key" ]; then
 certificateHTA="/root/ygkkkca/cert.crt"
@@ -3493,6 +3490,12 @@ else
 certificateHTA="$HOME/science/cert.crt"
 keyHTA="$HOME/science/private.key"
 echo "HY2/TUIC/Anytls/Xhttp-tls将使用自签证书的TLS"
+if [ -n "$alns" ]; then
+echo
+echo "提示：已开启alns，但未检测到证书(/root/ygkkkca/private.key)，Naiveproxy协议已自动跳过，不影响其他协议安装。"
+echo "如需启用Naiveproxy，请先手动申请证书（一次性）：bash <(curl -Ls https://raw.githubusercontent.com/yonggekkk/acme-yg/main/acme.sh) 选择数字1，按提示输入IP或域名"
+echo "申请成功后重新运行：science rep"
+fi
 fi
 ins
 if [ -n "$sub" ]; then
