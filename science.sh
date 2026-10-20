@@ -27,14 +27,19 @@ trap cleanup_on_exit INT TERM
 [ -z "${xupt+x}" ] || xup=yes
 [ -z "${xcpt+x}" ] || xcp=yes
 [ -z "${vgpt+x}" ] || vgp=yes
+[ -z "${vhupt+x}" ] || vhup=yes
+[ -z "${vh2pt+x}" ] || vh2p=yes
+[ -z "${vmgpt+x}" ] || vmgp=yes
+[ -z "${vmh2pt+x}" ] || vmh2p=yes
+[ -z "${vmhupt+x}" ] || vmhup=yes
 # 一键全协议预设：all=y 自动开启全部协议+Hysteria2端口跳跃+SOCKS5+订阅（Argo需额外指定agn和agk）
-[ -z "${all+x}" ] || { vlp=yes; vmp=yes; vmag=yes; vwp=yes; hyp=yes; hyjpt="10000:20000"; tup=yes; xhp=yes; vxp=yes; anp=yes; arp=yes; ssp=yes; sop=yes; tjp=yes; tjgp=yes; tjtp=yes; xup=yes; xcp=yes; vgp=yes; sub=y; vmag=yes; }
+[ -z "${all+x}" ] || { vlp=yes; vmp=yes; vmag=yes; vwp=yes; hyp=yes; hyjpt="10000:20000"; tup=yes; xhp=yes; vxp=yes; anp=yes; arp=yes; ssp=yes; sop=yes; tjp=yes; tjgp=yes; tjtp=yes; xup=yes; xcp=yes; vgp=yes; vhup=yes; vh2p=yes; vmgp=yes; vmh2p=yes; vmhup=yes; sub=y; vmag=yes; }
 if find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(s|x)' || pgrep -f 'science/(s|x)' >/dev/null 2>&1; then
 if [ "$1" = "rep" ]; then
-[ "$xcp" = yes ] || [ "$xup" = yes ] || [ "$tjp" = yes ] || [ "$tjgp" = yes ] || [ "$tjtp" = yes ] || [ "$vgp" = yes ] || [ "$vwp" = yes ] || [ "$sop" = yes ] || [ "$vxp" = yes ] || [ "$ssp" = yes ] || [ "$vlp" = yes ] || [ "$vmp" = yes ] || [ "$hyp" = yes ] || [ "$tup" = yes ] || [ "$xhp" = yes ] || [ "$anp" = yes ] || [ "$arp" = yes ] || { echo "提示：rep重置协议时，请在脚本前至少设置一个协议变量哦，再见！💣"; exit; }
+[ "$xcp" = yes ] || [ "$xup" = yes ] || [ "$tjp" = yes ] || [ "$tjgp" = yes ] || [ "$tjtp" = yes ] || [ "$vgp" = yes ] || [ "$vhup" = yes ] || [ "$vh2p" = yes ] || [ "$vmgp" = yes ] || [ "$vmh2p" = yes ] || [ "$vmhup" = yes ] || [ "$vwp" = yes ] || [ "$sop" = yes ] || [ "$vxp" = yes ] || [ "$ssp" = yes ] || [ "$vlp" = yes ] || [ "$vmp" = yes ] || [ "$hyp" = yes ] || [ "$tup" = yes ] || [ "$xhp" = yes ] || [ "$anp" = yes ] || [ "$arp" = yes ] || { echo "提示：rep重置协议时，请在脚本前至少设置一个协议变量哦，再见！💣"; exit; }
 fi
 else
-[ "$1" = "del" ] || [ "$1" = "panel" ] || [ "$1" = "statusgen" ] || [ "$1" = "list" ] || [ "$xcp" = yes ] || [ "$xup" = yes ] || [ "$tjp" = yes ] || [ "$tjgp" = yes ] || [ "$tjtp" = yes ] || [ "$vgp" = yes ] || [ "$vwp" = yes ] || [ "$sop" = yes ] || [ "$vxp" = yes ] || [ "$ssp" = yes ] || [ "$vlp" = yes ] || [ "$vmp" = yes ] || [ "$hyp" = yes ] || [ "$tup" = yes ] || [ "$xhp" = yes ] || [ "$anp" = yes ] || [ "$arp" = yes ] || { echo "提示：未安装science脚本，请在脚本前至少设置一个协议变量哦，再见！💣"; exit; }
+[ "$1" = "del" ] || [ "$1" = "panel" ] || [ "$1" = "statusgen" ] || [ "$1" = "list" ] || [ "$xcp" = yes ] || [ "$xup" = yes ] || [ "$tjp" = yes ] || [ "$tjgp" = yes ] || [ "$tjtp" = yes ] || [ "$vgp" = yes ] || [ "$vhup" = yes ] || [ "$vh2p" = yes ] || [ "$vmgp" = yes ] || [ "$vmh2p" = yes ] || [ "$vmhup" = yes ] || [ "$vwp" = yes ] || [ "$sop" = yes ] || [ "$vxp" = yes ] || [ "$ssp" = yes ] || [ "$vlp" = yes ] || [ "$vmp" = yes ] || [ "$hyp" = yes ] || [ "$tup" = yes ] || [ "$xhp" = yes ] || [ "$anp" = yes ] || [ "$arp" = yes ] || { echo "提示：未安装science脚本，请在脚本前至少设置一个协议变量哦，再见！💣"; exit; }
 fi
 export uuid=${uuid:-''}
 export port_vl_re=${vlpt:-''}
@@ -52,6 +57,11 @@ export port_tj=${tjpt:-''}
 export port_tjg=${tjgpt:-''}
 export port_tjt=${tjtpt:-''}
 export port_vg=${vgpt:-''}
+export port_vhu=${vhupt:-''}
+export port_vh2=${vh2pt:-''}
+export port_vmg=${vmgpt:-''}
+export port_vmh2=${vmh2pt:-''}
+export port_vmhu=${vmhupt:-''}
 export port_xu=${xupt:-''}
 export port_xc=${xcpt:-''}
 export ym_vl_re=${reym:-''}
@@ -78,7 +88,7 @@ echo "卸载脚本命令：science del 【或者】 主脚本 del"
 echo "部署/更新面板命令：science panel 【或者】 主脚本 panel"
 echo "一键全协议命令：all=y dnym=\"域名\" bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)"
 echo "一键全协议+Argo：all=y dnym=\"域名\" argo=vmpt agn=\"CF域名\" agk=\"ey开头的token\" bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)"
-echo "（all=y 自动开启协议：VLESS-Reality/XHTTP-Reality/XHTTP-ENC/VLESS-gRPC/Hysteria2(端口跳跃)/Tuic/SS-2022/VMess-WS/SOCKS5/Trojan-ws/Trojan-grpc/Trojan-tcp/Xhttp-tls-UDP/Xhttp-tls-TCP）"
+echo "（all=y 自动开启协议：VLESS-Reality/XHTTP-Reality/XHTTP-ENC/VLESS-gRPC/VLESS-httpupgrade/VLESS-h2/Hysteria2(端口跳跃)/Tuic/SS-2022/VMess-WS/VMess-gRPC/VMess-h2/VMess-httpupgrade/SOCKS5/Trojan-ws/Trojan-grpc/Trojan-tcp/Xhttp-tls-UDP/Xhttp-tls-TCP）"
 echo "申请本地IP域名证书脚本：bash <(curl -Ls https://raw.githubusercontent.com/yonggekkk/acme-yg/main/acme.sh)"
 echo "订阅面板(需开启sub=y)：http://服务器IP或域名:订阅端口/订阅Token/index.html"
 echo "隐藏IP用域名变量：dnym=\"你的域名\" (需先在DNS将域名解析到服务器IP)"
@@ -637,6 +647,173 @@ cat >> "$HOME/science/xr.json" <<EOF
 EOF
 else
 vgp=vgptargo
+fi
+if [ -n "$vhup" ]; then
+vhup=vhupt
+if [ -z "$port_vhu" ] && [ ! -e "$HOME/science/port_vhu" ]; then
+port_vhu=$(shuf -i 10000-65535 -n 1)
+echo "$port_vhu" > "$HOME/science/port_vhu"
+elif [ -n "$port_vhu" ]; then
+echo "$port_vhu" > "$HOME/science/port_vhu"
+fi
+port_vhu=$(cat "$HOME/science/port_vhu")
+echo "Vless-httpupgrade端口：$port_vhu"
+cat >> "$HOME/science/xr.json" <<EOF
+        {
+            "tag":"vless-httpupgrade",
+            "listen": "::",
+            "port": $port_vhu,
+            "protocol": "vless",
+            "settings": {
+                "clients": [{"id": "${uuid}", "flow": ""}],
+                "decryption": "none"
+            },
+            "streamSettings": {
+                "network": "httpupgrade",
+                "security": "tls",
+                "httpupgradeSettings": {"path": "/${uuid}-vhu"},
+                "tlsSettings": {
+                    "certificates": [{"certificateFile": "$certificateHTA", "keyFile": "$keyHTA"}]
+                }
+            },
+            "sniffing": {"enabled": true, "destOverride": ["http", "tls", "quic"], "metadataOnly": false}
+        },
+EOF
+else
+vhup=vhuptargo
+fi
+if [ -n "$vh2p" ]; then
+vh2p=vh2pt
+if [ -z "$port_vh2" ] && [ ! -e "$HOME/science/port_vh2" ]; then
+port_vh2=$(shuf -i 10000-65535 -n 1)
+echo "$port_vh2" > "$HOME/science/port_vh2"
+elif [ -n "$port_vh2" ]; then
+echo "$port_vh2" > "$HOME/science/port_vh2"
+fi
+port_vh2=$(cat "$HOME/science/port_vh2")
+echo "Vless-h2端口：$port_vh2"
+cat >> "$HOME/science/xr.json" <<EOF
+        {
+            "tag":"vless-h2",
+            "listen": "::",
+            "port": $port_vh2,
+            "protocol": "vless",
+            "settings": {
+                "clients": [{"id": "${uuid}", "flow": ""}],
+                "decryption": "none"
+            },
+            "streamSettings": {
+                "network": "h2",
+                "security": "tls",
+                "httpSettings": {"path": "/${uuid}-vh2"},
+                "tlsSettings": {
+                    "certificates": [{"certificateFile": "$certificateHTA", "keyFile": "$keyHTA"}]
+                }
+            },
+            "sniffing": {"enabled": true, "destOverride": ["http", "tls", "quic"], "metadataOnly": false}
+        },
+EOF
+else
+vh2p=vh2ptargo
+fi
+if [ -n "$vmgp" ]; then
+vmgp=vmgpt
+if [ -z "$port_vmg" ] && [ ! -e "$HOME/science/port_vmg" ]; then
+port_vmg=$(shuf -i 10000-65535 -n 1)
+echo "$port_vmg" > "$HOME/science/port_vmg"
+elif [ -n "$port_vmg" ]; then
+echo "$port_vmg" > "$HOME/science/port_vmg"
+fi
+port_vmg=$(cat "$HOME/science/port_vmg")
+echo "Vmess-grpc端口：$port_vmg"
+cat >> "$HOME/science/xr.json" <<EOF
+        {
+            "tag":"vmess-grpc",
+            "listen": "::",
+            "port": $port_vmg,
+            "protocol": "vmess",
+            "settings": {
+                "clients": [{"id": "${uuid}"}]
+            },
+            "streamSettings": {
+                "network": "grpc",
+                "security": "tls",
+                "grpcSettings": {"serviceName": "${uuid}-vmg"},
+                "tlsSettings": {
+                    "certificates": [{"certificateFile": "$certificateHTA", "keyFile": "$keyHTA"}]
+                }
+            },
+            "sniffing": {"enabled": true, "destOverride": ["http", "tls", "quic"], "metadataOnly": false}
+        },
+EOF
+else
+vmgp=vmgptargo
+fi
+if [ -n "$vmh2p" ]; then
+vmh2p=vmh2pt
+if [ -z "$port_vmh2" ] && [ ! -e "$HOME/science/port_vmh2" ]; then
+port_vmh2=$(shuf -i 10000-65535 -n 1)
+echo "$port_vmh2" > "$HOME/science/port_vmh2"
+elif [ -n "$port_vmh2" ]; then
+echo "$port_vmh2" > "$HOME/science/port_vmh2"
+fi
+port_vmh2=$(cat "$HOME/science/port_vmh2")
+echo "Vmess-h2端口：$port_vmh2"
+cat >> "$HOME/science/xr.json" <<EOF
+        {
+            "tag":"vmess-h2",
+            "listen": "::",
+            "port": $port_vmh2,
+            "protocol": "vmess",
+            "settings": {
+                "clients": [{"id": "${uuid}"}]
+            },
+            "streamSettings": {
+                "network": "h2",
+                "security": "tls",
+                "httpSettings": {"path": "/${uuid}-vmh2"},
+                "tlsSettings": {
+                    "certificates": [{"certificateFile": "$certificateHTA", "keyFile": "$keyHTA"}]
+                }
+            },
+            "sniffing": {"enabled": true, "destOverride": ["http", "tls", "quic"], "metadataOnly": false}
+        },
+EOF
+else
+vmh2p=vmh2ptargo
+fi
+if [ -n "$vmhup" ]; then
+vmhup=vmhupt
+if [ -z "$port_vmhu" ] && [ ! -e "$HOME/science/port_vmhu" ]; then
+port_vmhu=$(shuf -i 10000-65535 -n 1)
+echo "$port_vmhu" > "$HOME/science/port_vmhu"
+elif [ -n "$port_vmhu" ]; then
+echo "$port_vmhu" > "$HOME/science/port_vmhu"
+fi
+port_vmhu=$(cat "$HOME/science/port_vmhu")
+echo "Vmess-httpupgrade端口：$port_vmhu"
+cat >> "$HOME/science/xr.json" <<EOF
+        {
+            "tag":"vmess-httpupgrade",
+            "listen": "::",
+            "port": $port_vmhu,
+            "protocol": "vmess",
+            "settings": {
+                "clients": [{"id": "${uuid}"}]
+            },
+            "streamSettings": {
+                "network": "httpupgrade",
+                "security": "tls",
+                "httpupgradeSettings": {"path": "/${uuid}-vmhu"},
+                "tlsSettings": {
+                    "certificates": [{"certificateFile": "$certificateHTA", "keyFile": "$keyHTA"}]
+                }
+            },
+            "sniffing": {"enabled": true, "destOverride": ["http", "tls", "quic"], "metadataOnly": false}
+        },
+EOF
+else
+vmhup=vmhuptargo
 fi
 }
 
@@ -1318,7 +1495,7 @@ xrsbso
 warpsx
 xrsbout
 tjp="tjptargo"; tjgp="tjgptargo"; tup="tuptargo"; anp="anptargo"; arp="arptargo"; ssp="ssptargo"
-elif [ "$xhp" != yes ] && [ "$vlp" != yes ] && [ "$vgp" != yes ] && [ "$vxp" != yes ] && [ "$vwp" != yes ] && [ "$xup" != yes ] && [ "$xcp" != yes ]; then
+elif [ "$xhp" != yes ] && [ "$vlp" != yes ] && [ "$vgp" != yes ] && [ "$vhup" != yes ] && [ "$vh2p" != yes ] && [ "$vmgp" != yes ] && [ "$vmh2p" != yes ] && [ "$vmhup" != yes ] && [ "$vxp" != yes ] && [ "$vwp" != yes ] && [ "$xup" != yes ] && [ "$xcp" != yes ]; then
 installsb
 xrsbhy2
 xrsbvm
@@ -1434,7 +1611,7 @@ echo "快捷命令 science 已就绪 (重新登录SSH后生效，或执行 sourc
 # ====== 进程检测：仅当进程运行时才配置自启动恢复 ======
 if find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(s|x)' || pgrep -f 'science/(s|x)' >/dev/null 2>&1 ; then
 if ! pidof systemd >/dev/null 2>&1 && ! command -v rc-service >/dev/null 2>&1; then
-echo "if ! find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(s|x)' && ! pgrep -f 'science/(s|x)' >/dev/null 2>&1; then echo '检测到系统可能中断过，或者变量格式错误？建议在SSH对话框输入 reboot 重启下服务器。现在自动执行Science脚本的节点恢复操作，请稍等……'; sleep 6; export alns=\"${alns}\" cfip=\"${cfip}\" hyjpt=\"${hyjpt}\" cdnym=\"${cdnym}\" name=\"${name}\" ippz=\"${ippz}\" argo=\"${argo}\" uuid=\"${uuid}\" $wap=\"${warp}\" $xhp=\"${port_xh}\" $xup=\"${port_xu}\" $vxp=\"${port_vx}\" $ssp=\"${port_ss}\" $sop=\"${port_so}\" $anp=\"${port_an}\" $arp=\"${port_ar}\" $vlp=\"${port_vl_re}\" $vwp=\"${port_vw}\" $vmp=\"${port_vm_ws}\" $hyp=\"${port_hy2}\" $tup=\"${port_tu}\" $xcp=\"${port_xc}\" $tjp=\"${port_tj}\" $tjgp=\"${port_tjg}\" $tjtp=\"${port_tjt}\" $vgp=\"${port_vg}\" reym=\"${ym_vl_re}\" agn=\"${ARGO_DOMAIN}\" agk=\"${ARGO_AUTH}\"; bash "$HOME/bin/science"; fi" >> ~/.bashrc
+echo "if ! find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(s|x)' && ! pgrep -f 'science/(s|x)' >/dev/null 2>&1; then echo '检测到系统可能中断过，或者变量格式错误？建议在SSH对话框输入 reboot 重启下服务器。现在自动执行Science脚本的节点恢复操作，请稍等……'; sleep 6; export alns=\"${alns}\" cfip=\"${cfip}\" hyjpt=\"${hyjpt}\" cdnym=\"${cdnym}\" name=\"${name}\" ippz=\"${ippz}\" argo=\"${argo}\" uuid=\"${uuid}\" $wap=\"${warp}\" $xhp=\"${port_xh}\" $xup=\"${port_xu}\" $vxp=\"${port_vx}\" $ssp=\"${port_ss}\" $sop=\"${port_so}\" $anp=\"${port_an}\" $arp=\"${port_ar}\" $vlp=\"${port_vl_re}\" $vwp=\"${port_vw}\" $vmp=\"${port_vm_ws}\" $hyp=\"${port_hy2}\" $tup=\"${port_tu}\" $xcp=\"${port_xc}\" $tjp=\"${port_tj}\" $tjgp=\"${port_tjg}\" $tjtp=\"${port_tjt}\" $vgp=\"${port_vg}\" $vhup=\"${port_vhu}\" $vh2p=\"${port_vh2}\" $vmgp=\"${port_vmg}\" $vmh2p=\"${port_vmh2}\" $vmhup=\"${port_vmhu}\" reym=\"${ym_vl_re}\" agn=\"${ARGO_DOMAIN}\" agk=\"${ARGO_AUTH}\"; bash "$HOME/bin/science"; fi" >> ~/.bashrc
 fi
 crontab -l > /tmp/crontab.tmp 2>/dev/null
 if ! pidof systemd >/dev/null 2>&1 && ! command -v rc-service >/dev/null 2>&1; then
@@ -2028,6 +2205,277 @@ EOF
 }
 clvgpt1(){
 echo "- ${sxname}vl-grpc-reality-$hostname"
+}
+fi
+if grep vless-httpupgrade "$HOME/science/xr.json" >/dev/null 2>&1; then
+echo "💣【 Vless-httpupgrade 】节点信息如下："
+port_vhu=$(cat "$HOME/science/port_vhu")
+vhu_link="vless://$uuid@$add:$port_vhu?encryption=none&security=tls&sni=$sni&insecure=$jhins&allowInsecure=$jhins&type=httpupgrade&host=$sni&path=/$uuid-vhu#${sxname}vl-httpupgrade-$hostname"
+echo "$vhu_link" >> "$HOME/science/jhsub.txt"
+echo "$vhu_link"
+echo
+sbvhup(){
+cat <<EOF
+    {
+      "type": "vless",
+      "tag": "${sxname}vl-httpupgrade-$hostname",
+      "server": "$add",
+      "server_port": $port_vhu,
+      "uuid": "$uuid",
+      "tls": {
+        "enabled": true,
+        "insecure": $msins,
+        "server_name": "$sni"
+      },
+      "transport": {
+        "type": "httpupgrade",
+        "path": "/$uuid-vhu",
+        "host": "$sni"
+      }
+    },
+EOF
+}
+sbvhup1(){
+echo "\"${sxname}vl-httpupgrade-$hostname\","
+}
+clvhup(){
+cat <<EOF
+- name: ${sxname}vl-httpupgrade-$hostname
+  type: vless
+  server: $add
+  port: $port_vhu
+  uuid: $uuid
+  network: httpupgrade
+  udp: true
+  tls: true
+  servername: $sni
+  skip-cert-verify: $msins
+  httpupgrade-opts:
+    path: /$uuid-vhu
+    headers:
+      Host: $sni
+EOF
+}
+clvhup1(){
+echo "- ${sxname}vl-httpupgrade-$hostname"
+}
+fi
+if grep vless-h2 "$HOME/science/xr.json" >/dev/null 2>&1; then
+echo "💣【 Vless-h2 】节点信息如下："
+port_vh2=$(cat "$HOME/science/port_vh2")
+vh2_link="vless://$uuid@$add:$port_vh2?encryption=none&security=tls&sni=$sni&insecure=$jhins&allowInsecure=$jhins&type=h2&host=$sni&path=/$uuid-vh2#${sxname}vl-h2-$hostname"
+echo "$vh2_link" >> "$HOME/science/jhsub.txt"
+echo "$vh2_link"
+echo
+sbvh2p(){
+cat <<EOF
+    {
+      "type": "vless",
+      "tag": "${sxname}vl-h2-$hostname",
+      "server": "$add",
+      "server_port": $port_vh2,
+      "uuid": "$uuid",
+      "tls": {
+        "enabled": true,
+        "insecure": $msins,
+        "server_name": "$sni"
+      },
+      "transport": {
+        "type": "http",
+        "path": "/$uuid-vh2",
+        "host": ["$sni"]
+      }
+    },
+EOF
+}
+sbvh2p1(){
+echo "\"${sxname}vl-h2-$hostname\","
+}
+clvh2p(){
+cat <<EOF
+- name: ${sxname}vl-h2-$hostname
+  type: vless
+  server: $add
+  port: $port_vh2
+  uuid: $uuid
+  network: h2
+  udp: true
+  tls: true
+  servername: $sni
+  skip-cert-verify: $msins
+  h2-opts:
+    host:
+      - $sni
+    path: /$uuid-vh2
+EOF
+}
+clvh2p1(){
+echo "- ${sxname}vl-h2-$hostname"
+}
+fi
+if grep vmess-grpc "$HOME/science/xr.json" >/dev/null 2>&1; then
+echo "💣【 Vmess-grpc 】节点信息如下："
+port_vmg=$(cat "$HOME/science/port_vmg")
+vmg_link="vmess://$(echo "{ \"v\": \"2\", \"ps\": \"${sxname}vmess-grpc-$hostname\", \"add\": \"$add\", \"port\": \"$port_vmg\", \"id\": \"$uuid\", \"aid\": \"0\", \"scy\": \"auto\", \"net\": \"grpc\", \"type\": \"none\", \"host\": \"$sni\", \"path\": \"$uuid-vmg\", \"tls\": \"tls\", \"sni\": \"$sni\"}" | base64 -w0)"
+echo "$vmg_link" >> "$HOME/science/jhsub.txt"
+echo "$vmg_link"
+echo
+sbvmgp(){
+cat <<EOF
+    {
+      "type": "vmess",
+      "tag": "${sxname}vmess-grpc-$hostname",
+      "server": "$add",
+      "server_port": $port_vmg,
+      "uuid": "$uuid",
+      "security": "auto",
+      "tls": {
+        "enabled": true,
+        "insecure": $msins,
+        "server_name": "$sni"
+      },
+      "transport": {
+        "type": "grpc",
+        "service_name": "$uuid-vmg"
+      }
+    },
+EOF
+}
+sbvmgp1(){
+echo "\"${sxname}vmess-grpc-$hostname\","
+}
+clvmgp(){
+cat <<EOF
+- name: ${sxname}vmess-grpc-$hostname
+  type: vmess
+  server: $add
+  port: $port_vmg
+  uuid: $uuid
+  alterId: 0
+  cipher: auto
+  udp: true
+  tls: true
+  servername: $sni
+  skip-cert-verify: $msins
+  network: grpc
+  grpc-opts:
+    grpc-service-name: $uuid-vmg
+EOF
+}
+clvmgp1(){
+echo "- ${sxname}vmess-grpc-$hostname"
+}
+fi
+if grep vmess-h2 "$HOME/science/xr.json" >/dev/null 2>&1; then
+echo "💣【 Vmess-h2 】节点信息如下："
+port_vmh2=$(cat "$HOME/science/port_vmh2")
+vmh2_link="vmess://$(echo "{ \"v\": \"2\", \"ps\": \"${sxname}vmess-h2-$hostname\", \"add\": \"$add\", \"port\": \"$port_vmh2\", \"id\": \"$uuid\", \"aid\": \"0\", \"scy\": \"auto\", \"net\": \"h2\", \"type\": \"none\", \"host\": \"$sni\", \"path\": \"/$uuid-vmh2\", \"tls\": \"tls\", \"sni\": \"$sni\"}" | base64 -w0)"
+echo "$vmh2_link" >> "$HOME/science/jhsub.txt"
+echo "$vmh2_link"
+echo
+sbvmh2p(){
+cat <<EOF
+    {
+      "type": "vmess",
+      "tag": "${sxname}vmess-h2-$hostname",
+      "server": "$add",
+      "server_port": $port_vmh2,
+      "uuid": "$uuid",
+      "security": "auto",
+      "tls": {
+        "enabled": true,
+        "insecure": $msins,
+        "server_name": "$sni"
+      },
+      "transport": {
+        "type": "http",
+        "path": "/$uuid-vmh2",
+        "host": ["$sni"]
+      }
+    },
+EOF
+}
+sbvmh2p1(){
+echo "\"${sxname}vmess-h2-$hostname\","
+}
+clvmh2p(){
+cat <<EOF
+- name: ${sxname}vmess-h2-$hostname
+  type: vmess
+  server: $add
+  port: $port_vmh2
+  uuid: $uuid
+  alterId: 0
+  cipher: auto
+  udp: true
+  tls: true
+  servername: $sni
+  skip-cert-verify: $msins
+  network: h2
+  h2-opts:
+    host:
+      - $sni
+    path: /$uuid-vmh2
+EOF
+}
+clvmh2p1(){
+echo "- ${sxname}vmess-h2-$hostname"
+}
+fi
+if grep vmess-httpupgrade "$HOME/science/xr.json" >/dev/null 2>&1; then
+echo "💣【 Vmess-httpupgrade 】节点信息如下："
+port_vmhu=$(cat "$HOME/science/port_vmhu")
+vmhu_link="vmess://$(echo "{ \"v\": \"2\", \"ps\": \"${sxname}vmess-httpupgrade-$hostname\", \"add\": \"$add\", \"port\": \"$port_vmhu\", \"id\": \"$uuid\", \"aid\": \"0\", \"scy\": \"auto\", \"net\": \"httpupgrade\", \"type\": \"none\", \"host\": \"$sni\", \"path\": \"/$uuid-vmhu\", \"tls\": \"tls\", \"sni\": \"$sni\"}" | base64 -w0)"
+echo "$vmhu_link" >> "$HOME/science/jhsub.txt"
+echo "$vmhu_link"
+echo
+sbvmhup(){
+cat <<EOF
+    {
+      "type": "vmess",
+      "tag": "${sxname}vmess-httpupgrade-$hostname",
+      "server": "$add",
+      "server_port": $port_vmhu,
+      "uuid": "$uuid",
+      "security": "auto",
+      "tls": {
+        "enabled": true,
+        "insecure": $msins,
+        "server_name": "$sni"
+      },
+      "transport": {
+        "type": "httpupgrade",
+        "path": "/$uuid-vmhu",
+        "host": "$sni"
+      }
+    },
+EOF
+}
+sbvmhup1(){
+echo "\"${sxname}vmess-httpupgrade-$hostname\","
+}
+clvmhup(){
+cat <<EOF
+- name: ${sxname}vmess-httpupgrade-$hostname
+  type: vmess
+  server: $add
+  port: $port_vmhu
+  uuid: $uuid
+  alterId: 0
+  cipher: auto
+  udp: true
+  tls: true
+  servername: $sni
+  skip-cert-verify: $msins
+  network: httpupgrade
+  httpupgrade-opts:
+    path: /$uuid-vmhu
+    headers:
+      Host: $sni
+EOF
+}
+clvmhup1(){
+echo "- ${sxname}vmess-httpupgrade-$hostname"
 }
 fi
 if grep ss-2022 "$HOME/science/sb.json" >/dev/null 2>&1; then
@@ -2676,10 +3124,10 @@ out=$($f)
 [ -n "$out" ] && printf "%s\n" "$out"
 fi
 }
-sbxy="$(get_func sbvlpt; get_func sbvgpt; get_func sbsspt; get_func sbanpt; get_func sbarpt; get_func sbvmpt; get_func sbhypt; get_func sbtupt; get_func sbtjpt; get_func sbxhpt; get_func sbvxpt; get_func sbvmargopt)"
-clxy="$(get_func cludpxcpt; get_func clxcpt; get_func clvlpt; get_func clvgpt; get_func clsspt; get_func clanpt; get_func clvmpt; get_func clhypt; get_func cltupt; get_func cltjpt; get_func clxhpt; get_func clvxpt; get_func clvmargopt)"
-sbgz="$(get_func sbvlpt1; get_func sbvgpt1; get_func sbsspt1; get_func sbanpt1; get_func sbarpt1; get_func sbvmpt1; get_func sbhypt1; get_func sbtupt1; get_func sbtjpt1; get_func sbxhpt1; get_func sbvxpt1; get_func sbvmargopt1)"
-clgz="$({ get_func cludpxcpt1; get_func clxcpt1; get_func clvlpt1; get_func clvgpt1; get_func clsspt1; get_func clanpt1; get_func clvmpt1; get_func clhypt1; get_func cltupt1; get_func cltjpt1; get_func clxhpt1; get_func clvxpt1; get_func clvmargopt1; } | sed '2,$s/^/    /')"
+sbxy="$(get_func sbvlpt; get_func sbvgpt; get_func sbvhup; get_func sbvh2p; get_func sbvmgp; get_func sbvmh2p; get_func sbvmhup; get_func sbsspt; get_func sbanpt; get_func sbarpt; get_func sbvmpt; get_func sbhypt; get_func sbtupt; get_func sbtjpt; get_func sbxhpt; get_func sbvxpt; get_func sbvmargopt)"
+clxy="$(get_func cludpxcpt; get_func clxcpt; get_func clvlpt; get_func clvgpt; get_func clvhup; get_func clvh2p; get_func clvmgp; get_func clvmh2p; get_func clvmhup; get_func clsspt; get_func clanpt; get_func clvmpt; get_func clhypt; get_func cltupt; get_func cltjpt; get_func clxhpt; get_func clvxpt; get_func clvmargopt)"
+sbgz="$(get_func sbvlpt1; get_func sbvgpt1; get_func sbvhup1; get_func sbvh2p1; get_func sbvmgp1; get_func sbvmh2p1; get_func sbvmhup1; get_func sbsspt1; get_func sbanpt1; get_func sbarpt1; get_func sbvmpt1; get_func sbhypt1; get_func sbtupt1; get_func sbtjpt1; get_func sbxhpt1; get_func sbvxpt1; get_func sbvmargopt1)"
+clgz="$({ get_func cludpxcpt1; get_func clxcpt1; get_func clvlpt1; get_func clvgpt1; get_func clvhup1; get_func clvh2p1; get_func clvmgp1; get_func clvmh2p1; get_func clvmhup1; get_func clsspt1; get_func clanpt1; get_func clvmpt1; get_func clhypt1; get_func cltupt1; get_func cltjpt1; get_func clxhpt1; get_func clvxpt1; get_func clvmargopt1; } | sed '2,$s/^/    /')"
 sbgz=$(printf "%s\n" "$sbgz" | sed '$ s/,$//')
 cat > $HOME/science/sbox.json <<EOF
 {
