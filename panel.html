@@ -306,17 +306,19 @@ document.getElementById('tab-sub').addEventListener('click', function(){ switchT
 // Auto detect
 (function(){
   var p = window.location.pathname.split('/').filter(function(x){ return x; });
+  srv = window.location.hostname;
+  port = window.location.port || (proto === 'https:' ? '443' : '80');
+  document.getElementById('subServer').value = srv;
+  document.getElementById('subPort').value = port;
   if (p.length >= 2 && p[p.length - 1] === 'index.html') {
     token = p[p.length - 2];
-    srv = window.location.hostname;
-    port = window.location.port || (proto === 'https:' ? '443' : '80');
-    document.getElementById('subServer').value = srv;
-    document.getElementById('subPort').value = port;
-    document.getElementById('subToken').value = token;
-    renderSub();
-    fetchDash();
-    startTimer();
+  } else {
+    token = '';
   }
+  document.getElementById('subToken').value = token;
+  renderSub();
+  fetchDash();
+  startTimer();
 })();
 
 // UUID
@@ -385,12 +387,14 @@ document.getElementById('btn-cpSbox').addEventListener('click', function(){ copy
 document.getElementById('btn-cpAll').addEventListener('click', function(){ copyEl('allUrl', this); });
 
 function baseUrl() {
-  return proto + '//' + srv + (port === '443' || port === '80' ? '' : ':' + port) + '/' + token + '/';
+  var base = proto + '//' + srv + (port === '443' || port === '80' ? '' : ':' + port) + '/';
+  if (token) { base += token + '/'; }
+  return base;
 }
 
 // 渲染订阅分组卡片
 function renderSub() {
-  if (!srv || !port || !token) return;
+  if (!srv || !port) return;
   var b = baseUrl();
   // 原始订阅
   document.getElementById('clashUrl').textContent = b + 'clmi.yaml';
@@ -478,7 +482,7 @@ function nodesForGroupById(id) {
 
 // Dashboard
 function fetchDash() {
-  if (!srv || !port || !token) return;
+  if (!srv || !port) return;
   var xhr = new XMLHttpRequest();
   xhr.open('GET', baseUrl() + 'status.json', true);
   xhr.onload = function() {
@@ -534,7 +538,7 @@ function fetchDash() {
 }
 
 function fetchNodes() {
-  if (!srv || !port || !token) return;
+  if (!srv || !port) return;
   var xhr = new XMLHttpRequest();
   xhr.open('GET', baseUrl() + 'jhsub.txt', true);
   xhr.onload = function() {
