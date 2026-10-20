@@ -23,16 +23,18 @@ trap cleanup_on_exit INT TERM
 [ -z "${warp+x}" ] || wap=yes
 [ -z "${tjpt+x}" ] || tjp=yes
 [ -z "${tjgpt+x}" ] || tjgp=yes
+[ -z "${tjtpt+x}" ] || tjtp=yes
 [ -z "${xupt+x}" ] || xup=yes
 [ -z "${xcpt+x}" ] || xcp=yes
+[ -z "${vgpt+x}" ] || vgp=yes
 # 一键全协议预设：all=y 自动开启全部协议+Hysteria2端口跳跃+SOCKS5+订阅（Argo需额外指定agn和agk）
-[ -z "${all+x}" ] || { vlp=yes; vmp=yes; vmag=yes; vwp=yes; hyp=yes; hyjpt="10000:20000"; tup=yes; xhp=yes; vxp=yes; anp=yes; arp=yes; ssp=yes; sop=yes; tjp=yes; tjgp=yes; xup=yes; xcp=yes; sub=y; vmag=yes; }
+[ -z "${all+x}" ] || { vlp=yes; vmp=yes; vmag=yes; vwp=yes; hyp=yes; hyjpt="10000:20000"; tup=yes; xhp=yes; vxp=yes; anp=yes; arp=yes; ssp=yes; sop=yes; tjp=yes; tjgp=yes; tjtp=yes; xup=yes; xcp=yes; vgp=yes; sub=y; vmag=yes; }
 if find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(s|x)' || pgrep -f 'science/(s|x)' >/dev/null 2>&1; then
 if [ "$1" = "rep" ]; then
-[ "$xcp" = yes ] || [ "$xup" = yes ] || [ "$tjp" = yes ] || [ "$tjgp" = yes ] || [ "$vwp" = yes ] || [ "$sop" = yes ] || [ "$vxp" = yes ] || [ "$ssp" = yes ] || [ "$vlp" = yes ] || [ "$vmp" = yes ] || [ "$hyp" = yes ] || [ "$tup" = yes ] || [ "$xhp" = yes ] || [ "$anp" = yes ] || [ "$arp" = yes ] || { echo "提示：rep重置协议时，请在脚本前至少设置一个协议变量哦，再见！💣"; exit; }
+[ "$xcp" = yes ] || [ "$xup" = yes ] || [ "$tjp" = yes ] || [ "$tjgp" = yes ] || [ "$tjtp" = yes ] || [ "$vgp" = yes ] || [ "$vwp" = yes ] || [ "$sop" = yes ] || [ "$vxp" = yes ] || [ "$ssp" = yes ] || [ "$vlp" = yes ] || [ "$vmp" = yes ] || [ "$hyp" = yes ] || [ "$tup" = yes ] || [ "$xhp" = yes ] || [ "$anp" = yes ] || [ "$arp" = yes ] || { echo "提示：rep重置协议时，请在脚本前至少设置一个协议变量哦，再见！💣"; exit; }
 fi
 else
-[ "$1" = "del" ] || [ "$1" = "panel" ] || [ "$1" = "statusgen" ] || [ "$1" = "list" ] || [ "$xcp" = yes ] || [ "$xup" = yes ] || [ "$tjp" = yes ] || [ "$tjgp" = yes ] || [ "$vwp" = yes ] || [ "$sop" = yes ] || [ "$vxp" = yes ] || [ "$ssp" = yes ] || [ "$vlp" = yes ] || [ "$vmp" = yes ] || [ "$hyp" = yes ] || [ "$tup" = yes ] || [ "$xhp" = yes ] || [ "$anp" = yes ] || [ "$arp" = yes ] || { echo "提示：未安装science脚本，请在脚本前至少设置一个协议变量哦，再见！💣"; exit; }
+[ "$1" = "del" ] || [ "$1" = "panel" ] || [ "$1" = "statusgen" ] || [ "$1" = "list" ] || [ "$xcp" = yes ] || [ "$xup" = yes ] || [ "$tjp" = yes ] || [ "$tjgp" = yes ] || [ "$tjtp" = yes ] || [ "$vgp" = yes ] || [ "$vwp" = yes ] || [ "$sop" = yes ] || [ "$vxp" = yes ] || [ "$ssp" = yes ] || [ "$vlp" = yes ] || [ "$vmp" = yes ] || [ "$hyp" = yes ] || [ "$tup" = yes ] || [ "$xhp" = yes ] || [ "$anp" = yes ] || [ "$arp" = yes ] || { echo "提示：未安装science脚本，请在脚本前至少设置一个协议变量哦，再见！💣"; exit; }
 fi
 export uuid=${uuid:-''}
 export port_vl_re=${vlpt:-''}
@@ -48,6 +50,8 @@ export port_ss=${sspt:-''}
 export port_so=${sopt:-''}
 export port_tj=${tjpt:-''}
 export port_tjg=${tjgpt:-''}
+export port_tjt=${tjtpt:-''}
+export port_vg=${vgpt:-''}
 export port_xu=${xupt:-''}
 export port_xc=${xcpt:-''}
 export ym_vl_re=${reym:-''}
@@ -74,7 +78,7 @@ echo "卸载脚本命令：science del 【或者】 主脚本 del"
 echo "部署/更新面板命令：science panel 【或者】 主脚本 panel"
 echo "一键全协议命令：all=y dnym=\"域名\" bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)"
 echo "一键全协议+Argo：all=y dnym=\"域名\" argo=vmpt agn=\"CF域名\" agk=\"ey开头的token\" bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)"
-echo "（all=y 自动开启协议：VLESS-Reality/XHTTP-Reality/XHTTP-ENC/Hysteria2(端口跳跃)/Tuic/SS-2022/VMess-WS/SOCKS5/Trojan-ws/Trojan-grpc/Xhttp-tls-UDP/Xhttp-tls-TCP）"
+echo "（all=y 自动开启协议：VLESS-Reality/XHTTP-Reality/XHTTP-ENC/VLESS-gRPC/Hysteria2(端口跳跃)/Tuic/SS-2022/VMess-WS/SOCKS5/Trojan-ws/Trojan-grpc/Trojan-tcp/Xhttp-tls-UDP/Xhttp-tls-TCP）"
 echo "申请本地IP域名证书脚本：bash <(curl -Ls https://raw.githubusercontent.com/yonggekkk/acme-yg/main/acme.sh)"
 echo "订阅面板(需开启sub=y)：http://服务器IP或域名:订阅端口/订阅Token/index.html"
 echo "隐藏IP用域名变量：dnym=\"你的域名\" (需先在DNS将域名解析到服务器IP)"
@@ -583,6 +587,57 @@ EOF
 else
 vlp=vlptargo
 fi
+if [ -n "$vgp" ]; then
+vgp=vgpt
+if [ -z "$port_vg" ] && [ ! -e "$HOME/science/port_vg" ]; then
+port_vg=$(shuf -i 10000-65535 -n 1)
+echo "$port_vg" > "$HOME/science/port_vg"
+elif [ -n "$port_vg" ]; then
+echo "$port_vg" > "$HOME/science/port_vg"
+fi
+port_vg=$(cat "$HOME/science/port_vg")
+echo "Vless-grpc-reality端口：$port_vg"
+cat >> "$HOME/science/xr.json" <<EOF
+        {
+            "tag":"vless-grpc-reality",
+            "listen": "::",
+            "port": $port_vg,
+            "protocol": "vless",
+            "settings": {
+                "clients": [
+                    {
+                        "id": "${uuid}",
+                        "flow": ""
+                    }
+                ],
+                "decryption": "none"
+            },
+            "streamSettings": {
+                "network": "grpc",
+                "security": "reality",
+                "realitySettings": {
+                    "fingerprint": "chrome",
+                    "dest": "${ym_vl_re}:443",
+                    "serverNames": [
+                      "${ym_vl_re}"
+                    ],
+                    "privateKey": "$private_key_x",
+                    "shortIds": ["$short_id_x"]
+                },
+                "grpcSettings": {
+                    "serviceName": "${uuid}-vg"
+                }
+            },
+          "sniffing": {
+          "enabled": true,
+          "destOverride": ["http", "tls", "quic"],
+          "metadataOnly": false
+      }
+    },
+EOF
+else
+vgp=vgptargo
+fi
 }
 
 installsb(){
@@ -670,6 +725,37 @@ cat >> "$HOME/science/sb.json" <<EOF
 EOF
 else
 tjgp=tjgptargo
+fi
+if [ -n "$tjtp" ]; then
+tjtp=tjtpt
+if [ -z "$port_tjt" ] && [ ! -e "$HOME/science/port_tjt" ]; then
+port_tjt=$(shuf -i 10000-65535 -n 1)
+echo "$port_tjt" > "$HOME/science/port_tjt"
+elif [ -n "$port_tjt" ]; then
+echo "$port_tjt" > "$HOME/science/port_tjt"
+fi
+port_tjt=$(cat "$HOME/science/port_tjt")
+echo "Trojan-TCP端口：$port_tjt"
+cat >> "$HOME/science/sb.json" <<EOF
+    {
+        "type": "trojan",
+        "tag": "trojan-tcp-sb",
+        "listen": "::",
+        "listen_port": ${port_tjt},
+        "users": [
+            {
+                "password": "${uuid}"
+            }
+        ],
+        "tls": {
+            "enabled": true,
+            "certificate_path": "$certificateHTA",
+            "key_path": "$keyHTA"
+        }
+    },
+EOF
+else
+tjtp=tjtptargo
 fi
 if [ -n "$tup" ]; then
 tup=tupt
@@ -1224,7 +1310,7 @@ fi
 fi
 }
 ins(){
-if [ "$tjp" != yes ] && [ "$tjgp" != yes ] && [ "$tup" != yes ] && [ "$anp" != yes ] && [ "$arp" != yes ] && [ "$ssp" != yes ]; then
+if [ "$tjp" != yes ] && [ "$tjgp" != yes ] && [ "$tjtp" != yes ] && [ "$tup" != yes ] && [ "$anp" != yes ] && [ "$arp" != yes ] && [ "$ssp" != yes ]; then
 installxray
 xrsbhy2
 xrsbvm
@@ -1232,7 +1318,7 @@ xrsbso
 warpsx
 xrsbout
 tjp="tjptargo"; tjgp="tjgptargo"; tup="tuptargo"; anp="anptargo"; arp="arptargo"; ssp="ssptargo"
-elif [ "$xhp" != yes ] && [ "$vlp" != yes ] && [ "$vxp" != yes ] && [ "$vwp" != yes ] && [ "$xup" != yes ] && [ "$xcp" != yes ]; then
+elif [ "$xhp" != yes ] && [ "$vlp" != yes ] && [ "$vgp" != yes ] && [ "$vxp" != yes ] && [ "$vwp" != yes ] && [ "$xup" != yes ] && [ "$xcp" != yes ]; then
 installsb
 xrsbhy2
 xrsbvm
@@ -1348,7 +1434,7 @@ echo "快捷命令 science 已就绪 (重新登录SSH后生效，或执行 sourc
 # ====== 进程检测：仅当进程运行时才配置自启动恢复 ======
 if find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(s|x)' || pgrep -f 'science/(s|x)' >/dev/null 2>&1 ; then
 if ! pidof systemd >/dev/null 2>&1 && ! command -v rc-service >/dev/null 2>&1; then
-echo "if ! find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(s|x)' && ! pgrep -f 'science/(s|x)' >/dev/null 2>&1; then echo '检测到系统可能中断过，或者变量格式错误？建议在SSH对话框输入 reboot 重启下服务器。现在自动执行Science脚本的节点恢复操作，请稍等……'; sleep 6; export alns=\"${alns}\" cfip=\"${cfip}\" hyjpt=\"${hyjpt}\" cdnym=\"${cdnym}\" name=\"${name}\" ippz=\"${ippz}\" argo=\"${argo}\" uuid=\"${uuid}\" $wap=\"${warp}\" $xhp=\"${port_xh}\" $xup=\"${port_xu}\" $vxp=\"${port_vx}\" $ssp=\"${port_ss}\" $sop=\"${port_so}\" $anp=\"${port_an}\" $arp=\"${port_ar}\" $vlp=\"${port_vl_re}\" $vwp=\"${port_vw}\" $vmp=\"${port_vm_ws}\" $hyp=\"${port_hy2}\" $tup=\"${port_tu}\" $xcp=\"${port_xc}\" $tjp=\"${port_tj}\" $tjgp=\"${port_tjg}\" reym=\"${ym_vl_re}\" agn=\"${ARGO_DOMAIN}\" agk=\"${ARGO_AUTH}\"; bash "$HOME/bin/science"; fi" >> ~/.bashrc
+echo "if ! find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(s|x)' && ! pgrep -f 'science/(s|x)' >/dev/null 2>&1; then echo '检测到系统可能中断过，或者变量格式错误？建议在SSH对话框输入 reboot 重启下服务器。现在自动执行Science脚本的节点恢复操作，请稍等……'; sleep 6; export alns=\"${alns}\" cfip=\"${cfip}\" hyjpt=\"${hyjpt}\" cdnym=\"${cdnym}\" name=\"${name}\" ippz=\"${ippz}\" argo=\"${argo}\" uuid=\"${uuid}\" $wap=\"${warp}\" $xhp=\"${port_xh}\" $xup=\"${port_xu}\" $vxp=\"${port_vx}\" $ssp=\"${port_ss}\" $sop=\"${port_so}\" $anp=\"${port_an}\" $arp=\"${port_ar}\" $vlp=\"${port_vl_re}\" $vwp=\"${port_vw}\" $vmp=\"${port_vm_ws}\" $hyp=\"${port_hy2}\" $tup=\"${port_tu}\" $xcp=\"${port_xc}\" $tjp=\"${port_tj}\" $tjgp=\"${port_tjg}\" $tjtp=\"${port_tjt}\" $vgp=\"${port_vg}\" reym=\"${ym_vl_re}\" agn=\"${ARGO_DOMAIN}\" agk=\"${ARGO_AUTH}\"; bash "$HOME/bin/science"; fi" >> ~/.bashrc
 fi
 crontab -l > /tmp/crontab.tmp 2>/dev/null
 if ! pidof systemd >/dev/null 2>&1 && ! command -v rc-service >/dev/null 2>&1; then
@@ -1882,6 +1968,68 @@ clvlpt1(){
 echo "- ${sxname}vless-reality-vision-$hostname"
 }
 fi
+if grep vless-grpc-reality "$HOME/science/xr.json" >/dev/null 2>&1; then
+echo "💣【 Vless-grpc-reality 】节点信息如下："
+port_vg=$(cat "$HOME/science/port_vg")
+vg_link="vless://$uuid@$server_ip:$port_vg?encryption=none&security=reality&sni=$ym_vl_re&fp=chrome&pbk=$public_key_x&sid=$short_id_x&type=grpc&serviceName=$uuid-vg#${sxname}vl-grpc-reality-$hostname"
+echo "$vg_link" >> "$HOME/science/jhsub.txt"
+echo "$vg_link"
+echo
+sbvgpt(){
+cat <<EOF
+    {
+      "type": "vless",
+      "tag": "${sxname}vl-grpc-reality-$hostname",
+      "server": "$server_ip",
+      "server_port": $port_vg,
+      "uuid": "$uuid",
+      "flow": "",
+      "tls": {
+        "enabled": true,
+        "server_name": "$ym_vl_re",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        },
+      "reality": {
+          "enabled": true,
+          "public_key": "$public_key_x",
+          "short_id": "$short_id_x"
+        }
+      },
+      "transport": {
+        "type": "grpc",
+        "service_name": "$uuid-vg"
+      }
+    },
+EOF
+}
+sbvgpt1(){
+echo "\"${sxname}vl-grpc-reality-$hostname\","
+}
+clvgpt(){
+cat <<EOF
+- name: ${sxname}vl-grpc-reality-$hostname
+  type: vless
+  server: $server_ip
+  port: $port_vg
+  uuid: $uuid
+  network: grpc
+  udp: true
+  tls: true
+  servername: $ym_vl_re
+  reality-opts:
+    public-key: $public_key_x
+    short-id: $short_id_x
+  client-fingerprint: chrome
+  grpc-opts:
+    grpc-service-name: $uuid-vg
+EOF
+}
+clvgpt1(){
+echo "- ${sxname}vl-grpc-reality-$hostname"
+}
+fi
 if grep ss-2022 "$HOME/science/sb.json" >/dev/null 2>&1; then
 echo "💣【 Shadowsocks-2022 】节点信息如下："
 port_ss=$(cat "$HOME/science/port_ss")
@@ -2015,7 +2163,15 @@ echo "$tj_grpc_link" >> "$HOME/science/jhsub.txt"
 echo "$tj_grpc_link"
 echo
 fi
-if grep trojan-ws-sb "$HOME/science/sb.json" >/dev/null 2>&1 || grep trojan-grpc-sb "$HOME/science/sb.json" >/dev/null 2>&1; then
+if grep trojan-tcp-sb "$HOME/science/sb.json" >/dev/null 2>&1; then
+echo "💣【 Trojan-tcp 】节点信息如下："
+port_tjt=$(cat "$HOME/science/port_tjt")
+tj_tcp_link="trojan://$uuid@$add:$port_tjt?security=tls&sni=$sni&insecure=$jhins&allowInsecure=$jhins#${sxname}trojan-tcp-$hostname"
+echo "$tj_tcp_link" >> "$HOME/science/jhsub.txt"
+echo "$tj_tcp_link"
+echo
+fi
+if grep trojan-ws-sb "$HOME/science/sb.json" >/dev/null 2>&1 || grep trojan-grpc-sb "$HOME/science/sb.json" >/dev/null 2>&1 || grep trojan-tcp-sb "$HOME/science/sb.json" >/dev/null 2>&1; then
 sbtjpt(){
 cat <<EOF
          {
@@ -2053,11 +2209,24 @@ cat <<EOF
                 "service_name": "$uuid-tjg"
             }
          },
+         {
+            "type": "trojan",
+            "tag": "${sxname}trojan-tcp-$hostname",
+            "server": "$add",
+            "server_port": $port_tjt,
+            "password": "$uuid",
+            "tls": {
+                "enabled": true,
+                "insecure": $msins,
+                "server_name": "$sni"
+            }
+         },
 EOF
 }
 sbtjpt1(){
 echo "\"${sxname}trojan-ws-$hostname\","
 echo "\"${sxname}trojan-grpc-$hostname\","
+echo "\"${sxname}trojan-tcp-$hostname\","
 }
 cltjpt(){
 cat <<EOF
@@ -2085,11 +2254,20 @@ cat <<EOF
   network: grpc
   grpc-opts:
     grpc-service-name: $uuid-tjg
+- name: ${sxname}trojan-tcp-$hostname
+  type: trojan
+  server: $add
+  port: $port_tjt
+  password: $uuid
+  udp: true
+  sni: $sni
+  skip-cert-verify: $msins
 EOF
 }
 cltjpt1(){
 echo "- ${sxname}trojan-ws-$hostname"
 echo "- ${sxname}trojan-grpc-$hostname"
+echo "- ${sxname}trojan-tcp-$hostname"
 }
 fi
 if grep anytls-sb "$HOME/science/sb.json" >/dev/null 2>&1; then
@@ -2498,10 +2676,10 @@ out=$($f)
 [ -n "$out" ] && printf "%s\n" "$out"
 fi
 }
-sbxy="$(get_func sbvlpt; get_func sbsspt; get_func sbanpt; get_func sbarpt; get_func sbvmpt; get_func sbhypt; get_func sbtupt; get_func sbtjpt; get_func sbxhpt; get_func sbvxpt; get_func sbvmargopt)"
-clxy="$(get_func cludpxcpt; get_func clxcpt; get_func clvlpt; get_func clsspt; get_func clanpt; get_func clvmpt; get_func clhypt; get_func cltupt; get_func cltjpt; get_func clxhpt; get_func clvxpt; get_func clvmargopt)"
-sbgz="$(get_func sbvlpt1; get_func sbsspt1; get_func sbanpt1; get_func sbarpt1; get_func sbvmpt1; get_func sbhypt1; get_func sbtupt1; get_func sbtjpt1; get_func sbxhpt1; get_func sbvxpt1; get_func sbvmargopt1)"
-clgz="$({ get_func cludpxcpt1; get_func clxcpt1; get_func clvlpt1; get_func clsspt1; get_func clanpt1; get_func clvmpt1; get_func clhypt1; get_func cltupt1; get_func cltjpt1; get_func clxhpt1; get_func clvxpt1; get_func clvmargopt1; } | sed '2,$s/^/    /')"
+sbxy="$(get_func sbvlpt; get_func sbvgpt; get_func sbsspt; get_func sbanpt; get_func sbarpt; get_func sbvmpt; get_func sbhypt; get_func sbtupt; get_func sbtjpt; get_func sbxhpt; get_func sbvxpt; get_func sbvmargopt)"
+clxy="$(get_func cludpxcpt; get_func clxcpt; get_func clvlpt; get_func clvgpt; get_func clsspt; get_func clanpt; get_func clvmpt; get_func clhypt; get_func cltupt; get_func cltjpt; get_func clxhpt; get_func clvxpt; get_func clvmargopt)"
+sbgz="$(get_func sbvlpt1; get_func sbvgpt1; get_func sbsspt1; get_func sbanpt1; get_func sbarpt1; get_func sbvmpt1; get_func sbhypt1; get_func sbtupt1; get_func sbtjpt1; get_func sbxhpt1; get_func sbvxpt1; get_func sbvmargopt1)"
+clgz="$({ get_func cludpxcpt1; get_func clxcpt1; get_func clvlpt1; get_func clvgpt1; get_func clsspt1; get_func clanpt1; get_func clvmpt1; get_func clhypt1; get_func cltupt1; get_func cltjpt1; get_func clxhpt1; get_func clvxpt1; get_func clvmargopt1; } | sed '2,$s/^/    /')"
 sbgz=$(printf "%s\n" "$sbgz" | sed '$ s/,$//')
 cat > $HOME/science/sbox.json <<EOF
 {
