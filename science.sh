@@ -1357,6 +1357,9 @@ cat >> "$HOME/science/xr.json" <<EOF
   }
 }
 EOF
+if [ -x "$HOME/science/xray" ]; then
+  "$HOME/science/xray" run -test -c "$HOME/science/xr.json" >/dev/null 2>&1 && echo "√ xr.json 配置校验通过" || echo "⚠️ xr.json 配置校验失败，请检查协议配置"
+fi
 if pidof systemd >/dev/null 2>&1 && [ "$EUID" -eq 0 ]; then
 cat > /etc/systemd/system/xr.service <<EOF
 [Unit]
@@ -1448,6 +1451,9 @@ cat >> "$HOME/science/sb.json" <<EOF
   }
 }
 EOF
+if [ -x "$HOME/science/sing-box" ]; then
+  "$HOME/science/sing-box" check -c "$HOME/science/sb.json" >/dev/null 2>&1 && echo "√ sb.json 配置校验通过" || echo "⚠️ sb.json 配置校验失败，请检查协议配置"
+fi
 if pidof systemd >/dev/null 2>&1 && [ "$EUID" -eq 0 ]; then
 cat > /etc/systemd/system/sb.service <<EOF
 [Unit]
@@ -3527,6 +3533,11 @@ echo
 showmode
 exit
 elif [ "$1" = "rep" ]; then
+mkdir -p "$HOME/science/backup"
+for bf in sb.json xr.json jhsub.txt sbox.json clmi.yaml; do
+  [ -f "$HOME/science/$bf" ] && cp "$HOME/science/$bf" "$HOME/science/backup/$bf.bak" 2>/dev/null
+done
+echo "已备份旧配置到 $HOME/science/backup/（安装失败可回退）"
 cleandel
 rm -rf "$HOME/science"/{sb.json,xr.json,sbargoym.log,sbargotoken.log,argo.log,argoport.log,cdnym,name}
 echo "Science重置协议完成，开始更新相关协议变量……" && sleep 2
@@ -4109,6 +4120,10 @@ SHA256=$(openssl x509 -in $HOME/science/cert.crt -outform DER | sha256sum | awk 
 echo "$SHA256" > "$HOME/science/SHA256.txt"
 fi
 #fi
+if [ ! -s "$HOME/science/cert.crt" ] || [ ! -s "$HOME/science/private.key" ]; then
+echo "⚠️ 自签证书生成失败，Trojan/Hy2/TUIC/AnyTLS等TLS协议将无法启动"
+echo "   请检查 openssl 是否已安装：apt install openssl / yum install openssl / apk add openssl"
+fi
 echo
 if [ -n "$alns" ] && [ -s "/root/ygkkkca/private.key" ]; then
 certificateHTA="/root/ygkkkca/cert.crt"
