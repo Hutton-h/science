@@ -131,6 +131,10 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
     <div style="font-size:12px;display:flex;justify-content:space-between;margin:2px 0"><span>域名</span><span id="dnymV">—</span></div>
   </div>
   <div class="card">
+    <h3>节点监控</h3>
+    <div id="nodeMonitor" style="display:flex;flex-wrap:wrap;gap:6px;color:var(--muted);font-size:12px;">等待数据...</div>
+  </div>
+  <div class="card">
     <h3>一键部署</h3>
     <div class="url-box" id="oneClickIP">all=y sub=y bash &lt;(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)</div>
     <button class="sm" id="btn-oneClick">复制</button>
@@ -504,6 +508,20 @@ function fetchDash() {
         document.getElementById('totalV').textContent = fmtSize(rx + tx);
         document.getElementById('ipV').textContent = d.server_ip || '—';
         document.getElementById('dnymV').textContent = d.dnym || '—';
+        var nm = document.getElementById('nodeMonitor');
+        if (nm) {
+          var nodes = d.nodes || [];
+          if (!nodes.length) { nm.innerHTML = '<span>暂无节点</span>'; }
+          else {
+            var nh = '';
+            for (var i = 0; i < nodes.length; i++) {
+              var nd = nodes[i];
+              var on = nd.status === 'online';
+              nh += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 8px;border-radius:99px;border:1px solid ' + (on ? '#34d399' : '#f87171') + ';color:' + (on ? '#059669' : '#dc2626') + ';background:' + (on ? 'var(--ok-bg)' : 'var(--err-bg)') + ';"><span style="width:6px;height:6px;border-radius:50%;background:' + (on ? '#34d399' : '#f87171') + ';"></span>' + escHtml(nd.name) + ' :' + nd.port + '</span>';
+            }
+            nm.innerHTML = nh;
+          }
+        }
         fetchNodes();
       } catch(e) { setStatus('数据解析失败', 'err'); }
     } else { setStatus('无法连接: ' + srv, 'err'); }
