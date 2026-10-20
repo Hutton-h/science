@@ -3622,9 +3622,9 @@ if [ -s "$HOME/science/panel.html" ]; then
     kill $(pgrep -f 'websbx' 2>/dev/null) 2>/dev/null
     sleep 1
     if command -v apk >/dev/null 2>&1; then
-      busybox-extras httpd -f -p "$subport" -h "$HOME/websbx" > /dev/null 2>&1 &
+      busybox-extras httpd -f -p "127.0.0.1:$subport" -h "$HOME/websbx" > /dev/null 2>&1 &
     else
-      busybox httpd -f -p "$subport" -h "$HOME/websbx" > /dev/null 2>&1 &
+      busybox httpd -f -p "127.0.0.1:$subport" -h "$HOME/websbx" > /dev/null 2>&1 &
     fi
     echo "订阅面板服务已重启"
     # 立即生成一次status.json
@@ -4042,14 +4042,7 @@ mem_avail=$(awk '/MemAvailable/{print $2}' /proc/meminfo 2>/dev/null || echo 0)
 cpu_usage=$(top -bn1 | awk '/^%Cpu/{print 100-$8"%"}' 2>/dev/null || echo "N/A")
 # 上次更新
 last_update=$(date '+%Y-%m-%d %H:%M:%S')
-# 节点监控：检测各协议端口监听状态
-if command -v ss >/dev/null 2>&1; then
-  LISTEN=$(ss -tlnu 2>/dev/null)
-elif command -v netstat >/dev/null 2>&1; then
-  LISTEN=$(netstat -tlnu 2>/dev/null)
-else
-  LISTEN=""
-fi
+# 节点监控：检测各协议端口监听状态（读 /proc/net/tcp + /proc/net/udp，兼容 Alpine/Debian）
 node_list=""
 node_map="vl_re:VLESS-Reality vm_ws:VMess-WS vw:VLESS-WS hy2:Hysteria2 tu:TUIC xh:XHTTP-Reality vx:XHTTP-ENC an:AnyTLS ar:AnyReality ss:SS-2022 so:SOCKS5 tj:Trojan-WS tjg:Trojan-gRPC tjt:Trojan-TCP xu:XHTTP-UDP xc:XHTTP-TCP vg:VLESS-gRPC vhu:VLESS-httpupgrade vh2:VLESS-h2 vmg:VMess-gRPC vmh2:VMess-h2 vmhu:VMess-httpupgrade"
 for item in $node_map; do
@@ -4057,7 +4050,8 @@ for item in $node_map; do
   name="${item##*:}"
   port=$(cat "$HOME/science/port_$key" 2>/dev/null)
   [ -z "$port" ] && continue
-  if echo "$LISTEN" | grep -qE "[:.]$port[[:space:]]"; then
+  port_hex=$(printf '%04X' "$port" 2>/dev/null)
+  if [ -n "$port_hex" ] && grep -qi ":$port_hex " /proc/net/tcp /proc/net/udp 2>/dev/null; then
     node_list="$node_list{\"name\":\"$name\",\"port\":$port,\"status\":\"online\"},"
   else
     node_list="$node_list{\"name\":\"$name\",\"port\":$port,\"status\":\"offline\"},"
@@ -4189,23 +4183,23 @@ fi
 ln -sf $HOME/science/panel.html $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/index.html
 ln -sf $HOME/science/status.json $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/status.json
 if command -v apk >/dev/null 2>&1; then
-busybox-extras httpd -f -p "$(cat $HOME/science/subport.log 2>/dev/null)" -h $HOME/websbx > /dev/null 2>&1 &
+busybox-extras httpd -f -p "127.0.0.1:$(cat $HOME/science/subport.log 2>/dev/null)" -h $HOME/websbx > /dev/null 2>&1 &
 else
-busybox httpd -f -p "$(cat $HOME/science/subport.log 2>/dev/null)" -h $HOME/websbx > /dev/null 2>&1 &
+busybox httpd -f -p "127.0.0.1:$(cat $HOME/science/subport.log 2>/dev/null)" -h $HOME/websbx > /dev/null 2>&1 &
 fi
 sleep 5
 if command -v apk >/dev/null 2>&1; then
 cat > /etc/local.d/alpinesubsbx.start <<EOF
 #!/bin/bash
 sleep 10
-busybox-extras httpd -f -p \$(cat $HOME/science/subport.log 2>/dev/null) -h $HOME/websbx > /dev/null 2>&1 &
+busybox-extras httpd -f -p 127.0.0.1:\$(cat $HOME/science/subport.log 2>/dev/null) -h $HOME/websbx > /dev/null 2>&1 &
 EOF
 chmod +x /etc/local.d/alpinesubsbx.start
 rc-update add local default >/dev/null 2>&1
 else
 crontab -l 2>/dev/null > /tmp/crontab.tmp
 sed -i '/websbx/d' /tmp/crontab.tmp
-echo '@reboot sleep 10 && /bin/bash -c "busybox httpd -f -p $(cat $HOME/science/subport.log 2>/dev/null) -h $HOME/websbx > /dev/null 2>&1 &"' >> /tmp/crontab.tmp
+echo '@reboot sleep 10 && /bin/bash -c "busybox httpd -f -p 127.0.0.1:$(cat $HOME/science/subport.log 2>/dev/null) -h $HOME/websbx > /dev/null 2>&1 &"' >> /tmp/crontab.tmp
 crontab /tmp/crontab.tmp >/dev/null 2>&1
 rm /tmp/crontab.tmp
 fi
