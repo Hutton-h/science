@@ -1494,7 +1494,7 @@ xrsbvm
 xrsbso
 warpsx
 xrsbout
-tjp="tjptargo"; tjgp="tjgptargo"; tup="tuptargo"; anp="anptargo"; arp="arptargo"; ssp="ssptargo"
+tjp="tjptargo"; tjgp="tjgptargo"; tjtp="tjtptargo"; tup="tuptargo"; anp="anptargo"; arp="arptargo"; ssp="ssptargo"
 elif [ "$xhp" != yes ] && [ "$vlp" != yes ] && [ "$vgp" != yes ] && [ "$vhup" != yes ] && [ "$vh2p" != yes ] && [ "$vmgp" != yes ] && [ "$vmh2p" != yes ] && [ "$vmhup" != yes ] && [ "$vxp" != yes ] && [ "$vwp" != yes ] && [ "$xup" != yes ] && [ "$xcp" != yes ]; then
 installsb
 xrsbhy2
@@ -1502,7 +1502,7 @@ xrsbvm
 xrsbso
 warpsx
 xrsbout
-xhp="xhptargo"; vlp="vlptargo"; vxp="vxptargo"; vwp="vwptargo"; xup="xuptargo"; xcp="xcptargo"
+xhp="xhptargo"; vlp="vlptargo"; vgp="vgptargo"; vhup="vhuptargo"; vh2p="vh2ptargo"; vmgp="vmgptargo"; vmh2p="vmh2ptargo"; vmhup="vmhuptargo"; vxp="vxptargo"; vwp="vwptargo"; xup="xuptargo"; xcp="xcptargo"
 else
 installsb
 installxray
