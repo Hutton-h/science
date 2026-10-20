@@ -394,11 +394,15 @@ function baseUrl() {
   return base;
 }
 
-// 订阅文件名（品牌化：name 非空时，主订阅文件用 name 前缀）
+// 订阅文件名（品牌化：name 非空时，所有订阅文件加 name 前缀）
+// sbox.json→SKPL-LIFT.json  clmi.yaml→SKPL-LIFT.yaml  jhsub.txt→SKPL-LIFT.txt
+// v2rayn.txt→SKPL-LIFT-v2rayn.txt  all.txt→SKPL-LIFT-all.txt
 function subFile(baseFile) {
-  if (brandName && (baseFile === 'sbox.json' || baseFile === 'clmi.yaml' || baseFile === 'jhsub.txt')) {
-    return brandName + baseFile.substring(baseFile.lastIndexOf('.'));
-  }
+  if (!brandName) return baseFile;
+  var base = baseFile.substring(0, baseFile.lastIndexOf('.'));
+  var ext = baseFile.substring(baseFile.lastIndexOf('.'));
+  if (base === 'sbox' || base === 'clmi' || base === 'jhsub') return brandName + ext;
+  if (base === 'v2rayn' || base === 'all') return brandName + '-' + baseFile;
   return baseFile;
 }
 
