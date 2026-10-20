@@ -1457,6 +1457,11 @@ echo "下载Cloudflared-argo最新正式版内核：$argocore"
 url="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-$cpu"; out="$HOME/science/cloudflared"; (command -v curl>/dev/null 2>&1 && curl -Lo "$out" -# --retry 2 "$url") || (command -v wget>/dev/null 2>&1 && timeout 3 wget -O "$out" --tries=2 "$url")
 chmod +x "$HOME/science/cloudflared"
 fi
+# 未传 agn/agk 时，沿用上次保存的 Argo 固定隧道配置（rep/更新后不丢失）
+if [ -z "${ARGO_AUTH}" ] && [ -s "$HOME/science/sbargotoken.log" ]; then
+  ARGO_AUTH=$(cat "$HOME/science/sbargotoken.log")
+  [ -s "$HOME/science/sbargoym.log" ] && ARGO_DOMAIN=$(cat "$HOME/science/sbargoym.log")
+fi
 if [ "$argo" = "vmpt" ]; then argoport=$(cat "$HOME/science/port_vm_ws" 2>/dev/null); echo "Vmess" > "$HOME/science/vlvm"; elif [ "$argo" = "vwpt" ]; then argoport=$(cat "$HOME/science/port_vw" 2>/dev/null); echo "Vless" > "$HOME/science/vlvm"; fi; echo "$argoport" > "$HOME/science/argoport.log"
 if [ -n "${ARGO_DOMAIN}" ] && [ -n "${ARGO_AUTH}" ]; then
 argoname='固定'
@@ -3357,8 +3362,8 @@ for bf in sb.json xr.json jhsub.txt sbox.json clmi.yaml; do
 done
 echo "已备份旧配置到 $HOME/science/backup/（安装失败可回退）"
 cleandel
-rm -rf "$HOME/science"/{sb.json,xr.json,sbargoym.log,sbargotoken.log,argo.log,argoport.log,cdnym}
-# 注意：name（品牌名）保留，更新后订阅文件名/SKPL-LIFT 品牌不丢失；如需改名再传 name=
+rm -rf "$HOME/science"/{sb.json,xr.json,argo.log,cdnym}
+# 注意：name（品牌名）与 Argo 固定隧道配置（sbargoym/sbargotoken/argoport）保留，更新后不丢失；如需更换再传 name=/agn=/agk=
 echo "Science重置协议完成，开始更新相关协议变量……" && sleep 2
 echo
 elif [ "$1" = "list" ]; then
