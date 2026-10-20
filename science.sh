@@ -4025,6 +4025,28 @@ mem_avail=$(awk '/MemAvailable/{print $2}' /proc/meminfo 2>/dev/null || echo 0)
 cpu_usage=$(top -bn1 | awk '/^%Cpu/{print 100-$8"%"}' 2>/dev/null || echo "N/A")
 # 上次更新
 last_update=$(date '+%Y-%m-%d %H:%M:%S')
+# 节点监控：检测各协议端口监听状态
+if command -v ss >/dev/null 2>&1; then
+  LISTEN=$(ss -tlnu 2>/dev/null)
+elif command -v netstat >/dev/null 2>&1; then
+  LISTEN=$(netstat -tlnu 2>/dev/null)
+else
+  LISTEN=""
+fi
+node_list=""
+node_map="vl_re:VLESS-Reality vm_ws:VMess-WS vw:VLESS-WS hy2:Hysteria2 tu:TUIC xh:XHTTP-Reality vx:XHTTP-ENC an:AnyTLS ar:AnyReality ss:SS-2022 so:SOCKS5 tj:Trojan-WS tjg:Trojan-gRPC tjt:Trojan-TCP xu:XHTTP-UDP xc:XHTTP-TCP vg:VLESS-gRPC vhu:VLESS-httpupgrade vh2:VLESS-h2 vmg:VMess-gRPC vmh2:VMess-h2 vmhu:VMess-httpupgrade"
+for item in $node_map; do
+  key="${item%%:*}"
+  name="${item##*:}"
+  port=$(cat "$HOME/science/port_$key" 2>/dev/null)
+  [ -z "$port" ] && continue
+  if echo "$LISTEN" | grep -qE "[:.]$port[[:space:]]"; then
+    node_list="$node_list{\"name\":\"$name\",\"port\":$port,\"status\":\"online\"},"
+  else
+    node_list="$node_list{\"name\":\"$name\",\"port\":$port,\"status\":\"offline\"},"
+  fi
+done
+node_list="${node_list%,}"
 # 写入JSON
 cat > "$wsdir/status.json" <<EOF
 {
@@ -4035,6 +4057,7 @@ cat > "$wsdir/status.json" <<EOF
   "traffic": {"rx_bytes": $rx_bytes, "tx_bytes": $tx_bytes},
   "kernels": {"xray": "$xray_status", "singbox": "$sbox_status", "argo": "$argo_status"},
   "node_count": $node_count,
+  "nodes": [$node_list],
   "last_update": "$last_update",
   "server_ip": "$(cat $HOME/science/server_ip.log 2>/dev/null)",
   "dnym": "${dnym:-}"
