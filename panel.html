@@ -71,8 +71,6 @@ input[type="checkbox"] { accent-color:var(--brand); }
 .ip-table td { padding:6px 8px; border-bottom:1px solid var(--line); font-family:ui-monospace,monospace; }
 .ip-table .ip-copy { cursor:pointer; color:var(--ink); font-size:11px; padding:2px 6px; border:1px solid var(--line); border-radius:4px; background:var(--bg2); }
 .ip-table .ip-copy:hover { background:var(--line); }
-.bestip-tag { display:inline-block; background:var(--ok-bg); color:var(--ok-ink); font-size:10px; padding:1px 5px; border-radius:3px; margin-left:4px; }
-.bestip-refresh { font-size:11px; color:var(--muted); margin-left:8px; }
 /* 订阅分组卡片 */
 .sub-group { position:relative; }
 .group-head { display:flex; align-items:center; gap:8px; }
@@ -119,36 +117,18 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
     </div>
   </div>
   <div class="card">
-    <h3>CF优选IP - 运营商分类 <span class="bestip-refresh" id="bestipUpdated"></span></h3>
+    <h3>流量统计</h3>
     <div class="grid grid-3">
-      <div class="stat" style="border-color:#2e7d32;">
-        <div class="l" style="color:#2e7d32;">电信推荐</div>
-        <div class="v" style="font-size:14px;font-family:monospace;" id="telecomIp">—</div>
-        <div class="l" style="font-size:10px;color:var(--muted);" id="telecomTag"></div>
-      </div>
-      <div class="stat" style="border-color:#e65100;">
-        <div class="l" style="color:#e65100;">联通推荐</div>
-        <div class="v" style="font-size:14px;font-family:monospace;" id="unicomIp">—</div>
-        <div class="l" style="font-size:10px;color:var(--muted);" id="unicomTag"></div>
-      </div>
-      <div class="stat" style="border-color:#1565c0;">
-        <div class="l" style="color:#1565c0;">移动推荐</div>
-        <div class="v" style="font-size:14px;font-family:monospace;" id="mobileIp">—</div>
-        <div class="l" style="font-size:10px;color:var(--muted);" id="mobileTag"></div>
-      </div>
+      <div class="stat"><div class="v" id="rxV">—</div><div class="l">下载</div></div>
+      <div class="stat"><div class="v" id="txV">—</div><div class="l">上传</div></div>
+      <div class="stat"><div class="v" id="totalV">—</div><div class="l">总流量</div></div>
     </div>
-    <div style="font-size:12px;margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="sm" id="btn-copyTelecom">复制电信IP</button>
-      <button class="sm" id="btn-copyUnicom">复制联通IP</button>
-      <button class="sm" id="btn-copyMobile">复制移动IP</button>
-    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:6px;">自系统启动以来的网卡累计流量</div>
   </div>
   <div class="card">
-    <h3>通用优选IP列表</h3>
-    <table class="ip-table" id="bestipTable">
-      <thead><tr><th>IP地址</th><th>备注</th><th>操作</th></tr></thead>
-      <tbody id="bestipBody"><tr><td colspan="3" style="color:var(--muted);text-align:center;">等待数据...</td></tr></tbody>
-    </table>
+    <h3>服务器</h3>
+    <div style="font-size:12px;display:flex;justify-content:space-between;margin:2px 0"><span>IP</span><span id="ipV">—</span></div>
+    <div style="font-size:12px;display:flex;justify-content:space-between;margin:2px 0"><span>域名</span><span id="dnymV">—</span></div>
   </div>
   <div class="card">
     <h3>一键部署</h3>
@@ -517,7 +497,13 @@ function fetchDash() {
         var ma = parseInt(d.memory && d.memory.available) || 0;
         var mu = mt - ma;
         document.getElementById('memV').textContent = fmtSize(mu * 1024) + ' / ' + fmtSize(mt * 1024);
-        renderBestIP(d);
+        var rx = parseInt(d.traffic && d.traffic.rx_bytes) || 0;
+        var tx = parseInt(d.traffic && d.traffic.tx_bytes) || 0;
+        document.getElementById('rxV').textContent = fmtSize(rx);
+        document.getElementById('txV').textContent = fmtSize(tx);
+        document.getElementById('totalV').textContent = fmtSize(rx + tx);
+        document.getElementById('ipV').textContent = d.server_ip || '—';
+        document.getElementById('dnymV').textContent = d.dnym || '—';
         fetchNodes();
       } catch(e) { setStatus('数据解析失败', 'err'); }
     } else { setStatus('无法连接: ' + srv, 'err'); }
@@ -574,65 +560,6 @@ function copyEl(id, btn) {
   var t = e.textContent || e.innerText || '';
   if (t === '请先连接' || !t) return;
   copyText(t, btn);
-}
-
-function renderBestIP(d) {
-  var bip = d.bestip || {};
-  var updatedEl = document.getElementById('bestipUpdated');
-  var bodyEl = document.getElementById('bestipBody');
-
-  var best = bip.best_ip || '';
-  var telIp = (bip.telecom_ip && bip.telecom_ip !== '无') ? bip.telecom_ip : best;
-  var telTag = (bip.telecom_tag && bip.telecom_tag !== '无') ? bip.telecom_tag : '';
-  var uniIp = (bip.unicom_ip && bip.unicom_ip !== '无') ? bip.unicom_ip : best;
-  var uniTag = (bip.unicom_tag && bip.unicom_tag !== '无') ? bip.unicom_tag : '';
-  var mobIp = (bip.mobile_ip && bip.mobile_ip !== '无') ? bip.mobile_ip : best;
-  var mobTag = (bip.mobile_tag && bip.mobile_tag !== '无') ? bip.mobile_tag : '';
-
-  var telEl = document.getElementById('telecomIp');
-  var telTagEl = document.getElementById('telecomTag');
-  var uniEl = document.getElementById('unicomIp');
-  var uniTagEl = document.getElementById('unicomTag');
-  var mobEl = document.getElementById('mobileIp');
-  var mobTagEl = document.getElementById('mobileTag');
-
-  if (telEl) { telEl.textContent = telIp && telIp !== '无' ? telIp : '暂无'; if (telTagEl) telTagEl.textContent = telTag || ''; }
-  if (uniEl) { uniEl.textContent = uniIp && uniIp !== '无' ? uniIp : '暂无'; if (uniTagEl) uniTagEl.textContent = uniTag || ''; }
-  if (mobEl) { mobEl.textContent = mobIp && mobIp !== '无' ? mobIp : '暂无'; if (mobTagEl) mobTagEl.textContent = mobTag || ''; }
-
-  if (updatedEl) updatedEl.textContent = bip.updated ? '更新于 ' + bip.updated : '';
-
-  var btnTel = document.getElementById('btn-copyTelecom');
-  var btnUni = document.getElementById('btn-copyUnicom');
-  var btnMob = document.getElementById('btn-copyMobile');
-  if (btnTel) btnTel.onclick = function(){ copyText(telIp, this); };
-  if (btnUni) btnUni.onclick = function(){ copyText(uniIp, this); };
-  if (btnMob) btnMob.onclick = function(){ copyText(mobIp, this); };
-
-  if (!bodyEl) return;
-  var ipList = bip.ip_list || '';
-  var items = ipList ? ipList.split(',') : [];
-  if (!items.length && best) { items = [best + '#通用优选']; }
-  if (!items.length) {
-    bodyEl.innerHTML = '<tr><td colspan="3" style="color:var(--muted);text-align:center;">请先在服务器执行: science bestip</td></tr>';
-    return;
-  }
-  var h = '';
-  for (var i = 0; i < items.length && i < 5; i++) {
-    var parts = items[i].split('#');
-    var ip = escHtml(parts[0] || '');
-    var remark = escHtml(parts[1] || '—');
-    if (!ip) continue;
-    h += '<tr><td>' + ip + '</td><td style="color:var(--sub);">' + remark + '</td><td><span class="ip-copy" data-ip="' + escHtml(ip) + '">复制</span></td></tr>';
-  }
-  bodyEl.innerHTML = h || '<tr><td colspan="3" style="color:var(--muted);">暂无列表</td></tr>';
-  var copies = bodyEl.querySelectorAll('.ip-copy');
-  for (var j = 0; j < copies.length; j++) {
-    copies[j].addEventListener('click', function(){
-      var ip = this.getAttribute('data-ip');
-      copyText(ip, this);
-    });
-  }
 }
 
 function fmtSize(b) {
