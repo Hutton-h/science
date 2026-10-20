@@ -1537,9 +1537,11 @@ echo
 sed -i '/science/d' ~/.bashrc
 SCRIPT_PATH="$HOME/bin/science"
 mkdir -p "$HOME/bin"
-if [ ! -s "$HOME/science/science.sh" ]; then
-  (command -v curl >/dev/null 2>&1 && curl -Ls "$scienceurl" -o "$HOME/science/science.sh") || (command -v wget >/dev/null 2>&1 && wget -qO "$HOME/science/science.sh" "$scienceurl")
-fi
+# 始终刷新已安装脚本（下载失败时保留旧版，不覆盖）
+sctmp="$HOME/science/science.sh.tmp"
+(command -v curl >/dev/null 2>&1 && curl -Ls "$scienceurl" -o "$sctmp") || (command -v wget >/dev/null 2>&1 && wget -qO "$sctmp" "$scienceurl")
+if [ -s "$sctmp" ]; then mv "$sctmp" "$HOME/science/science.sh"; fi
+rm -f "$sctmp"
 chmod +x "$HOME/science/science.sh"
 cp "$HOME/science/science.sh" "$SCRIPT_PATH"
 chmod +x "$SCRIPT_PATH"
@@ -3222,9 +3224,10 @@ else
 addrlabel="本地IP"
 fi
 echo "**********************************************************"
-echo "Clash/Mihomo${addrlabel}订阅地址：http://$suburl/clmi.yaml"
-echo "Sing-box${addrlabel}订阅地址：http://$suburl/sbox.json"
-echo "聚合协议${addrlabel}订阅地址：http://$suburl/jhsub.txt"
+sbnb=$(cat "$HOME/science/name" 2>/dev/null); sbnb=${sbnb%-}
+echo "Clash/Mihomo${addrlabel}订阅地址：http://$suburl/${sbnb:-clmi}.yaml"
+echo "Sing-box${addrlabel}订阅地址：http://$suburl/${sbnb:-sbox}.json"
+echo "聚合协议${addrlabel}订阅地址：http://$suburl/${sbnb:-jhsub}.txt"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🌟 订阅面板地址：http://$suburl/index.html"
 echo "**********************************************************"
@@ -3734,14 +3737,15 @@ NGINXEOF
     echo "  密码: $panel_pw"
     echo ""
     echo "  订阅地址（无需密码）:"
+    bnb=$(cat "$HOME/science/name" 2>/dev/null); bnb=${bnb%-}
     if [ "$ssl_ok" = true ]; then
-      echo "  https://$dnym_now/$subtoken/clmi.yaml"
-      echo "  https://$dnym_now/$subtoken/sbox.json"
-      echo "  https://$dnym_now/$subtoken/jhsub.txt"
+      echo "  https://$dnym_now/$subtoken/${bnb:-clmi}.yaml"
+      echo "  https://$dnym_now/$subtoken/${bnb:-sbox}.json"
+      echo "  https://$dnym_now/$subtoken/${bnb:-jhsub}.txt"
     else
-      echo "  http://$dnym_now/$subtoken/clmi.yaml"
-      echo "  http://$dnym_now/$subtoken/sbox.json"
-      echo "  http://$dnym_now/$subtoken/jhsub.txt"
+      echo "  http://$dnym_now/$subtoken/${bnb:-clmi}.yaml"
+      echo "  http://$dnym_now/$subtoken/${bnb:-sbox}.json"
+      echo "  http://$dnym_now/$subtoken/${bnb:-jhsub}.txt"
     fi
     echo "=============================="
     exit
@@ -3991,10 +3995,12 @@ echo "请稍后…………"
 kill -15 $(pgrep -f 'websbx' 2>/dev/null) >/dev/null 2>&1
 mkdir -p $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"
 # 确保panel.html已下载（备用下载，防止ins()中下载失败）
-if [ ! -s "$HOME/science/panel.html" ]; then
+# 始终刷新面板文件（下载失败时保留旧版，不覆盖）
 panelurl="https://raw.githubusercontent.com/Hutton-h/science/main/panel.html"
-(command -v curl >/dev/null 2>&1 && curl -Ls "$panelurl" -o "$HOME/science/panel.html") || (command -v wget >/dev/null 2>&1 && wget -qO "$HOME/science/panel.html" "$panelurl")
-fi
+ptmp="$HOME/science/panel.html.tmp"
+(command -v curl >/dev/null 2>&1 && curl -Ls "$panelurl" -o "$ptmp") || (command -v wget >/dev/null 2>&1 && wget -qO "$ptmp" "$panelurl")
+if [ -s "$ptmp" ]; then mv "$ptmp" "$HOME/science/panel.html"; fi
+rm -f "$ptmp"
 ln -sf $HOME/science/clmi.yaml $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/clmi.yaml
 ln -sf $HOME/science/sbox.json $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/sbox.json
 ln -sf $HOME/science/jhsub.txt $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/jhsub.txt
@@ -4005,6 +4011,8 @@ if [ -n "$bn" ]; then
 ln -sf $HOME/science/sbox.json $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/${bn}.json
 ln -sf $HOME/science/clmi.yaml $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/${bn}.yaml
 ln -sf $HOME/science/jhsub.txt $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/${bn}.txt
+ln -sf $HOME/science/sub/v2rayn.txt $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/${bn}-v2rayn.txt 2>/dev/null
+ln -sf $HOME/science/sub/all.txt $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/${bn}-all.txt 2>/dev/null
 fi
 # 分发层：下载并运行 subgen.sh，生成各客户端分组订阅并链接到面板目录
 if [ ! -s "$HOME/science/subgen.sh" ]; then
