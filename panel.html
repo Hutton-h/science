@@ -147,11 +147,12 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
   <div class="card">
     <h3>使用说明</h3>
     <div class="help">
-      <p><strong>1.</strong> 勾选需要的协议，<strong>端口留空=随机生成</strong>，标注"CDN"的协议建议填入CDN回源端口</p>
-      <p><strong>2.</strong> <code>vlpt</code> / <code>xhpt</code> 为 Reality 系列协议，需要 <code>reym</code> 指定伪装域名</p>
-      <p><strong>3.</strong> <code>vxpt</code> / <code>vwpt</code> / <code>vmpt</code> 走 CDN，需要 <code>dnym</code> + <code>cdnym</code></p>
-      <p><strong>4.</strong> Argo 隧道需要同时填写 <code>argo</code> 模式 + <code>agn</code> 域名 + <code>agk</code> Token</p>
-      <p><strong>5.</strong> 点击<strong>"生成命令"</strong>后复制，在服务器上执行即可一键部署</p>
+      <p><strong>1.</strong> 最省事：勾选 <strong>"一键全协议"</strong>，只需填下面"高级参数"即可生成</p>
+      <p><strong>2.</strong> 域名：<code>dnym</code> 填你的域名（隐藏服务器IP，如 skpl-lift.edu.pl）；<code>name</code> 填品牌前缀（如 SKPL-LIFT，决定订阅文件名前缀）</p>
+      <p><strong>3.</strong> CDN 协议（<code>vwpt</code>/<code>vmpt</code>/<code>vxpt</code>）：需 <code>dnym</code> + <code>cdnym</code>（CDN回源域名）</p>
+      <p><strong>4.</strong> Reality 协议（<code>vlpt</code>/<code>xhpt</code>）：建议 <code>reym</code> 填伪装域名（如 apple.com）</p>
+      <p><strong>5.</strong> Argo 固定隧道：<code>argo=vmpt/vwpt</code> + <code>agn</code>(CF域名) + <code>agk</code>(Token)；不填则用临时隧道</p>
+      <p><strong>6.</strong> 端口留空=自动分配；订阅面板建议 <code>sub=y</code>。生成后复制，服务器执行一键部署</p>
     </div>
   </div>
   <div class="grid">
@@ -165,7 +166,6 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
         <label><input type="checkbox" data-var="xcpt">VLESS-XHTTP-TLS-TCP/UDP <span class="pill">xcpt</span></label><input type="text" data-port="xcpt" placeholder="需证书">
         <label><input type="checkbox" data-var="vgpt">VLESS-gRPC <span class="pill">vgpt</span></label><input type="text" data-port="vgpt" placeholder="随机">
         <label><input type="checkbox" data-var="vhupt">VLESS-httpupgrade <span class="pill">vhupt</span></label><input type="text" data-port="vhupt" placeholder="需证书">
-        <label><input type="checkbox" data-var="vh2pt">VLESS-h2 <span class="pill">vh2pt</span></label><input type="text" data-port="vh2pt" placeholder="需证书">
       </div>
     </div>
     <div class="card"><h3>Sing-box 协议</h3>
@@ -192,6 +192,10 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
     <div style="margin-top:8px;display:flex;gap:6px;">
       <button class="dark sm" id="btn-selAll">全选协议</button>
       <button class="sm" id="btn-clrAll">清空</button>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:6px;align-items:center;">
+      <label style="display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" id="allOn">一键全协议 <span class="pill">all=y</span></label>
+      <span style="font-size:11px;color:var(--muted);">自动开启全部协议（Reality/XHTTP/VMess-WS/Trojan×3/SS-2022/Hy2/TUIC/AnyTLS/SOCKS5…），端口自动分配</span>
     </div>
   </div>
   <div class="card"><h3>高级参数</h3>
@@ -347,14 +351,19 @@ document.getElementById('btn-clrAll').addEventListener('click', function(){
 // Generate
 document.getElementById('btn-genCmd').addEventListener('click', function(){
   var v = [];
-  var cs = document.querySelectorAll('input[data-var]');
-  for (var i = 0; i < cs.length; i++) {
-    if (cs[i].checked) {
+  var allOn = document.getElementById('allOn');
+  if (allOn && allOn.checked) {
+    v.push('all=y');
+  } else {
+    var cs = document.querySelectorAll('input[data-var]');
+    for (var i = 0; i < cs.length; i++) {
+      if (!cs[i].checked) continue;
       var pe = document.querySelector('input[data-port="' + cs[i].dataset.var + '"]');
-      v.push(cs[i].dataset.var + '="' + (pe ? pe.value.trim() : '') + '"');
+      var pv = pe ? pe.value.trim() : '';
+      v.push(cs[i].dataset.var + (pv ? '="' + pv + '"' : '=y'));
     }
+    if (!v.length) { alert('请至少选一个协议，或勾选"一键全协议"'); return; }
   }
-  if (!v.length) { alert('请至少选一个协议'); return; }
   var ids = ['uuid','dnym','reym','cdnym','warp','ippz','name','oap','sub','subid','subpt','hyjpt','argo','agn','agk','cfip'];
   for (var j = 0; j < ids.length; j++) {
     var e = document.getElementById(ids[j]);
