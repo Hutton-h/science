@@ -247,6 +247,7 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
 <script>
 var srv='', port='', token='', timer=null, proto = window.location.protocol || 'http:';
 var jhNodes = [];  // 明文节点列表（来自 jhsub.txt）
+var brandName = '';  // 品牌名（来自 status.json 的 name 字段，用于订阅文件名前缀）
 
 // 客户端分组定义（与 subgen.sh 白名单矩阵一致）
 var GROUPS = [
@@ -393,20 +394,28 @@ function baseUrl() {
   return base;
 }
 
+// 订阅文件名（品牌化：name 非空时，主订阅文件用 name 前缀）
+function subFile(baseFile) {
+  if (brandName && (baseFile === 'sbox.json' || baseFile === 'clmi.yaml' || baseFile === 'jhsub.txt')) {
+    return brandName + baseFile.substring(baseFile.lastIndexOf('.'));
+  }
+  return baseFile;
+}
+
 // 渲染订阅分组卡片
 function renderSub() {
   if (!srv || !port) return;
   var b = baseUrl();
   // 原始订阅
-  document.getElementById('clashUrl').textContent = b + 'clmi.yaml';
-  document.getElementById('singboxUrl').textContent = b + 'sbox.json';
-  document.getElementById('allUrl').textContent = b + 'jhsub.txt';
+  document.getElementById('clashUrl').textContent = b + subFile('clmi.yaml');
+  document.getElementById('singboxUrl').textContent = b + subFile('sbox.json');
+  document.getElementById('allUrl').textContent = b + subFile('jhsub.txt');
   // 分组卡片
   var host = document.getElementById('subGroups');
   var h = '';
   for (var i = 0; i < GROUPS.length; i++) {
     var g = GROUPS[i];
-    var url = b + g.file;
+    var url = b + subFile(g.file);
     h += '<div class="card sub-group">'
       + '<div class="group-head"><h3>' + g.name + '</h3><span class="count" id="cnt-' + g.id + '">…</span></div>'
       + '<div style="font-size:12px;color:var(--muted);margin-bottom:4px;">' + g.desc + '</div>'
@@ -422,7 +431,7 @@ function renderSub() {
   }
   host.innerHTML = h;
   for (var k = 0; k < GROUPS.length; k++) {
-    setQR('qr-' + GROUPS[k].id, b + GROUPS[k].file);
+    setQR('qr-' + GROUPS[k].id, b + subFile(GROUPS[k].file));
   }
   // 拉取节点列表
   fetchNodes();
@@ -516,6 +525,7 @@ function fetchDash() {
         document.getElementById('totalV').textContent = fmtSize(rx + tx);
         document.getElementById('ipV').textContent = d.server_ip || '—';
         document.getElementById('dnymV').textContent = d.dnym || '—';
+        brandName = d.name || '';  // 订阅文件名品牌化（如 SKPL-LIFT.json）
         var nm = document.getElementById('nodeMonitor');
         if (nm) {
           var nodes = d.nodes || [];
