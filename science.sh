@@ -21,17 +21,18 @@ trap cleanup_on_exit INT TERM
 [ -z "${arpt+x}" ] || arp=yes
 [ -z "${sopt+x}" ] || sop=yes
 [ -z "${warp+x}" ] || wap=yes
-[ -z "${nvpt+x}" ] || nvp=yes
+[ -z "${tjpt+x}" ] || tjp=yes
+[ -z "${tjgpt+x}" ] || tjgp=yes
 [ -z "${xupt+x}" ] || xup=yes
 [ -z "${xcpt+x}" ] || xcp=yes
-# 一键全协议预设：all=y 自动开启12大协议+Hysteria2端口跳跃+SOCKS5+订阅（Argo需额外指定agn和agk）
-[ -z "${all+x}" ] || { vlp=yes; vmp=yes; vmag=yes; hyp=yes; hyjpt="10000:20000"; tup=yes; xhp=yes; vxp=yes; ssp=yes; sop=yes; nvp=yes; xup=yes; xcp=yes; sub=y; vmag=yes; }
+# 一键全协议预设：all=y 自动开启全部协议+Hysteria2端口跳跃+SOCKS5+订阅（Argo需额外指定agn和agk）
+[ -z "${all+x}" ] || { vlp=yes; vmp=yes; vmag=yes; hyp=yes; hyjpt="10000:20000"; tup=yes; xhp=yes; vxp=yes; ssp=yes; sop=yes; tjp=yes; tjgp=yes; xup=yes; xcp=yes; sub=y; vmag=yes; }
 if find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(s|x)' || pgrep -f 'science/(s|x)' >/dev/null 2>&1; then
 if [ "$1" = "rep" ]; then
-[ "$xcp" = yes ] || [ "$xup" = yes ] || [ "$nvp" = yes ] || [ "$vwp" = yes ] || [ "$sop" = yes ] || [ "$vxp" = yes ] || [ "$ssp" = yes ] || [ "$vlp" = yes ] || [ "$vmp" = yes ] || [ "$hyp" = yes ] || [ "$tup" = yes ] || [ "$xhp" = yes ] || [ "$anp" = yes ] || [ "$arp" = yes ] || { echo "提示：rep重置协议时，请在脚本前至少设置一个协议变量哦，再见！💣"; exit; }
+[ "$xcp" = yes ] || [ "$xup" = yes ] || [ "$tjp" = yes ] || [ "$tjgp" = yes ] || [ "$vwp" = yes ] || [ "$sop" = yes ] || [ "$vxp" = yes ] || [ "$ssp" = yes ] || [ "$vlp" = yes ] || [ "$vmp" = yes ] || [ "$hyp" = yes ] || [ "$tup" = yes ] || [ "$xhp" = yes ] || [ "$anp" = yes ] || [ "$arp" = yes ] || { echo "提示：rep重置协议时，请在脚本前至少设置一个协议变量哦，再见！💣"; exit; }
 fi
 else
-[ "$1" = "del" ] || [ "$1" = "panel" ] || [ "$1" = "statusgen" ] || [ "$1" = "list" ] || [ "$xcp" = yes ] || [ "$xup" = yes ] || [ "$nvp" = yes ] || [ "$vwp" = yes ] || [ "$sop" = yes ] || [ "$vxp" = yes ] || [ "$ssp" = yes ] || [ "$vlp" = yes ] || [ "$vmp" = yes ] || [ "$hyp" = yes ] || [ "$tup" = yes ] || [ "$xhp" = yes ] || [ "$anp" = yes ] || [ "$arp" = yes ] || { echo "提示：未安装science脚本，请在脚本前至少设置一个协议变量哦，再见！💣"; exit; }
+[ "$1" = "del" ] || [ "$1" = "panel" ] || [ "$1" = "statusgen" ] || [ "$1" = "list" ] || [ "$xcp" = yes ] || [ "$xup" = yes ] || [ "$tjp" = yes ] || [ "$tjgp" = yes ] || [ "$vwp" = yes ] || [ "$sop" = yes ] || [ "$vxp" = yes ] || [ "$ssp" = yes ] || [ "$vlp" = yes ] || [ "$vmp" = yes ] || [ "$hyp" = yes ] || [ "$tup" = yes ] || [ "$xhp" = yes ] || [ "$anp" = yes ] || [ "$arp" = yes ] || { echo "提示：未安装science脚本，请在脚本前至少设置一个协议变量哦，再见！💣"; exit; }
 fi
 export uuid=${uuid:-''}
 export port_vl_re=${vlpt:-''}
@@ -45,7 +46,8 @@ export port_an=${anpt:-''}
 export port_ar=${arpt:-''}
 export port_ss=${sspt:-''}
 export port_so=${sopt:-''}
-export port_nv=${nvpt:-''}
+export port_tj=${tjpt:-''}
+export port_tjg=${tjgpt:-''}
 export port_xu=${xupt:-''}
 export port_xc=${xcpt:-''}
 export ym_vl_re=${reym:-''}
@@ -72,7 +74,7 @@ echo "卸载脚本命令：science del 【或者】 主脚本 del"
 echo "部署/更新面板命令：science panel 【或者】 主脚本 panel"
 echo "一键全协议命令：all=y dnym=\"域名\" bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)"
 echo "一键全协议+Argo：all=y dnym=\"域名\" argo=vmpt agn=\"CF域名\" agk=\"ey开头的token\" bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)"
-echo "（all=y 自动开启12协议：VLESS-Reality/XHTTP-Reality/XHTTP-ENC/Hysteria2(端口跳跃)/Tuic/SS-2022/VMess-WS/SOCKS5/Naiveproxy/Xhttp-tls-UDP/Xhttp-tls-TCP）"
+echo "（all=y 自动开启协议：VLESS-Reality/XHTTP-Reality/XHTTP-ENC/Hysteria2(端口跳跃)/Tuic/SS-2022/VMess-WS/SOCKS5/Trojan-ws/Trojan-grpc/Xhttp-tls-UDP/Xhttp-tls-TCP）"
 echo "申请本地IP域名证书脚本：bash <(curl -Ls https://raw.githubusercontent.com/yonggekkk/acme-yg/main/acme.sh)"
 echo "订阅面板(需开启sub=y)：http://服务器IP或域名:订阅端口/订阅Token/index.html"
 echo "隐藏IP用域名变量：dnym=\"你的域名\" (需先在DNS将域名解析到服务器IP)"
@@ -599,37 +601,75 @@ cat > "$HOME/science/sb.json" <<EOF
   "inbounds": [
 EOF
 insuuid
-if [ -s "/root/ygkkkca/private.key" ] && [ -n "$nvp" ]; then
-nvp=nvpt
-if [ -z "$port_nv" ] && [ ! -e "$HOME/science/port_nv" ]; then
-port_nv=$(shuf -i 10000-65535 -n 1)
-echo "$port_nv" > "$HOME/science/port_nv"
-elif [ -n "$port_nv" ]; then
-echo "$port_nv" > "$HOME/science/port_nv"
+if [ -n "$tjp" ]; then
+tjp=tjpt
+if [ -z "$port_tj" ] && [ ! -e "$HOME/science/port_tj" ]; then
+port_tj=$(shuf -i 10000-65535 -n 1)
+echo "$port_tj" > "$HOME/science/port_tj"
+elif [ -n "$port_tj" ]; then
+echo "$port_tj" > "$HOME/science/port_tj"
 fi
-port_nv=$(cat "$HOME/science/port_nv")
-echo "Naiveproxy端口：$port_nv"
+port_tj=$(cat "$HOME/science/port_tj")
+echo "Trojan-WS端口：$port_tj"
 cat >> "$HOME/science/sb.json" <<EOF
     {
-        "type": "naive",
-        "tag": "naive-sb",
+        "type": "trojan",
+        "tag": "trojan-ws-sb",
         "listen": "::",
-        "listen_port": ${port_nv},
+        "listen_port": ${port_tj},
         "users": [
             {
-                "username": "${uuid}",
                 "password": "${uuid}"
             }
         ],
         "tls": {
             "enabled": true,
-            "certificate_path": "/root/ygkkkca/cert.crt",
-            "key_path": "/root/ygkkkca/private.key"
+            "certificate_path": "$certificateHTA",
+            "key_path": "$keyHTA"
+        },
+        "transport": {
+            "type": "ws",
+            "path": "/${uuid}-tj"
         }
     },
 EOF
 else
-nvp=nvptargo
+tjp=tjptargo
+fi
+if [ -n "$tjgp" ]; then
+tjgp=tjgpt
+if [ -z "$port_tjg" ] && [ ! -e "$HOME/science/port_tjg" ]; then
+port_tjg=$(shuf -i 10000-65535 -n 1)
+echo "$port_tjg" > "$HOME/science/port_tjg"
+elif [ -n "$port_tjg" ]; then
+echo "$port_tjg" > "$HOME/science/port_tjg"
+fi
+port_tjg=$(cat "$HOME/science/port_tjg")
+echo "Trojan-gRPC端口：$port_tjg"
+cat >> "$HOME/science/sb.json" <<EOF
+    {
+        "type": "trojan",
+        "tag": "trojan-grpc-sb",
+        "listen": "::",
+        "listen_port": ${port_tjg},
+        "users": [
+            {
+                "password": "${uuid}"
+            }
+        ],
+        "tls": {
+            "enabled": true,
+            "certificate_path": "$certificateHTA",
+            "key_path": "$keyHTA"
+        },
+        "transport": {
+            "type": "grpc",
+            "service_name": "${uuid}-tjg"
+        }
+    },
+EOF
+else
+tjgp=tjgptargo
 fi
 if [ -n "$tup" ]; then
 tup=tupt
@@ -1184,14 +1224,14 @@ fi
 fi
 }
 ins(){
-if [ "$nvp" != yes ] && [ "$tup" != yes ] && [ "$anp" != yes ] && [ "$arp" != yes ] && [ "$ssp" != yes ]; then
+if [ "$tjp" != yes ] && [ "$tjgp" != yes ] && [ "$tup" != yes ] && [ "$anp" != yes ] && [ "$arp" != yes ] && [ "$ssp" != yes ]; then
 installxray
 xrsbhy2
 xrsbvm
 xrsbso
 warpsx
 xrsbout
-tup="tuptargo"; anp="anptargo"; arp="arptargo"; ssp="ssptargo"; nvp="nvptargo"
+tjp="tjptargo"; tjgp="tjgptargo"; tup="tuptargo"; anp="anptargo"; arp="arptargo"; ssp="ssptargo"
 elif [ "$xhp" != yes ] && [ "$vlp" != yes ] && [ "$vxp" != yes ] && [ "$vwp" != yes ] && [ "$xup" != yes ] && [ "$xcp" != yes ]; then
 installsb
 xrsbhy2
@@ -1308,7 +1348,7 @@ echo "快捷命令 science 已就绪 (重新登录SSH后生效，或执行 sourc
 # ====== 进程检测：仅当进程运行时才配置自启动恢复 ======
 if find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(s|x)' || pgrep -f 'science/(s|x)' >/dev/null 2>&1 ; then
 if ! pidof systemd >/dev/null 2>&1 && ! command -v rc-service >/dev/null 2>&1; then
-echo "if ! find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(s|x)' && ! pgrep -f 'science/(s|x)' >/dev/null 2>&1; then echo '检测到系统可能中断过，或者变量格式错误？建议在SSH对话框输入 reboot 重启下服务器。现在自动执行Science脚本的节点恢复操作，请稍等……'; sleep 6; export alns=\"${alns}\" cfip=\"${cfip}\" hyjpt=\"${hyjpt}\" cdnym=\"${cdnym}\" name=\"${name}\" ippz=\"${ippz}\" argo=\"${argo}\" uuid=\"${uuid}\" $wap=\"${warp}\" $xhp=\"${port_xh}\" $xup=\"${port_xu}\" $vxp=\"${port_vx}\" $ssp=\"${port_ss}\" $sop=\"${port_so}\" $anp=\"${port_an}\" $arp=\"${port_ar}\" $vlp=\"${port_vl_re}\" $vwp=\"${port_vw}\" $vmp=\"${port_vm_ws}\" $hyp=\"${port_hy2}\" $tup=\"${port_tu}\" $xcp=\"${port_xc}\" $nvp=\"${port_nv}\" reym=\"${ym_vl_re}\" agn=\"${ARGO_DOMAIN}\" agk=\"${ARGO_AUTH}\"; bash "$HOME/bin/science"; fi" >> ~/.bashrc
+echo "if ! find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(s|x)' && ! pgrep -f 'science/(s|x)' >/dev/null 2>&1; then echo '检测到系统可能中断过，或者变量格式错误？建议在SSH对话框输入 reboot 重启下服务器。现在自动执行Science脚本的节点恢复操作，请稍等……'; sleep 6; export alns=\"${alns}\" cfip=\"${cfip}\" hyjpt=\"${hyjpt}\" cdnym=\"${cdnym}\" name=\"${name}\" ippz=\"${ippz}\" argo=\"${argo}\" uuid=\"${uuid}\" $wap=\"${warp}\" $xhp=\"${port_xh}\" $xup=\"${port_xu}\" $vxp=\"${port_vx}\" $ssp=\"${port_ss}\" $sop=\"${port_so}\" $anp=\"${port_an}\" $arp=\"${port_ar}\" $vlp=\"${port_vl_re}\" $vwp=\"${port_vw}\" $vmp=\"${port_vm_ws}\" $hyp=\"${port_hy2}\" $tup=\"${port_tu}\" $xcp=\"${port_xc}\" $tjp=\"${port_tj}\" $tjgp=\"${port_tjg}\" reym=\"${ym_vl_re}\" agn=\"${ARGO_DOMAIN}\" agk=\"${ARGO_AUTH}\"; bash "$HOME/bin/science"; fi" >> ~/.bashrc
 fi
 crontab -l > /tmp/crontab.tmp 2>/dev/null
 if ! pidof systemd >/dev/null 2>&1 && ! command -v rc-service >/dev/null 2>&1; then
@@ -1946,63 +1986,97 @@ echo "$vm_cdn_link"
 echo
 fi
 fi
-if grep naive-sb "$HOME/science/sb.json" >/dev/null 2>&1; then
-echo "💣【 Naiveproxy 】节点信息如下："
-port_nv=$(cat "$HOME/science/port_nv")
-nv1_link="naive+https://$uuid:$uuid@$(cat /root/ygkkkca/ca.log 2>/dev/null):$port_nv?security=tls&sni=$(cat /root/ygkkkca/ca.log 2>/dev/null)&insecure=0&allowInsecure=0#${sxname}naive-h2-$hostname"
-nv2_link="naive+quic://$uuid:$uuid@$(cat /root/ygkkkca/ca.log 2>/dev/null):$port_nv?congestion_control=bbr&security=tls&sni=$(cat /root/ygkkkca/ca.log 2>/dev/null)&insecure=0&allowInsecure=0#${sxname}naive-h3-$hostname"
-nv3_link="http2://$uuid:$uuid@$(cat /root/ygkkkca/ca.log 2>/dev/null):$port_nv?security=tls&sni=$(cat /root/ygkkkca/ca.log 2>/dev/null)&insecure=0&allowInsecure=0&padding=1&tfo=1#${sxname}naive-h2-$hostname"
-nv4_link="http3://$uuid:$uuid@$(cat /root/ygkkkca/ca.log 2>/dev/null):$port_nv?security=tls&sni=$(cat /root/ygkkkca/ca.log 2>/dev/null)&insecure=0&allowInsecure=0&padding=1&tfo=1#${sxname}naive-h3-$hostname"
-echo "$nv1_link" >> "$HOME/science/jhsub.txt"
-echo "$nv2_link" >> "$HOME/science/jhsub.txt"
-echo "$nv3_link" >> "$HOME/science/jhsub.txt"
-echo "$nv4_link" >> "$HOME/science/jhsub.txt"
-echo "V2rayN/Karing/Nekobox单节点分享："
-echo "$nv1_link" 
-echo "$nv2_link"
+if grep trojan-ws-sb "$HOME/science/sb.json" >/dev/null 2>&1; then
+echo "💣【 Trojan-ws 】节点信息如下："
+port_tj=$(cat "$HOME/science/port_tj")
+tj_ws_link="trojan://$uuid@$add:$port_tj?security=tls&sni=$sni&insecure=$jhins&allowInsecure=$jhins&type=ws&host=$sni&path=/$uuid-tj#${sxname}trojan-ws-$hostname"
+echo "$tj_ws_link" >> "$HOME/science/jhsub.txt"
+echo "$tj_ws_link"
 echo
-echo "Shadowrocket小火箭单节点分享："
-echo "$nv3_link"
-echo "$nv4_link"
+fi
+if grep trojan-grpc-sb "$HOME/science/sb.json" >/dev/null 2>&1; then
+echo "💣【 Trojan-grpc 】节点信息如下："
+port_tjg=$(cat "$HOME/science/port_tjg")
+tj_grpc_link="trojan://$uuid@$add:$port_tjg?security=tls&sni=$sni&insecure=$jhins&allowInsecure=$jhins&type=grpc&serviceName=$uuid-tjg&mode=gun#${sxname}trojan-grpc-$hostname"
+echo "$tj_grpc_link" >> "$HOME/science/jhsub.txt"
+echo "$tj_grpc_link"
 echo
-sbnvpt(){
+fi
+if grep trojan-ws-sb "$HOME/science/sb.json" >/dev/null 2>&1 || grep trojan-grpc-sb "$HOME/science/sb.json" >/dev/null 2>&1; then
+sbtjpt(){
 cat <<EOF
          {
-            "type": "naive",
-            "tag": "${sxname}naive-h3-$hostname",
-            "server": "$(cat /root/ygkkkca/ca.log 2>/dev/null)",
-            "server_port": $port_nv,
-            "username": "$uuid",
+            "type": "trojan",
+            "tag": "${sxname}trojan-ws-$hostname",
+            "server": "$add",
+            "server_port": $port_tj,
             "password": "$uuid",
-            "udp_over_tcp": false,
-            "quic": true,
-            "quic_congestion_control": "bbr",
             "tls": {
                 "enabled": true,
-                "insecure": false,
-                "server_name": "$(cat /root/ygkkkca/ca.log 2>/dev/null)"
+                "insecure": $msins,
+                "server_name": "$sni"
+            },
+            "transport": {
+                "type": "ws",
+                "path": "/$uuid-tj",
+                "headers": {
+                    "Host": "$sni"
+                }
             }
          },
-		 {
-            "type": "naive",
-            "tag": "${sxname}naive-h2-$hostname",
-            "server": "$(cat /root/ygkkkca/ca.log 2>/dev/null)",
-            "server_port": $port_nv,
-            "username": "$uuid",
+         {
+            "type": "trojan",
+            "tag": "${sxname}trojan-grpc-$hostname",
+            "server": "$add",
+            "server_port": $port_tjg,
             "password": "$uuid",
-            "udp_over_tcp": true,
-            "quic": false,
             "tls": {
                 "enabled": true,
-                "insecure": false,
-                "server_name": "$(cat /root/ygkkkca/ca.log 2>/dev/null)"
+                "insecure": $msins,
+                "server_name": "$sni"
+            },
+            "transport": {
+                "type": "grpc",
+                "service_name": "$uuid-tjg"
             }
          },
 EOF
 }
-sbnvpt1(){
-echo "\"${sxname}naive-h3-$hostname\","
-echo "\"${sxname}naive-h2-$hostname\","
+sbtjpt1(){
+echo "\"${sxname}trojan-ws-$hostname\","
+echo "\"${sxname}trojan-grpc-$hostname\","
+}
+cltjpt(){
+cat <<EOF
+- name: ${sxname}trojan-ws-$hostname
+  type: trojan
+  server: $add
+  port: $port_tj
+  password: $uuid
+  udp: true
+  sni: $sni
+  skip-cert-verify: $msins
+  network: ws
+  ws-opts:
+    path: /$uuid-tj
+    headers:
+      Host: $sni
+- name: ${sxname}trojan-grpc-$hostname
+  type: trojan
+  server: $add
+  port: $port_tjg
+  password: $uuid
+  udp: true
+  sni: $sni
+  skip-cert-verify: $msins
+  network: grpc
+  grpc-opts:
+    grpc-service-name: $uuid-tjg
+EOF
+}
+cltjpt1(){
+echo "- ${sxname}trojan-ws-$hostname"
+echo "- ${sxname}trojan-grpc-$hostname"
 }
 fi
 if grep anytls-sb "$HOME/science/sb.json" >/dev/null 2>&1; then
@@ -2411,10 +2485,10 @@ out=$($f)
 [ -n "$out" ] && printf "%s\n" "$out"
 fi
 }
-sbxy="$(get_func sbvlpt; get_func sbsspt; get_func sbanpt; get_func sbarpt; get_func sbvmpt; get_func sbhypt; get_func sbtupt; get_func sbnvpt; get_func sbxhpt; get_func sbvxpt; get_func sbsopt; get_func sbvmargopt)"
-clxy="$(get_func cludpxcpt; get_func clxcpt; get_func clvlpt; get_func clsspt; get_func clanpt; get_func clvmpt; get_func clhypt; get_func cltupt; get_func clxhpt; get_func clvxpt; get_func clsopt; get_func clvmargopt)"
-sbgz="$(get_func sbvlpt1; get_func sbsspt1; get_func sbanpt1; get_func sbarpt1; get_func sbvmpt1; get_func sbhypt1; get_func sbtupt1; get_func sbnvpt1; get_func sbxhpt1; get_func sbvxpt1; get_func sbsopt1; get_func sbvmargopt1)"
-clgz="$({ get_func cludpxcpt1; get_func clxcpt1; get_func clvlpt1; get_func clsspt1; get_func clanpt1; get_func clvmpt1; get_func clhypt1; get_func cltupt1; get_func clxhpt1; get_func clvxpt1; get_func clsopt1; get_func clvmargopt1; } | sed '2,$s/^/    /')"
+sbxy="$(get_func sbvlpt; get_func sbsspt; get_func sbanpt; get_func sbarpt; get_func sbvmpt; get_func sbhypt; get_func sbtupt; get_func sbtjpt; get_func sbxhpt; get_func sbvxpt; get_func sbsopt; get_func sbvmargopt)"
+clxy="$(get_func cludpxcpt; get_func clxcpt; get_func clvlpt; get_func clsspt; get_func clanpt; get_func clvmpt; get_func clhypt; get_func cltupt; get_func cltjpt; get_func clxhpt; get_func clvxpt; get_func clsopt; get_func clvmargopt)"
+sbgz="$(get_func sbvlpt1; get_func sbsspt1; get_func sbanpt1; get_func sbarpt1; get_func sbvmpt1; get_func sbhypt1; get_func sbtupt1; get_func sbtjpt1; get_func sbxhpt1; get_func sbvxpt1; get_func sbsopt1; get_func sbvmargopt1)"
+clgz="$({ get_func cludpxcpt1; get_func clxcpt1; get_func clvlpt1; get_func clsspt1; get_func clanpt1; get_func clvmpt1; get_func clhypt1; get_func cltupt1; get_func cltjpt1; get_func clxhpt1; get_func clvxpt1; get_func clsopt1; get_func clvmargopt1; } | sed '2,$s/^/    /')"
 sbgz=$(printf "%s\n" "$sbgz" | sed '$ s/,$//')
 cat > $HOME/science/sbox.json <<EOF
 {
@@ -3473,17 +3547,11 @@ echo
 if [ -n "$alns" ] && [ -s "/root/ygkkkca/private.key" ]; then
 certificateHTA="/root/ygkkkca/cert.crt"
 keyHTA="/root/ygkkkca/private.key"
-echo "HY2/TUIC/Naive/Anytls/Xhttp-tls将使用IP证书或域名证书的TLS"
+echo "HY2/TUIC/Trojan/Anytls/Xhttp-tls将使用IP证书或域名证书的TLS"
 else
 certificateHTA="$HOME/science/cert.crt"
 keyHTA="$HOME/science/private.key"
-echo "HY2/TUIC/Anytls/Xhttp-tls将使用自签证书的TLS"
-if [ -n "$alns" ]; then
-echo
-echo "提示：已开启alns，但未检测到证书(/root/ygkkkca/private.key)，Naiveproxy协议已自动跳过，不影响其他协议安装。"
-echo "如需启用Naiveproxy，请先手动申请证书（一次性）：bash <(curl -Ls https://raw.githubusercontent.com/yonggekkk/acme-yg/main/acme.sh) 选择数字1，按提示输入IP或域名"
-echo "申请成功后重新运行：science rep"
-fi
+echo "HY2/TUIC/Trojan/Anytls/Xhttp-tls将使用自签证书的TLS"
 fi
 ins
 if [ -n "$sub" ]; then
@@ -3526,6 +3594,17 @@ fi
 ln -sf $HOME/science/clmi.yaml $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/clmi.yaml
 ln -sf $HOME/science/sbox.json $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/sbox.json
 ln -sf $HOME/science/jhsub.txt $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/jhsub.txt
+# 分发层：下载并运行 subgen.sh，生成各客户端分组订阅并链接到面板目录
+if [ ! -s "$HOME/science/subgen.sh" ]; then
+subgenurl="https://raw.githubusercontent.com/Hutton-h/science/main/subgen.sh"
+(command -v curl >/dev/null 2>&1 && curl -Ls "$subgenurl" -o "$HOME/science/subgen.sh") || (command -v wget >/dev/null 2>&1 && wget -qO "$HOME/science/subgen.sh" "$subgenurl")
+fi
+if [ -s "$HOME/science/subgen.sh" ]; then
+bash "$HOME/science/subgen.sh"
+for subf in hiddify v2rayn clash singbox all; do
+ln -sf $HOME/science/sub/$subf.txt $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/$subf.txt 2>/dev/null
+done
+fi
 ln -sf $HOME/science/panel.html $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/index.html
 ln -sf $HOME/science/status.json $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/status.json
 if command -v apk >/dev/null 2>&1; then
