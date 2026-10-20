@@ -1365,15 +1365,10 @@ cdnip2="$2"
 echo "$cdnip1" > "$HOME/science/cdnip1"
 echo "$cdnip2" > "$HOME/science/cdnip2"
 else
-if [ -s "$HOME/science/cdnip1" ] && [ -s "$HOME/science/cdnip2" ]; then
-cdnip1=$(cat "$HOME/science/cdnip1")
-cdnip2=$(cat "$HOME/science/cdnip2")
-else
 cdnip1="www.shopify.com"
 cdnip2="www.wto.org"
 echo "$cdnip1" > "$HOME/science/cdnip1"
 echo "$cdnip2" > "$HOME/science/cdnip2"
-fi
 fi
 }
 sciencestatus(){
@@ -2915,8 +2910,6 @@ if [ -s "$HOME/science/panel.html" ]; then
     $HOME/science/science.sh statusgen
     # 启动状态监控cron
     (crontab -l 2>/dev/null | grep -v 'science/statusgen'; echo "*/2 * * * * $HOME/science/science.sh statusgen >/dev/null 2>&1") | crontab - 2>/dev/null
-    # 添加优选IP自动更新cron（每30分钟）
-    (crontab -l 2>/dev/null | grep -v 'science/bestip'; echo "*/30 * * * * $HOME/science/science.sh bestip >/dev/null 2>&1") | crontab - 2>/dev/null
     echo "已启动每2分钟自动更新状态监控"
   else
     echo "提示：订阅功能未开启，请先运行 sub=y 的主脚本启用订阅"
@@ -3561,8 +3554,6 @@ echo "本地IP订阅链接已更新完成"
 $HOME/science/science.sh statusgen
 # 启动状态监控cron（每2分钟更新status.json供面板实时读取）
 (crontab -l 2>/dev/null | grep -v 'science/statusgen'; echo "*/2 * * * * $HOME/science/science.sh statusgen >/dev/null 2>&1") | crontab - 2>/dev/null
-# 添加优选IP自动更新cron（每30分钟）
-(crontab -l 2>/dev/null | grep -v 'science/bestip'; echo "*/30 * * * * $HOME/science/science.sh bestip >/dev/null 2>&1") | crontab - 2>/dev/null
 echo "已启动面板状态监控（每2分钟更新）"
 fi
 if [ -n "$hyjpt" ] && [ -n "$hyp" ]; then
