@@ -5,72 +5,95 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Science 控制面板</title>
 <style>
-:root { --bg:#fff; --card:#fff; --ink:#111; --sub:#555; --muted:#999; --line:#ddd; --bg2:#f5f5f5; }
+:root {
+  --bg:#f5f6f8; --card:#ffffff; --ink:#111827; --sub:#4b5563; --muted:#9ca3af; --line:#e5e7eb; --bg2:#f3f4f6;
+  --brand:#4f46e5; --brand2:#4338ca; --ok-bg:#ecfdf5; --ok-ink:#059669; --err-bg:#fef2f2; --err-ink:#dc2626; --wait-bg:#fffbeb; --wait-ink:#d97706;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+}
+[data-theme="dark"] {
+  --bg:#0f1115; --card:#1a1d24; --ink:#e8eaed; --sub:#b0b3b8; --muted:#7a7e85; --line:#2a2f38; --bg2:#14171d;
+  --brand:#818cf8; --brand2:#6366f1; --ok-bg:#0c2a1f; --ok-ink:#34d399; --err-bg:#2a1212; --err-ink:#f87171; --wait-bg:#2a1f0c; --wait-ink:#fbbf24;
+  --shadow:0 1px 3px rgba(0,0,0,.4);
+}
 * { box-sizing:border-box; margin:0; padding:0; }
-body { background:var(--bg2); color:var(--ink); font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; min-height:100vh; }
-.wrap { max-width:900px; margin:0 auto; padding:16px; }
-header { text-align:center; padding:20px 0 12px; border-bottom:1px solid var(--line); margin-bottom:14px; }
-header h1 { font-size:22px; font-weight:700; }
-header .meta { font-size:11px; color:var(--muted); margin-top:4px; }
-header .meta a { color:var(--ink); }
-.status { text-align:center; padding:10px; border-radius:6px; margin-bottom:14px; font-size:13px; }
-.status.ok { background:#e8f5e9; color:#2e7d32; }
-.status.err { background:#ffebee; color:#c62828; }
-.status.wait { background:#fff3e0; color:#e65100; }
-.tabs { display:flex; gap:2px; margin-bottom:14px; }
-.tab { flex:1; padding:10px; cursor:pointer; text-align:center; border:none; background:var(--card); color:var(--sub); font-size:13px; font-weight:600; border:1px solid var(--line); }
-.tab:first-child { border-radius:6px 0 0 6px; }
-.tab:last-child { border-radius:0 6px 6px 0; }
-.tab.active { background:var(--ink); color:#fff; border-color:var(--ink); }
+body { background:var(--bg); color:var(--ink); font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif; min-height:100vh; transition:background .2s,color .2s; }
+.wrap { max-width:960px; margin:0 auto; padding:16px; }
+header { display:flex; align-items:center; justify-content:space-between; padding:18px 0 12px; border-bottom:1px solid var(--line); margin-bottom:14px; }
+header h1 { font-size:20px; font-weight:800; letter-spacing:-.3px; }
+header .meta { font-size:11px; color:var(--muted); margin-top:3px; }
+header .meta a { color:var(--ink); text-decoration:none; }
+header .meta a:hover { text-decoration:underline; }
+.theme-btn { cursor:pointer; border:1px solid var(--line); background:var(--card); color:var(--ink); width:36px; height:36px; border-radius:8px; font-size:16px; display:flex; align-items:center; justify-content:center; }
+.theme-btn:hover { background:var(--bg2); }
+.status { text-align:center; padding:10px 14px; border-radius:8px; margin-bottom:14px; font-size:13px; }
+.status.ok { background:var(--ok-bg); color:var(--ok-ink); }
+.status.err { background:var(--err-bg); color:var(--err-ink); }
+.status.wait { background:var(--wait-bg); color:var(--wait-ink); }
+.tabs { display:flex; gap:4px; margin-bottom:14px; flex-wrap:wrap; }
+.tab { flex:1; min-width:110px; padding:10px; cursor:pointer; text-align:center; border:none; background:var(--card); color:var(--sub); font-size:13px; font-weight:600; border:1px solid var(--line); border-radius:8px; }
+.tab.active { background:var(--brand); color:#fff; border-color:var(--brand); }
 .panel { display:none; }
 .panel.active { display:block; }
-.card { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:12px; }
-.card h3 { font-size:14px; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--line); }
-.grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:12px; box-shadow:var(--shadow); }
+.card h3 { font-size:14px; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--line); }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 .grid-3 { grid-template-columns:1fr 1fr 1fr; }
-@media(max-width:600px){ .grid,.grid-3{grid-template-columns:1fr;} }
-.stat { text-align:center; padding:12px; border:1px solid var(--line); border-radius:6px; background:var(--bg2); }
+@media(max-width:640px){ .grid,.grid-3{grid-template-columns:1fr;} }
+.stat { text-align:center; padding:14px; border:1px solid var(--line); border-radius:10px; background:var(--bg2); }
 .stat .v { font-size:22px; font-weight:700; }
 .stat .l { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
-.v.on { color:#2e7d32; }
-.v.off { color:#c62828; }
+.v.on { color:var(--ok-ink); }
+.v.off { color:var(--err-ink); }
 .row { display:flex; gap:6px; margin:6px 0; align-items:center; }
 .row label { min-width:100px; font-size:12px; color:var(--sub); }
-input[type="text"],input[type="number"] { flex:1; padding:7px 9px; border:1px solid var(--line); border-radius:5px; font-size:13px; outline:none; }
-input:focus { border-color:var(--ink); }
-button { cursor:pointer; border:1px solid var(--line); padding:8px 14px; border-radius:6px; background:var(--card); font-size:13px; font-weight:500; }
+input[type="text"],input[type="number"] { flex:1; padding:8px 10px; border:1px solid var(--line); border-radius:8px; font-size:13px; outline:none; background:var(--card); color:var(--ink); }
+input:focus { border-color:var(--brand); }
+button { cursor:pointer; border:1px solid var(--line); padding:8px 14px; border-radius:8px; background:var(--card); color:var(--ink); font-size:13px; font-weight:500; }
 button:hover { background:var(--bg2); }
-button.dark { background:var(--ink); color:#fff; border-color:var(--ink); }
-button.dark:hover { background:#333; }
-button.sm { padding:4px 10px; font-size:12px; }
-.url-box { background:var(--bg2); border:1px solid var(--line); border-radius:6px; padding:10px; font-family:monospace; font-size:12px; word-break:break-all; margin:6px 0; }
+button.dark { background:var(--brand); color:#fff; border-color:var(--brand); }
+button.dark:hover { background:var(--brand2); }
+button.sm { padding:5px 10px; font-size:12px; }
+.url-box { background:var(--bg2); border:1px solid var(--line); border-radius:8px; padding:10px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; word-break:break-all; margin:6px 0; color:var(--sub); }
 .node { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--line); font-size:12px; }
-.node .n { font-weight:600; min-width:70px; font-size:11px; }
-.node .u { flex:1; word-break:break-all; color:var(--sub); font-family:monospace; font-size:10px; }
-.qr-img { display:block; margin:8px auto 0; border:1px solid var(--line); border-radius:4px; width:160px; height:160px; }
-input[type="checkbox"] { accent-color:var(--ink); }
-.proto-grid { display:grid; grid-template-columns:auto 1fr; gap:4px 10px; align-items:center; }
+.node .n { font-weight:600; min-width:76px; font-size:11px; color:var(--ink); }
+.node .u { flex:1; word-break:break-all; color:var(--sub); font-family:ui-monospace,monospace; font-size:10px; }
+.qr-img { display:block; margin:8px auto 0; border:1px solid var(--line); border-radius:8px; width:160px; height:160px; background:#fff; }
+input[type="checkbox"] { accent-color:var(--brand); }
+.proto-grid { display:grid; grid-template-columns:auto 1fr; gap:5px 10px; align-items:center; }
 .proto-grid label { display:flex; align-items:center; gap:4px; cursor:pointer; font-size:12px; }
-.pill { font-size:9px; padding:1px 5px; border:1px solid var(--line); border-radius:99px; color:var(--muted); white-space:nowrap; }
-.cmd-box { background:var(--bg2); border:1px dashed var(--line); border-radius:6px; padding:12px; font-family:monospace; font-size:12px; word-break:break-all; white-space:pre-wrap; max-height:180px; overflow-y:auto; }
+.pill { font-size:9px; padding:1px 6px; border:1px solid var(--line); border-radius:99px; color:var(--muted); white-space:nowrap; }
+.cmd-box { background:var(--bg2); border:1px dashed var(--line); border-radius:8px; padding:12px; font-family:ui-monospace,monospace; font-size:12px; word-break:break-all; white-space:pre-wrap; max-height:180px; overflow-y:auto; }
 .help { font-size:12px; color:var(--sub); line-height:1.8; }
-.help code { background:var(--bg2); padding:1px 5px; border-radius:3px; font-size:11px; border:1px solid var(--line); }
+.help code { background:var(--bg2); padding:1px 5px; border-radius:4px; font-size:11px; border:1px solid var(--line); }
 .help strong { color:var(--ink); }
-  .ip-table { width:100%; border-collapse:collapse; font-size:12px; margin-top:6px; }
-  .ip-table th { background:var(--bg2); padding:6px 8px; text-align:left; font-weight:600; border-bottom:1px solid var(--line); color:var(--sub); }
-  .ip-table td { padding:6px 8px; border-bottom:1px solid var(--line); font-family:monospace; }
-  .ip-table .ip-copy { cursor:pointer; color:var(--ink); font-size:11px; padding:2px 6px; border:1px solid var(--line); border-radius:3px; background:var(--bg2); }
-  .ip-table .ip-copy:hover { background:var(--line); }
-  .bestip-tag { display:inline-block; background:#e8f5e9; color:#2e7d32; font-size:10px; padding:1px 5px; border-radius:3px; margin-left:4px; }
-  .bestip-refresh { font-size:11px; color:var(--muted); margin-left:8px; }
+.ip-table { width:100%; border-collapse:collapse; font-size:12px; margin-top:6px; }
+.ip-table th { background:var(--bg2); padding:6px 8px; text-align:left; font-weight:600; border-bottom:1px solid var(--line); color:var(--sub); }
+.ip-table td { padding:6px 8px; border-bottom:1px solid var(--line); font-family:ui-monospace,monospace; }
+.ip-table .ip-copy { cursor:pointer; color:var(--ink); font-size:11px; padding:2px 6px; border:1px solid var(--line); border-radius:4px; background:var(--bg2); }
+.ip-table .ip-copy:hover { background:var(--line); }
+.bestip-tag { display:inline-block; background:var(--ok-bg); color:var(--ok-ink); font-size:10px; padding:1px 5px; border-radius:3px; margin-left:4px; }
+.bestip-refresh { font-size:11px; color:var(--muted); margin-left:8px; }
+/* 订阅分组卡片 */
+.sub-group { position:relative; }
+.group-head { display:flex; align-items:center; gap:8px; }
+.group-head h3 { border:none; padding:0; margin:0; flex:1; font-size:15px; }
+.group-head .count { font-size:11px; color:var(--muted); background:var(--bg2); border:1px solid var(--line); padding:2px 8px; border-radius:99px; }
+.group-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.node-toggle { width:100%; margin-top:10px; background:var(--bg2); border:1px dashed var(--line); color:var(--sub); font-size:12px; }
+.node-list { max-height:0; overflow:hidden; transition:max-height .25s ease; margin-top:10px; border-top:1px dashed var(--line); }
+.node-list.open { max-height:420px; overflow-y:auto; }
+.node-list .node:last-child { border-bottom:none; }
 footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
 </style>
 </head>
 <body>
 <div class="wrap">
 <header>
-  <h1>Science 控制面板</h1>
-  <div class="meta"><a href="https://github.com/Hutton-h/science">github.com/Hutton-h/science</a> · V26.7.16</div>
+  <div>
+    <h1>Science 控制面板</h1>
+    <div class="meta"><a href="https://github.com/Hutton-h/science">github.com/Hutton-h/science</a> · V26.7.16</div>
+  </div>
+  <button class="theme-btn" id="btn-theme" title="切换深浅色">🌙</button>
 </header>
 <div class="status wait" id="statusBar">等待连接服务器…</div>
 <div class="tabs">
@@ -164,7 +187,8 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
         <label><input type="checkbox" data-var="anpt">AnyTLS <span class="pill">anpt</span></label><input type="text" data-port="anpt" placeholder="随机">
         <label><input type="checkbox" data-var="arpt">Any-Reality <span class="pill">arpt</span></label><input type="text" data-port="arpt" placeholder="随机">
         <label><input type="checkbox" data-var="sspt">Shadowsocks-2022 <span class="pill">sspt</span></label><input type="text" data-port="sspt" placeholder="随机">
-        <label><input type="checkbox" data-var="nvpt">Naiveproxy <span class="pill">nvpt</span></label><input type="text" data-port="nvpt" placeholder="需alns证书">
+        <label><input type="checkbox" data-var="tjpt">Trojan-WS <span class="pill">tjpt</span></label><input type="text" data-port="tjpt" placeholder="随机">
+        <label><input type="checkbox" data-var="tjgpt">Trojan-gRPC <span class="pill">tjgpt</span></label><input type="text" data-port="tjgpt" placeholder="随机">
       </div>
     </div>
   </div>
@@ -174,7 +198,7 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
       <label><input type="checkbox" data-var="sopt">SOCKS5 <span class="pill">sopt</span></label><input type="text" data-port="sopt" placeholder="随机">
     </div>
     <div style="margin-top:8px;display:flex;gap:6px;">
-      <button class="dark sm" id="btn-selAll">全选14协议</button>
+      <button class="dark sm" id="btn-selAll">全选协议</button>
       <button class="sm" id="btn-clrAll">清空</button>
     </div>
   </div>
@@ -217,16 +241,41 @@ footer { text-align:center; padding:20px; font-size:11px; color:var(--muted); }
       <button class="sm" id="btn-refresh">刷新</button>
     </div>
   </div>
-  <div class="card"><h3>Clash/Meta 订阅</h3><div class="url-box" id="clashUrl">请先连接</div><button class="sm" id="btn-cpClash">复制</button><img class="qr-img" id="qrClash" src="" alt="QR" style="display:none"></div>
-  <div class="card"><h3>Sing-box 订阅</h3><div class="url-box" id="singboxUrl">请先连接</div><button class="sm" id="btn-cpSbox">复制</button><img class="qr-img" id="qrSbox" src="" alt="QR" style="display:none"></div>
-  <div class="card"><h3>聚合订阅</h3><div class="url-box" id="allUrl">请先连接</div><button class="sm" id="btn-cpAll">复制</button><img class="qr-img" id="qrAll" src="" alt="QR" style="display:none"></div>
-  <div class="card"><h3>节点列表</h3><div id="nodeList" style="max-height:400px;overflow-y:auto;color:var(--muted);">请先连接</div></div>
+  <div id="subGroups"><div class="card"><h3>订阅分组</h3><div style="color:var(--muted);font-size:13px;">请先连接服务器</div></div></div>
+  <div class="card"><h3>原始订阅（兼容）</h3>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">以下为 sing-box / Clash / 聚合原始订阅，供旧客户端或自定义使用</div>
+    <div class="row"><label style="min-width:80px;">Sing-box</label><div class="url-box" id="singboxUrl" style="flex:1;margin:0;">请先连接</div><button class="sm" id="btn-cpSbox">复制</button></div>
+    <div class="row"><label style="min-width:80px;">Clash/Meta</label><div class="url-box" id="clashUrl" style="flex:1;margin:0;">请先连接</div><button class="sm" id="btn-cpClash">复制</button></div>
+    <div class="row"><label style="min-width:80px;">聚合明文</label><div class="url-box" id="allUrl" style="flex:1;margin:0;">请先连接</div><button class="sm" id="btn-cpAll">复制</button></div>
+  </div>
 </div>
 <footer>github.com/Hutton-h/science · Science V26.7.16</footer>
 </div>
 
 <script>
 var srv='', port='', token='', timer=null, proto = window.location.protocol || 'http:';
+var jhNodes = [];  // 明文节点列表（来自 jhsub.txt）
+
+// 客户端分组定义（与 subgen.sh 白名单矩阵一致）
+var GROUPS = [
+  { id:'hiddify', name:'Hiddify', file:'hiddify.txt', desc:'主力客户端（sing-box 内核），全协议支持', protos:['vless','vmess','trojan','ss','hysteria2','tuic','anytls'] },
+  { id:'v2rayn', name:'v2rayN', file:'v2rayn.txt', desc:'Xray 内核，支持 VLESS/VMess/Trojan', protos:['vless','vmess','trojan'] },
+  { id:'clash', name:'Clash / Meta', file:'clash.txt', desc:'Mihomo 内核，支持 VLESS/VMess/Trojan/SS/Hy2/TUIC', protos:['vless','vmess','trojan','ss','hysteria2','tuic'] },
+  { id:'singbox', name:'sing-box', file:'singbox.txt', desc:'原生 sing-box，全协议支持', protos:['vless','vmess','trojan','ss','hysteria2','tuic','anytls'] },
+  { id:'all', name:'全部节点', file:'all.txt', desc:'所有节点（含需人工判断的协议）', protos:['vless','vmess','trojan','ss','hysteria2','tuic','anytls','other'] }
+];
+
+function protoOf(l) {
+  var p = (l.split('://')[0] || '').toLowerCase();
+  if (p === 'vless') return 'vless';
+  if (p === 'vmess') return 'vmess';
+  if (p === 'trojan') return 'trojan';
+  if (p === 'ss') return 'ss';
+  if (p === 'hysteria2') return 'hysteria2';
+  if (p === 'tuic') return 'tuic';
+  if (p === 'anytls') return 'anytls';
+  return 'other';
+}
 
 function setQR(id, text) {
   var img = document.getElementById(id);
@@ -249,6 +298,17 @@ document.getElementById('tab-dashboard').addEventListener('click', function(){ s
 document.getElementById('tab-generator').addEventListener('click', function(){ switchTab('generator'); });
 document.getElementById('tab-sub').addEventListener('click', function(){ switchTab('sub'); });
 
+// 深浅色主题
+(function(){
+  var saved = localStorage.getItem('science-theme');
+  if (saved === 'dark') { document.body.setAttribute('data-theme', 'dark'); document.getElementById('btn-theme').textContent = '☀️'; }
+  document.getElementById('btn-theme').addEventListener('click', function(){
+    var isDark = document.body.getAttribute('data-theme') === 'dark';
+    if (isDark) { document.body.removeAttribute('data-theme'); this.textContent = '🌙'; localStorage.setItem('science-theme', 'light'); }
+    else { document.body.setAttribute('data-theme', 'dark'); this.textContent = '☀️'; localStorage.setItem('science-theme', 'dark'); }
+  });
+})();
+
 // Auto detect
 (function(){
   var p = window.location.pathname.split('/').filter(function(x){ return x; });
@@ -259,13 +319,7 @@ document.getElementById('tab-sub').addEventListener('click', function(){ switchT
     document.getElementById('subServer').value = srv;
     document.getElementById('subPort').value = port;
     document.getElementById('subToken').value = token;
-    var base = proto + '//' + srv + (port === '443' || port === '80' ? '' : ':' + port) + '/' + token + '/';
-    document.getElementById('clashUrl').textContent = base + 'clmi.yaml';
-    document.getElementById('singboxUrl').textContent = base + 'sbox.json';
-    document.getElementById('allUrl').textContent = base + 'jhsub.txt';
-    setQR('qrClash', base + 'clmi.yaml');
-    setQR('qrSbox', base + 'sbox.json');
-    setQR('qrAll', base + 'jhsub.txt');
+    renderSub();
     fetchDash();
     startTimer();
   }
@@ -322,13 +376,7 @@ document.getElementById('btn-connect').addEventListener('click', function(){
   var t = document.getElementById('subToken').value.trim();
   if (!s || !p || !t) { alert('请填写完整'); return; }
   s = s.replace(/\/$/, ''); srv = s; port = p; token = t;
-  var base = proto + '//' + s + (p === '443' || p === '80' ? '' : ':' + p) + '/' + t + '/';
-  document.getElementById('clashUrl').textContent = base + 'clmi.yaml';
-  document.getElementById('singboxUrl').textContent = base + 'sbox.json';
-  document.getElementById('allUrl').textContent = base + 'jhsub.txt';
-  setQR('qrClash', base + 'clmi.yaml');
-  setQR('qrSbox', base + 'sbox.json');
-  setQR('qrAll', base + 'jhsub.txt');
+  renderSub();
   fetchDash(); startTimer();
 });
 
@@ -342,11 +390,103 @@ document.getElementById('btn-cpClash').addEventListener('click', function(){ cop
 document.getElementById('btn-cpSbox').addEventListener('click', function(){ copyEl('singboxUrl', this); });
 document.getElementById('btn-cpAll').addEventListener('click', function(){ copyEl('allUrl', this); });
 
+function baseUrl() {
+  return proto + '//' + srv + (port === '443' || port === '80' ? '' : ':' + port) + '/' + token + '/';
+}
+
+// 渲染订阅分组卡片
+function renderSub() {
+  if (!srv || !port || !token) return;
+  var b = baseUrl();
+  // 原始订阅
+  document.getElementById('clashUrl').textContent = b + 'clmi.yaml';
+  document.getElementById('singboxUrl').textContent = b + 'sbox.json';
+  document.getElementById('allUrl').textContent = b + 'jhsub.txt';
+  // 分组卡片
+  var host = document.getElementById('subGroups');
+  var h = '';
+  for (var i = 0; i < GROUPS.length; i++) {
+    var g = GROUPS[i];
+    var url = b + g.file;
+    h += '<div class="card sub-group">'
+      + '<div class="group-head"><h3>' + g.name + '</h3><span class="count" id="cnt-' + g.id + '">…</span></div>'
+      + '<div style="font-size:12px;color:var(--muted);margin-bottom:4px;">' + g.desc + '</div>'
+      + '<div class="url-box" id="url-' + g.id + '">' + url + '</div>'
+      + '<div class="group-actions">'
+      + '<button class="dark sm" onclick="copyGroup(\'' + g.id + '\', this)">复制订阅</button>'
+      + '<button class="sm" onclick="copyGroupNodes(\'' + g.id + '\', this)">复制节点</button>'
+      + '<button class="sm" onclick="toggleNodes(\'' + g.id + '\')">展开节点</button>'
+      + '</div>'
+      + '<img class="qr-img" id="qr-' + g.id + '" alt="QR" style="display:none">'
+      + '<div class="node-list" id="list-' + g.id + '"></div>'
+      + '</div>';
+  }
+  host.innerHTML = h;
+  for (var k = 0; k < GROUPS.length; k++) {
+    setQR('qr-' + GROUPS[k].id, b + GROUPS[k].file);
+  }
+  // 拉取节点列表
+  fetchNodes();
+}
+
+function copyGroup(id, btn) {
+  var el = document.getElementById('url-' + id);
+  if (el) copyText(el.textContent, btn);
+}
+function copyGroupNodes(id, btn) {
+  var g = null;
+  for (var i = 0; i < GROUPS.length; i++) { if (GROUPS[i].id === id) { g = GROUPS[i]; break; } }
+  if (!g) return;
+  var ls = nodesForGroup(g);
+  copyText(ls.join('\n'), btn);
+}
+function toggleNodes(id) {
+  var el = document.getElementById('list-' + id);
+  if (el) el.classList.toggle('open');
+}
+
+function nodesForGroup(g) {
+  var out = [];
+  for (var i = 0; i < jhNodes.length; i++) {
+    var p = protoOf(jhNodes[i]);
+    if (g.protos.indexOf(p) >= 0) out.push(jhNodes[i]);
+  }
+  return out;
+}
+
+function renderNodeLists() {
+  for (var i = 0; i < GROUPS.length; i++) {
+    var g = GROUPS[i];
+    var cnt = document.getElementById('cnt-' + g.id);
+    var list = document.getElementById('list-' + g.id);
+    if (!list) continue;
+    var ls = nodesForGroup(g);
+    if (cnt) cnt.textContent = ls.length + ' 节点';
+    if (!ls.length) { list.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:8px;">该客户端无可用节点</div>'; continue; }
+    var h = '';
+    for (var j = 0; j < ls.length; j++) {
+      var l = ls[j], pn = l.split('://')[0] || '?';
+      h += '<div class="node"><span class="n">' + escHtml(pn) + '</span><span class="u">' + escHtml(l) + '</span><button class="sm" data-idx="' + j + '" data-g="' + g.id + '">复制</button></div>';
+    }
+    list.innerHTML = h;
+  }
+  var btns = document.querySelectorAll('.node-list .sm[data-g]');
+  for (var k = 0; k < btns.length; k++) {
+    (function(b, gid, idx) {
+      b.addEventListener('click', function() { copyText(nodesForGroupById(gid)[idx], this); });
+    })(btns[k], btns[k].getAttribute('data-g'), parseInt(btns[k].getAttribute('data-idx')));
+  }
+}
+function nodesForGroupById(id) {
+  for (var i = 0; i < GROUPS.length; i++) { if (GROUPS[i].id === id) return nodesForGroup(GROUPS[i]); }
+  return [];
+}
+
 // Dashboard
 function fetchDash() {
   if (!srv || !port || !token) return;
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', proto + '//' + srv + (port === '443' || port === '80' ? '' : ':' + port) + '/' + token + '/status.json', true);
+  xhr.open('GET', baseUrl() + 'status.json', true);
   xhr.onload = function() {
     if (xhr.status >= 200 && xhr.status < 300) {
       try {
@@ -370,7 +510,6 @@ function fetchDash() {
         var ma = parseInt(d.memory && d.memory.available) || 0;
         var mu = mt - ma;
         document.getElementById('memV').textContent = fmtSize(mu * 1024) + ' / ' + fmtSize(mt * 1024);
-        // 渲染优选IP
         renderBestIP(d);
         fetchNodes();
       } catch(e) { setStatus('数据解析失败', 'err'); }
@@ -383,26 +522,14 @@ function fetchDash() {
 function fetchNodes() {
   if (!srv || !port || !token) return;
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', proto + '//' + srv + (port === '443' || port === '80' ? '' : ':' + port) + '/' + token + '/jhsub.txt', true);
+  xhr.open('GET', baseUrl() + 'jhsub.txt', true);
   xhr.onload = function() {
     if (xhr.status >= 200 && xhr.status < 300) {
-      var ls = xhr.responseText.split('\n').filter(function(l) { return l.trim(); });
-      if (!ls.length) { document.getElementById('nodeList').innerHTML = '暂无节点'; return; }
-      var h = '';
-      for (var i = 0; i < ls.length; i++) {
-        var l = ls[i], pn = l.split('://')[0] || '?';
-        h += '<div class="node"><span class="n">#' + (i + 1) + ' ' + escHtml(pn) + '</span><span class="u">' + escHtml(l.substring(0, 100)) + (l.length > 100 ? '…' : '') + '</span><button class="sm">复制</button></div>';
-      }
-      document.getElementById('nodeList').innerHTML = h;
-      var btns = document.querySelectorAll('#nodeList .sm');
-      for (var j = 0; j < btns.length; j++) {
-        (function(idx, txt) {
-          btns[idx].addEventListener('click', function() { copyText(txt, this); });
-        })(j, ls[j]);
-      }
-    } else { document.getElementById('nodeList').innerHTML = '获取失败'; }
+      jhNodes = xhr.responseText.split('\n').filter(function(l) { return l.trim(); });
+      renderNodeLists();
+    }
   };
-  xhr.onerror = function() { document.getElementById('nodeList').innerHTML = '获取失败'; };
+  xhr.onerror = function() {};
   xhr.send();
 }
 
@@ -446,8 +573,7 @@ function renderBestIP(d) {
   var bip = d.bestip || {};
   var updatedEl = document.getElementById('bestipUpdated');
   var bodyEl = document.getElementById('bestipBody');
-  
-  // 运营商IP（"无"字符串是truthy需显式排除）
+
   var best = bip.best_ip || '';
   var telIp = (bip.telecom_ip && bip.telecom_ip !== '无') ? bip.telecom_ip : best;
   var telTag = (bip.telecom_tag && bip.telecom_tag !== '无') ? bip.telecom_tag : '';
@@ -455,45 +581,31 @@ function renderBestIP(d) {
   var uniTag = (bip.unicom_tag && bip.unicom_tag !== '无') ? bip.unicom_tag : '';
   var mobIp = (bip.mobile_ip && bip.mobile_ip !== '无') ? bip.mobile_ip : best;
   var mobTag = (bip.mobile_tag && bip.mobile_tag !== '无') ? bip.mobile_tag : '';
-  
+
   var telEl = document.getElementById('telecomIp');
   var telTagEl = document.getElementById('telecomTag');
   var uniEl = document.getElementById('unicomIp');
   var uniTagEl = document.getElementById('unicomTag');
   var mobEl = document.getElementById('mobileIp');
   var mobTagEl = document.getElementById('mobileTag');
-  
-  if (telEl) {
-    telEl.textContent = telIp && telIp !== '无' ? telIp : '暂无';
-    if (telTagEl) telTagEl.textContent = telTag || '';
-  }
-  if (uniEl) {
-    uniEl.textContent = uniIp && uniIp !== '无' ? uniIp : '暂无';
-    if (uniTagEl) uniTagEl.textContent = uniTag || '';
-  }
-  if (mobEl) {
-    mobEl.textContent = mobIp && mobIp !== '无' ? mobIp : '暂无';
-    if (mobTagEl) mobTagEl.textContent = mobTag || '';
-  }
-  
-  updatedEl.textContent = bip.updated ? '更新于 ' + bip.updated : '';
-  
-  // 复制按钮
+
+  if (telEl) { telEl.textContent = telIp && telIp !== '无' ? telIp : '暂无'; if (telTagEl) telTagEl.textContent = telTag || ''; }
+  if (uniEl) { uniEl.textContent = uniIp && uniIp !== '无' ? uniIp : '暂无'; if (uniTagEl) uniTagEl.textContent = uniTag || ''; }
+  if (mobEl) { mobEl.textContent = mobIp && mobIp !== '无' ? mobIp : '暂无'; if (mobTagEl) mobTagEl.textContent = mobTag || ''; }
+
+  if (updatedEl) updatedEl.textContent = bip.updated ? '更新于 ' + bip.updated : '';
+
   var btnTel = document.getElementById('btn-copyTelecom');
   var btnUni = document.getElementById('btn-copyUnicom');
   var btnMob = document.getElementById('btn-copyMobile');
   if (btnTel) btnTel.onclick = function(){ copyText(telIp, this); };
   if (btnUni) btnUni.onclick = function(){ copyText(uniIp, this); };
   if (btnMob) btnMob.onclick = function(){ copyText(mobIp, this); };
-  
-  // 通用IP列表
+
   if (!bodyEl) return;
   var ipList = bip.ip_list || '';
   var items = ipList ? ipList.split(',') : [];
-  // 如果列表为空但有best_ip，至少显示它
-  if (!items.length && best) {
-    items = [best + '#通用优选'];
-  }
+  if (!items.length && best) { items = [best + '#通用优选']; }
   if (!items.length) {
     bodyEl.innerHTML = '<tr><td colspan="3" style="color:var(--muted);text-align:center;">请先在服务器执行: science bestip</td></tr>';
     return;
