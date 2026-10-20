@@ -2498,10 +2498,10 @@ out=$($f)
 [ -n "$out" ] && printf "%s\n" "$out"
 fi
 }
-sbxy="$(get_func sbvlpt; get_func sbsspt; get_func sbanpt; get_func sbarpt; get_func sbvmpt; get_func sbhypt; get_func sbtupt; get_func sbtjpt; get_func sbxhpt; get_func sbvxpt; get_func sbsopt; get_func sbvmargopt)"
-clxy="$(get_func cludpxcpt; get_func clxcpt; get_func clvlpt; get_func clsspt; get_func clanpt; get_func clvmpt; get_func clhypt; get_func cltupt; get_func cltjpt; get_func clxhpt; get_func clvxpt; get_func clsopt; get_func clvmargopt)"
-sbgz="$(get_func sbvlpt1; get_func sbsspt1; get_func sbanpt1; get_func sbarpt1; get_func sbvmpt1; get_func sbhypt1; get_func sbtupt1; get_func sbtjpt1; get_func sbxhpt1; get_func sbvxpt1; get_func sbsopt1; get_func sbvmargopt1)"
-clgz="$({ get_func cludpxcpt1; get_func clxcpt1; get_func clvlpt1; get_func clsspt1; get_func clanpt1; get_func clvmpt1; get_func clhypt1; get_func cltupt1; get_func cltjpt1; get_func clxhpt1; get_func clvxpt1; get_func clsopt1; get_func clvmargopt1; } | sed '2,$s/^/    /')"
+sbxy="$(get_func sbvlpt; get_func sbsspt; get_func sbanpt; get_func sbarpt; get_func sbvmpt; get_func sbhypt; get_func sbtupt; get_func sbtjpt; get_func sbxhpt; get_func sbvxpt; get_func sbvmargopt)"
+clxy="$(get_func cludpxcpt; get_func clxcpt; get_func clvlpt; get_func clsspt; get_func clanpt; get_func clvmpt; get_func clhypt; get_func cltupt; get_func cltjpt; get_func clxhpt; get_func clvxpt; get_func clvmargopt)"
+sbgz="$(get_func sbvlpt1; get_func sbsspt1; get_func sbanpt1; get_func sbarpt1; get_func sbvmpt1; get_func sbhypt1; get_func sbtupt1; get_func sbtjpt1; get_func sbxhpt1; get_func sbvxpt1; get_func sbvmargopt1)"
+clgz="$({ get_func cludpxcpt1; get_func clxcpt1; get_func clvlpt1; get_func clsspt1; get_func clanpt1; get_func clvmpt1; get_func clhypt1; get_func cltupt1; get_func cltjpt1; get_func clxhpt1; get_func clvxpt1; get_func clvmargopt1; } | sed '2,$s/^/    /')"
 sbgz=$(printf "%s\n" "$sbgz" | sed '$ s/,$//')
 cat > $HOME/science/sbox.json <<EOF
 {
