@@ -707,6 +707,7 @@ cat >> "$HOME/science/xr.json" <<EOF
                 "security": "tls",
                 "httpSettings": {"path": "/${uuid}-vh2"},
                 "tlsSettings": {
+                    "alpn": ["h2"],
                     "certificates": [{"certificateFile": "$certificateHTA", "keyFile": "$keyHTA"}]
                 }
             },
@@ -740,6 +741,7 @@ cat >> "$HOME/science/xr.json" <<EOF
                 "security": "tls",
                 "grpcSettings": {"serviceName": "${uuid}-vmg"},
                 "tlsSettings": {
+                    "alpn": ["h2"],
                     "certificates": [{"certificateFile": "$certificateHTA", "keyFile": "$keyHTA"}]
                 }
             },
@@ -773,6 +775,7 @@ cat >> "$HOME/science/xr.json" <<EOF
                 "security": "tls",
                 "httpSettings": {"path": "/${uuid}-vmh2"},
                 "tlsSettings": {
+                    "alpn": ["h2"],
                     "certificates": [{"certificateFile": "$certificateHTA", "keyFile": "$keyHTA"}]
                 }
             },
