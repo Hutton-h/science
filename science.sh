@@ -1506,6 +1506,13 @@ sxname=$(cat "$HOME/science/name" 2>/dev/null)
 xvvmcdnym=$(cat "$HOME/science/cdnym" 2>/dev/null)
 cdnip1=$(cat "$HOME/science/cdnip1" 2>/dev/null)
 cdnip2=$(cat "$HOME/science/cdnip2" 2>/dev/null)
+cdnips=""
+if [ -f "$HOME/science/bestip.json" ]; then
+cdnips=$(sed -n 's/.*"ip_list":"\([^"]*\)".*/\1/p' "$HOME/science/bestip.json" 2>/dev/null)
+fi
+if [ -z "$cdnips" ] || [ "$cdnips" = "无" ]; then
+cdnips="$cdnip1,$cdnip2"
+fi
 if grep -q 'science/private.key' "$HOME/science/sb.json" >/dev/null 2>&1 || grep -q 'science/private.key' "$HOME/science/xr.json" >/dev/null 2>&1; then
 sni=www.bing.com
 add=$server_ip
@@ -1668,10 +1675,13 @@ echo "$vl_vw_link"
 echo
 if [ -f "$HOME/science/cdnym" ]; then
 echo "💣【 Vless-ws-enc-cdn 】支持ENC加密，节点信息如下："
-echo "可自行更换优选IP域名，如是回源端口需手动修改443或者80系端口"
-vl_vw_cdn_link="vless://$uuid@$cdnip1:$port_vw?encryption=$enkey&flow=xtls-rprx-vision&type=ws&host=$xvvmcdnym&path=$uuid-vw#${sxname}vl-ws-enc-cdn-$hostname"
+echo "已自动使用全部优选IP生成多条CDN节点"
+for cdnip in $(echo "$cdnips" | tr ',' ' '); do
+[ -z "$cdnip" ] && continue
+vl_vw_cdn_link="vless://$uuid@$cdnip:$port_vw?encryption=$enkey&flow=xtls-rprx-vision&type=ws&host=$xvvmcdnym&path=$uuid-vw#${sxname}vl-ws-enc-cdn-$cdnip"
 echo "$vl_vw_cdn_link" >> "$HOME/science/jhsub.txt"
 echo "$vl_vw_cdn_link"
+done
 echo
 fi
 fi
@@ -1979,10 +1989,13 @@ echo "- ${sxname}vmess-ws-$hostname"
 }
 if [ -f "$HOME/science/cdnym" ]; then
 echo "💣【 Vmess-ws-cdn 】节点信息如下："
-echo "注：默认地址 www.shopify.com 可自行更换优选IP域名，如是回源端口需手动修改443或者80系端口"
-vm_cdn_link="vmess://$(echo "{ \"v\": \"2\", \"ps\": \"${sxname}vm-ws-cdn-$hostname\", \"add\": \"www.shopify.com\", \"port\": \"$port_vm_ws\", \"id\": \"$uuid\", \"aid\": \"0\", \"scy\": \"auto\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"$xvvmcdnym\", \"path\": \"/$uuid-vm\", \"tls\": \"\"}" | base64 -w0)"
+echo "已自动使用全部优选IP生成多条CDN节点"
+for cdnip in $(echo "$cdnips" | tr ',' ' '); do
+[ -z "$cdnip" ] && continue
+vm_cdn_link="vmess://$(echo "{ \"v\": \"2\", \"ps\": \"${sxname}vm-ws-cdn-$cdnip\", \"add\": \"$cdnip\", \"port\": \"$port_vm_ws\", \"id\": \"$uuid\", \"aid\": \"0\", \"scy\": \"auto\", \"net\": \"ws\", \"type\": \"none\", \"host\": \"$xvvmcdnym\", \"path\": \"/$uuid-vm\", \"tls\": \"\"}" | base64 -w0)"
 echo "$vm_cdn_link" >> "$HOME/science/jhsub.txt"
 echo "$vm_cdn_link"
+done
 echo
 fi
 fi
