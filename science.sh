@@ -1772,13 +1772,7 @@ sxname=$(cat "$HOME/science/name" 2>/dev/null)
 xvvmcdnym=$(cat "$HOME/science/cdnym" 2>/dev/null)
 cdnip1=$(cat "$HOME/science/cdnip1" 2>/dev/null)
 cdnip2=$(cat "$HOME/science/cdnip2" 2>/dev/null)
-cdnips=""
-if [ -f "$HOME/science/bestip.json" ]; then
-cdnips=$(sed -n 's/.*"ip_list":"\([^"]*\)".*/\1/p' "$HOME/science/bestip.json" 2>/dev/null)
-fi
-if [ -z "$cdnips" ] || [ "$cdnips" = "无" ]; then
 cdnips="$cdnip1,$cdnip2"
-fi
 if grep -q 'science/private.key' "$HOME/science/sb.json" >/dev/null 2>&1 || grep -q 'science/private.key' "$HOME/science/xr.json" >/dev/null 2>&1; then
 sni=www.bing.com
 add=$server_ip
@@ -4009,104 +4003,6 @@ NGINXEOF
   echo "=============================="
 exit
 fi
-# ====== CF优选IP获取（含三大运营商分类，供面板展示） ======
-if [ "$1" = "bestip" ]; then
-SAVE_FILE="$HOME/science/bestip.json"
-bp_ip=""; bp_delay=""; bp_speed=""; bp_updated=""
-# 尝试从多个公开API获取优选IP
-fetch_bestip() {
-  for api_url in \
-    "https://ip.164746.xyz" \
-    "https://cf.090227.xyz" \
-    "https://proxy.freecdn.workers.dev" \
-    "https://cdn.shanggan.pp.ua" \
-  ; do
-    resp=$(curl -sk --connect-timeout 8 --max-time 15 "$api_url" 2>/dev/null)
-    if [ -n "$resp" ]; then
-      bp_ip=$(echo "$resp" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-      bp_delay=$(echo "$resp" | grep -oE '[0-9]+\s*ms' | head -1 | grep -oE '[0-9]+')
-      bp_speed=$(echo "$resp" | grep -oE '[0-9]+\.[0-9]+\s*(MB|KB)' | head -1)
-      [ -n "$bp_ip" ] && break
-    fi
-  done
-  if [ -z "$bp_ip" ]; then
-    cfst_bin="$HOME/science/cfst"
-    if [ -x "$cfst_bin" ]; then
-      result=$($cfst_bin -n 50 -t 2 -dn 1 -tl 200 -p 0 2>/dev/null)
-      bp_ip=$(echo "$result" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-      bp_delay=$(echo "$result" | grep -oE '[0-9]+\.[0-9]+' | head -1)
-    fi
-  fi
-}
-fetch_bestip
-# 获取前5个优选IP列表（去重）
-bp_list=""
-for api_url in "https://ip.164746.xyz" "https://cf.090227.xyz"; do
-  resp=$(curl -sk --connect-timeout 8 --max-time 15 "$api_url" 2>/dev/null)
-  if [ -n "$resp" ]; then
-    # 优先从 copyIP('...') 提取（HTML API格式）
-    bp_list=$(echo "$resp" | grep -oE "copyIP\(\'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\'\)" | sed "s/copyIP('//g; s/')//g" | sort -u | head -5 | tr '\n' ',' | sed 's/,$//')
-    # 如果 copyIP 没提取到，用通用正则 + 去重
-    [ -z "$bp_list" ] && bp_list=$(echo "$resp" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | sort -u | head -5 | tr '\n' ',' | sed 's/,$//')
-    [ -n "$bp_list" ] && break
-  fi
-done
-
-# ====== 三大运营商分类优选IP ======
-# 从API返回中按运营商标签分类：电信/联通/移动
-parse_operator_ips() {
-  _op="$1"  # 电信 or 联通 or 移动
-  _result=""
-  for api_url in "https://ip.164746.xyz" "https://cf.090227.xyz"; do
-    resp=$(curl -sk --connect-timeout 8 --max-time 15 "$api_url" 2>/dev/null)
-    if [ -n "$resp" ]; then
-      # 如果HTML包含运营商关键词，提取该行附近的IP
-      if echo "$resp" | grep -qi "$_op"; then
-        _result=$(echo "$resp" | grep -i "$_op" | grep -oE "copyIP\(\'[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\'\)" | sed "s/copyIP('//g; s/')//g" | sort -u | head -3 | tr '\n' ',' | sed 's/,$//')
-        [ -n "$_result" ] && break
-      fi
-    fi
-  done
-  # 如果API没返回运营商标签，从通用列表取前3个作为兜底
-  if [ -z "$_result" ]; then
-    _result=$(echo "$bp_list" | cut -d',' -f1-3 2>/dev/null)
-  fi
-  echo "$_result"
-}
-
-bp_telecom=$(parse_operator_ips "电信")
-bp_unicom=$(parse_operator_ips "联通")
-bp_mobile=$(parse_operator_ips "移动")
-
-# 提取各运营商最佳IP（IP可能带#tag或纯IP）
-extract_best_ip() { echo "$1" | cut -d',' -f1 | cut -d'#' -f1; }
-extract_best_tag() { echo "$1" | cut -d',' -f1 | cut -d'#' -f2- 2>/dev/null; }
-
-bp_telecom_ip=$(extract_best_ip "$bp_telecom")
-bp_telecom_tag=$(extract_best_tag "$bp_telecom")
-bp_unicom_ip=$(extract_best_ip "$bp_unicom")
-bp_unicom_tag=$(extract_best_tag "$bp_unicom")
-bp_mobile_ip=$(extract_best_ip "$bp_mobile")
-bp_mobile_tag=$(extract_best_tag "$bp_mobile")
-
-bp_updated=$(date '+%Y-%m-%d %H:%M:%S')
-printf '{"best_ip":"%s","best_delay":"%s","best_speed":"%s","ip_list":"%s","telecom_ip":"%s","telecom_tag":"%s","telecom_list":"%s","unicom_ip":"%s","unicom_tag":"%s","unicom_list":"%s","mobile_ip":"%s","mobile_tag":"%s","mobile_list":"%s","updated":"%s"}\n' \
-  "${bp_ip:-无}" "${bp_delay:-0}" "${bp_speed:-0}" "${bp_list}" \
-  "${bp_telecom_ip:-无}" "${bp_telecom_tag:-}" "${bp_telecom}" \
-  "${bp_unicom_ip:-无}" "${bp_unicom_tag:-}" "${bp_unicom}" \
-  "${bp_mobile_ip:-无}" "${bp_mobile_tag:-}" "${bp_mobile}" \
-  "$bp_updated" > "$SAVE_FILE"
-echo "优选IP已更新: ${bp_ip:-获取失败} (延迟:${bp_delay:-N/A}ms, 速度:${bp_speed:-N/A})"
-# 更新 cdnip 文件
-if [ -n "$bp_ip" ] && [ "$bp_ip" != "无" ]; then
-  echo "$bp_ip" > "$HOME/science/cdnip1" 2>/dev/null
-  # 第二优IP
-  bp2=$(echo "$bp_list" | cut -d',' -f2 | cut -d'#' -f1)
-  [ -n "$bp2" ] && echo "$bp2" > "$HOME/science/cdnip2" 2>/dev/null
-fi
-exit
-fi
-
 # 生成状态监控JSON（供面板实时读取）
 if [ "$1" = "statusgen" ]; then
 mkdir -p "$HOME/websbx/$(cat $HOME/science/subtoken.log 2>/dev/null)" 2>/dev/null
@@ -4141,8 +4037,7 @@ cat > "$wsdir/status.json" <<EOF
   "node_count": $node_count,
   "last_update": "$last_update",
   "server_ip": "$(cat $HOME/science/server_ip.log 2>/dev/null)",
-  "dnym": "${dnym:-}",
-  "bestip": $(cat "$HOME/science/bestip.json" 2>/dev/null || echo '{"best_ip":"","best_delay":"0","best_speed":"","ip_list":"","updated":""}')
+  "dnym": "${dnym:-}"
 }
 EOF
 exit
