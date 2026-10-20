@@ -3357,7 +3357,8 @@ for bf in sb.json xr.json jhsub.txt sbox.json clmi.yaml; do
 done
 echo "已备份旧配置到 $HOME/science/backup/（安装失败可回退）"
 cleandel
-rm -rf "$HOME/science"/{sb.json,xr.json,sbargoym.log,sbargotoken.log,argo.log,argoport.log,cdnym,name}
+rm -rf "$HOME/science"/{sb.json,xr.json,sbargoym.log,sbargotoken.log,argo.log,argoport.log,cdnym}
+# 注意：name（品牌名）保留，更新后订阅文件名/SKPL-LIFT 品牌不丢失；如需改名再传 name=
 echo "Science重置协议完成，开始更新相关协议变量……" && sleep 2
 echo
 elif [ "$1" = "list" ]; then
