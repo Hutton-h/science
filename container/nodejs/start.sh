@@ -967,7 +967,7 @@ case "$server_ip" in
 esac
 echo
 reym=$(cat "$HOME/science/reym" 2>/dev/null)
-cfip() { echo $((RANDOM % 11 + 1)); }
+cfip() { echo $((RANDOM % 13 + 1)); }
 if [ -e "$HOME/science/xray" ]; then
 private_key_x=$(cat "$HOME/science/xrk/private_key" 2>/dev/null)
 public_key_x=$(cat "$HOME/science/xrk/public_key" 2>/dev/null)
