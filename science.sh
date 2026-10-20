@@ -3832,9 +3832,10 @@ NGINXEOF
   echo "  密码: $panel_pw"
   echo ""
   echo "  订阅地址（无需密码）:"
-  echo "  https://$dnym_now/$subtoken/clmi.yaml"
-  echo "  https://$dnym_now/$subtoken/sbox.json"
-  echo "  https://$dnym_now/$subtoken/jhsub.txt"
+  bnb=$(cat "$HOME/science/name" 2>/dev/null); bnb=${bnb%-}
+  echo "  https://$dnym_now/$subtoken/${bnb:-clmi}.yaml"
+  echo "  https://$dnym_now/$subtoken/${bnb:-sbox}.json"
+  echo "  https://$dnym_now/$subtoken/${bnb:-jhsub}.txt"
   echo "=============================="
 exit
 fi
@@ -3865,17 +3866,20 @@ node_list=""
 node_map="vl_re:VLESS-Reality vm_ws:VMess-WS vw:VLESS-WS hy2:Hysteria2 tu:TUIC xh:XHTTP-Reality vx:XHTTP-ENC an:AnyTLS ar:AnyReality ss:SS-2022 so:SOCKS5 tj:Trojan-WS tjg:Trojan-gRPC tjt:Trojan-TCP xu:XHTTP-UDP xc:XHTTP-TCP vg:VLESS-gRPC vhu:VLESS-httpupgrade vmg:VMess-gRPC vmhu:VMess-httpupgrade"
 for item in $node_map; do
   key="${item%%:*}"
-  name="${item##*:}"
+  ndname="${item##*:}"
   port=$(cat "$HOME/science/port_$key" 2>/dev/null)
   [ -z "$port" ] && continue
   port_hex=$(printf '%04X' "$port" 2>/dev/null)
-  if [ -n "$port_hex" ] && grep -qi ":$port_hex " /proc/net/tcp /proc/net/udp 2>/dev/null; then
-    node_list="$node_list{\"name\":\"$name\",\"port\":$port,\"status\":\"online\"},"
+  if [ -n "$port_hex" ] && grep -qi ":$port_hex " /proc/net/tcp /proc/net/tcp6 /proc/net/udp /proc/net/udp6 2>/dev/null; then
+    node_list="$node_list{\"name\":\"$ndname\",\"port\":$port,\"status\":\"online\"},"
   else
-    node_list="$node_list{\"name\":\"$name\",\"port\":$port,\"status\":\"offline\"},"
+    node_list="$node_list{\"name\":\"$ndname\",\"port\":$port,\"status\":\"offline\"},"
   fi
 done
 node_list="${node_list%,}"
+# 品牌名（name 文件存的是带尾部连字符的节点前缀，去掉连字符）
+brand_name=$(cat "$HOME/science/name" 2>/dev/null)
+brand_name=${brand_name%-}
 # 写入JSON
 cat > "$wsdir/status.json" <<EOF
 {
@@ -3889,7 +3893,8 @@ cat > "$wsdir/status.json" <<EOF
   "nodes": [$node_list],
   "last_update": "$last_update",
   "server_ip": "$(cat $HOME/science/server_ip.log 2>/dev/null)",
-  "dnym": "${dnym:-}"
+  "dnym": "${dnym:-}",
+  "name": "${brand_name:-}"
 }
 EOF
 exit
@@ -3987,6 +3992,14 @@ fi
 ln -sf $HOME/science/clmi.yaml $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/clmi.yaml
 ln -sf $HOME/science/sbox.json $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/sbox.json
 ln -sf $HOME/science/jhsub.txt $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/jhsub.txt
+# 品牌化别名：name 变量非空时，额外提供 name.json / name.yaml / name.txt 别名
+bn=$(cat "$HOME/science/name" 2>/dev/null)
+bn=${bn%-}
+if [ -n "$bn" ]; then
+ln -sf $HOME/science/sbox.json $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/${bn}.json
+ln -sf $HOME/science/clmi.yaml $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/${bn}.yaml
+ln -sf $HOME/science/jhsub.txt $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/${bn}.txt
+fi
 # 分发层：下载并运行 subgen.sh，生成各客户端分组订阅并链接到面板目录
 if [ ! -s "$HOME/science/subgen.sh" ]; then
 subgenurl="https://raw.githubusercontent.com/Hutton-h/science/main/subgen.sh"
