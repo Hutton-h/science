@@ -3722,6 +3722,7 @@ server {
     server_name $dnym_now;
     location ~ \.(yaml|json|txt)$ {
         auth_basic off;
+        rewrite ^/(.*)$ /${subtoken}/\$1 break;
         proxy_pass http://127.0.0.1:${subport};
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
@@ -3731,6 +3732,7 @@ server {
     location / {
         auth_basic "Science Panel";
         auth_basic_user_file /etc/nginx/conf.d/.htpasswd_science;
+        rewrite ^/(.*)$ /${subtoken}/\$1 break;
         proxy_pass http://127.0.0.1:${subport};
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
@@ -3790,6 +3792,7 @@ server {
     add_header Alt-Svc 'h3=":443"; ma=86400';
     location ~ \.(yaml|json|txt)$ {
         auth_basic off;
+        rewrite ^/(.*)$ /${subtoken}/\$1 break;
         proxy_pass http://127.0.0.1:${subport};
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
@@ -3799,6 +3802,7 @@ server {
     location / {
         auth_basic "Science Panel";
         auth_basic_user_file /etc/nginx/conf.d/.htpasswd_science;
+        rewrite ^/(.*)$ /${subtoken}/\$1 break;
         proxy_pass http://127.0.0.1:${subport};
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
@@ -3846,6 +3850,7 @@ server {
     add_header Alt-Svc 'h3=":443"; ma=86400';
     location ~ \.(yaml|json|txt)$ {
         auth_basic off;
+        rewrite ^/(.*)$ /${subtoken}/\$1 break;
         proxy_pass http://127.0.0.1:${subport};
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
@@ -3855,6 +3860,7 @@ server {
     location / {
         auth_basic "Science Panel";
         auth_basic_user_file /etc/nginx/conf.d/.htpasswd_science;
+        rewrite ^/(.*)$ /${subtoken}/\$1 break;
         proxy_pass http://127.0.0.1:${subport};
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
