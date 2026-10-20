@@ -250,10 +250,13 @@ var jhNodes = [];  // 明文节点列表（来自 jhsub.txt）
 // 客户端分组定义（与 subgen.sh 白名单矩阵一致）
 var GROUPS = [
   { id:'hiddify', name:'Hiddify', file:'sbox.json', desc:'主力客户端（sing-box 原生订阅），全协议支持', protos:['vless','vmess','trojan','ss','hysteria2','tuic','anytls'] },
-  { id:'v2rayn', name:'v2rayN', file:'v2rayn.txt', desc:'Xray 内核，支持 VLESS/VMess/Trojan', protos:['vless','vmess','trojan'] },
-  { id:'clash', name:'Clash / Meta', file:'clmi.yaml', desc:'Mihomo 内核，支持 VLESS/VMess/Trojan/SS/Hy2/TUIC', protos:['vless','vmess','trojan','ss','hysteria2','tuic'] },
   { id:'singbox', name:'sing-box', file:'sbox.json', desc:'原生 sing-box，全协议支持', protos:['vless','vmess','trojan','ss','hysteria2','tuic','anytls'] },
-  { id:'all', name:'全部节点', file:'jhsub.txt', desc:'所有节点（含需人工判断的协议）', protos:['vless','vmess','trojan','ss','hysteria2','tuic','anytls','other'] }
+  { id:'clash', name:'Clash / Meta / Stash', file:'clmi.yaml', desc:'Mihomo 内核（Clash Verge、FlClash、Stash、ClashX），支持 VLESS/VMess/Trojan/SS/Hy2/TUIC', protos:['vless','vmess','trojan','ss','hysteria2','tuic'] },
+  { id:'v2rayn', name:'v2rayN', file:'v2rayn.txt', desc:'Xray 内核，支持 VLESS/VMess/Trojan', protos:['vless','vmess','trojan'] },
+  { id:'rocket', name:'Shadowrocket 小火箭', file:'all.txt', desc:'iOS 小火箭，全协议 base64 订阅', protos:['vless','vmess','trojan','ss','hysteria2','tuic','anytls'] },
+  { id:'nekobox', name:'Nekobox / Karing', file:'all.txt', desc:'Nekobox、Nekoray、Karing，全协议 base64 订阅', protos:['vless','vmess','trojan','ss','hysteria2','tuic','anytls'] },
+  { id:'xui', name:'x-ui / 3x-ui 面板', file:'all.txt', desc:'x-ui 面板导入节点（base64 全协议，自动忽略不支持的协议）', protos:['vless','vmess','trojan','ss','hysteria2','tuic','anytls'] },
+  { id:'all', name:'全部节点', file:'jhsub.txt', desc:'所有节点（明文，供手动或其他工具）', protos:['vless','vmess','trojan','ss','hysteria2','tuic','anytls','other'] }
 ];
 
 function protoOf(l) {
