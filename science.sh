@@ -3111,6 +3111,13 @@ cat > $HOME/science/sbox.json <<EOF
         "outbound": "direct"
       },
       {
+        "domain_suffix": [
+          "fumamx.com"
+        ],
+        "action": "route",
+        "outbound": "direct"
+      },
+      {
         "clash_mode": "Direct",
         "action": "route",
         "outbound": "direct"
@@ -3204,6 +3211,7 @@ proxy-groups:
     $clgz
 rules:
   - GEOIP,LAN,DIRECT
+  - DOMAIN-SUFFIX,fumamx.com,DIRECT
   - GEOSITE,CN,DIRECT
   - GEOIP,CN,DIRECT
   - MATCH,🌍选择代理节点
