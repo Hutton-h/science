@@ -3621,13 +3621,9 @@ server {
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
-    listen 443 quic;
-    listen [::]:443 quic;
-    http2 on;
     server_name $dnym_now;
     ssl_certificate /etc/nginx/certs/${dnym_now}_cert.pem;
     ssl_certificate_key /etc/nginx/certs/${dnym_now}_key.pem;
-    add_header Alt-Svc 'h3=":443"; ma=86400';
     location ~ \.(yaml|json|txt)$ {
         auth_basic off;
         rewrite ^/(.*)$ /${subtoken}/\$1 break;
@@ -3679,13 +3675,9 @@ server {
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
-    listen 443 quic;
-    listen [::]:443 quic;
-    http2 on;
     server_name $dnym_now;
     ssl_certificate /etc/nginx/certs/${dnym_now}_cert.pem;
     ssl_certificate_key /etc/nginx/certs/${dnym_now}_key.pem;
-    add_header Alt-Svc 'h3=":443"; ma=86400';
     location ~ \.(yaml|json|txt)$ {
         auth_basic off;
         rewrite ^/(.*)$ /${subtoken}/\$1 break;
@@ -3781,7 +3773,6 @@ server {
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
-    http2 on;
     server_name $dnym_now;
     ssl_certificate $NGX_CERT;
     ssl_certificate_key $NGX_KEY;
