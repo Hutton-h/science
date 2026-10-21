@@ -3444,7 +3444,14 @@ if [ -s "$HOME/science/panel.html" ]; then
     subip=$(cat $HOME/science/server_ip.log 2>/dev/null)
     subport=$(cat $HOME/science/subport.log)
     subtoken=$(cat $HOME/science/subtoken.log)
-    echo "面板地址：http://$subip:$subport/$subtoken/index.html"
+    # nginx 反代下 token 自动隐藏，直接输出域名根地址
+    pdnym=$(cat $HOME/science/dnym.log 2>/dev/null)
+    if [ -n "$pdnym" ]; then
+      echo "面板地址：https://$pdnym/index.html"
+      echo "订阅地址：https://$pdnym/${bnb:-sbox}.json（SKPL-LIFT 品牌同理）"
+    else
+      echo "面板地址：http://$subip:$subport/$subtoken/index.html"
+    fi
     # 重启busybox httpd以加载新面板
     kill $(pgrep -f 'websbx' 2>/dev/null) 2>/dev/null
     sleep 1
@@ -3718,11 +3725,11 @@ NGINXEOF
     if [ "$ssl_ok" = true ]; then
       echo "  面板 HTTPS 部署完成！"
       echo "=============================="
-      echo "  地址: https://$dnym_now/$subtoken/index.html"
+      echo "  地址: https://$dnym_now/index.html"
     else
       echo "  面板 HTTP 部署完成！"
       echo "=============================="
-      echo "  地址: http://$dnym_now/$subtoken/index.html"
+      echo "  地址: http://$dnym_now/index.html"
       echo "  （SSL未启用，请手动申请SSL后可使用HTTPS）"
     fi
     echo "  用户名: $panel_user"
@@ -3731,13 +3738,13 @@ NGINXEOF
     echo "  订阅地址（无需密码）:"
     bnb=$(cat "$HOME/science/name" 2>/dev/null); bnb=${bnb%-}
     if [ "$ssl_ok" = true ]; then
-      echo "  https://$dnym_now/$subtoken/${bnb:-clmi}.yaml"
-      echo "  https://$dnym_now/$subtoken/${bnb:-sbox}.json"
-      echo "  https://$dnym_now/$subtoken/${bnb:-jhsub}.txt"
+      echo "  https://$dnym_now/${bnb:-clmi}.yaml"
+      echo "  https://$dnym_now/${bnb:-sbox}.json"
+      echo "  https://$dnym_now/${bnb:-jhsub}.txt"
     else
-      echo "  http://$dnym_now/$subtoken/${bnb:-clmi}.yaml"
-      echo "  http://$dnym_now/$subtoken/${bnb:-sbox}.json"
-      echo "  http://$dnym_now/$subtoken/${bnb:-jhsub}.txt"
+      echo "  http://$dnym_now/${bnb:-clmi}.yaml"
+      echo "  http://$dnym_now/${bnb:-sbox}.json"
+      echo "  http://$dnym_now/${bnb:-jhsub}.txt"
     fi
     echo "=============================="
     exit
