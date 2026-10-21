@@ -376,12 +376,12 @@ document.getElementById('btn-copyCmd').addEventListener('click', function(){
   copyText(document.getElementById('cmdBox').textContent, document.getElementById('btn-copyCmd'));
 });
 
-// Connect
+// Connect（token 可留空：nginx 反代下域名访问不需要 token）
 document.getElementById('btn-connect').addEventListener('click', function(){
   var s = document.getElementById('subServer').value.trim();
   var p = document.getElementById('subPort').value.trim();
   var t = document.getElementById('subToken').value.trim();
-  if (!s || !p || !t) { alert('请填写完整'); return; }
+  if (!s || !p) { alert('请填写地址和端口'); return; }
   s = s.replace(/\/$/, ''); srv = s; port = p; token = t;
   renderSub();
   fetchDash(); startTimer();
@@ -538,7 +538,9 @@ function fetchDash() {
         document.getElementById('totalV').textContent = fmtSize(rx + tx);
         document.getElementById('ipV').textContent = d.server_ip || '—';
         document.getElementById('dnymV').textContent = d.dnym || '—';
-        brandName = d.name || '';  // 订阅文件名品牌化（如 SKPL-LIFT.json）
+        // 品牌名变化时重新渲染订阅分组（否则一直显示 sbox.json）
+        var nb = d.name || '';
+        if (nb !== brandName) { brandName = nb; renderSub(); }
         var nm = document.getElementById('nodeMonitor');
         if (nm) {
           var nodes = d.nodes || [];
