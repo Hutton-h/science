@@ -246,7 +246,7 @@ open(WEB+"/SKPL-LIFT-all.yaml","w").write(fix_groups(usy))
 print("全家桶已筛选：美国直连 %d + 香港中转 %d + 隧道 %d + 香港直连 %d" % (len(us_direct), len(relay), len(argo), len(hk_lines)))
 PYEOF
   python3 /root/science/aggregate.py
-  (crontab -l 2>/dev/null | grep -v 'aggregate.py' ; echo "*/10 * * * * python3 /root/science/aggregate.py >/dev/null 2>&1") | crontab - 2>/dev/null
+  (crontab -l 2>/dev/null | grep -v 'aggregate.py' ; echo "*/2 * * * * python3 /root/science/aggregate.py >/dev/null 2>&1") | crontab - 2>/dev/null
   echo "====================================================="
   echo "✅ 美国服务器配置完成！客户端只导入一个订阅："
   echo "  hiddify/sing-box -> http://$US_DOMAIN:$US_PORT/$US_TOKEN/SKPL-LIFT-all.json"
