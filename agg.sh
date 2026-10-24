@@ -60,7 +60,7 @@ NODE_TYPES = {"vless","vmess","trojan","hysteria2","tuic","anytls","shadowsocks"
 # 中转端口映射：美国端口 -> 香港转发端口
 MAP = {"48504":"8443","20632":"8444","47601":"8445","60316":"8446","50334":"8447","25919":"8448","23409":"8449","33657":"8450","35397":"8451","18392":"8452","14774":"8453"}
 # 美国直连择优保留（按名称关键词）
-US_DIRECT_KEYS = ["vl-reality-vision-us","hy2-us","anytls-us","vm-ws-us"]
+US_DIRECT_KEYS = ["vl-reality-vision-us","hy2-us","anytls-us","vm-ws-us","vl-xhttp-reality-enc-us"]
 
 def fetch(name):
     subprocess.run(["curl","-s","--max-time","10", HK_BASE+"/"+name, "-o","/tmp/hk_"+name], check=False)
@@ -126,15 +126,8 @@ for line in us_lines:
     if "cdn" in low or "cdn" in line.lower(): continue
     if port in MAP: relay_src[port] = line
     if any(k in name for k in US_DIRECT_KEYS): us_direct.append(line)
-# 隧道只留 2 个（优先 443 和 80）
+# 隧道节点默认去掉（Argo 优选 IP 国内大多不通；如需要可手动加回）
 argo = []
-for l in argo_all:
-    nl = parse(l)[0].lower()
-    if len(argo) < 2 and ("443" in nl or "80" in nl):
-        argo.append(l)
-for l in argo_all:
-    if len(argo) >= 2: break
-    if l not in argo: argo.append(l)
 
 # ---- 生成香港中转节点（美国全部直连端口，多一些）----
 relay = []
