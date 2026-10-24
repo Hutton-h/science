@@ -66,25 +66,65 @@ def fetch(name):
     subprocess.run(["curl","-s","--max-time","10", HK_BASE+"/"+name, "-o","/tmp/hk_"+name], check=False)
     return os.path.isfile("/tmp/hk_"+name) and os.path.getsize("/tmp/hk_"+name) > 0
 
-def nm(line):
-    m = re.search(r"#([^#]*)$", line)
-    return m.group(1) if m else ""
+def b64d(s):
+    s = s.strip()
+    return base64.b64decode(s + "="*((4-len(s)%4)%4)).decode("utf-8","ignore")
 
-def port_of(line):
-    m = re.search(r"@[^:]+:(\d+)", line)
-    return m.group(1) if m else ""
+def parse(line):
+    low = line.lower()
+    if low.startswith("vmess://"):
+        try:
+            obj = json.loads(b64d(line[8:]))
+            return (obj.get("ps",""), obj.get("add",""), str(obj.get("port","")), "vmess")
+        except: return ("","","","vmess")
+    if low.startswith("ss://"):
+        try:
+            raw = b64d(line[5:].split("#")[0])
+            if "@" in raw:
+                hp = raw.split("@")[1]
+                host, port = hp.rsplit(":",1)
+                return ("", host, port, "ss")
+        except: pass
+        return ("","","","ss")
+    m = re.search(r"#([^#]*)$", line)
+    name = m.group(1) if m else ""
+    m2 = re.search(r"@\[?([^:\]]+)\]?:(\d+)", line)
+    add = m2.group(1) if m2 else ""
+    port = m2.group(2) if m2 else ""
+    proto = line.split("://")[0] if "://" in line else ""
+    return (name, add, port, proto)
+
+def relay_line(line, us_port, hk_port):
+    low = line.lower()
+    if low.startswith("vmess://"):
+        try:
+            obj = json.loads(b64d(line[8:]))
+            obj["add"] = HK_IP; obj["port"] = int(hk_port)
+            obj["ps"] = "HK中转-" + obj.get("ps","")
+            return "vmess://" + base64.b64encode(json.dumps(obj).encode()).decode()
+        except: return None
+    if low.startswith("ss://"):
+        try:
+            raw = b64d(line[5:].split("#")[0])
+            raw = raw.replace("@%s:%s" % (US_HOST, us_port), "@%s:%s" % (HK_IP, hk_port), 1)
+            nmx = re.search(r"#(.*)$", line)
+            return "ss://" + base64.b64encode(raw.encode()).decode() + (("#HK中转-"+nmx.group(1)) if nmx else "#HK中转-ss")
+        except: return None
+    nl = line.replace("@%s:%s" % (US_HOST, us_port), "@%s:%s" % (HK_IP, hk_port), 1)
+    nl = re.sub(r"#([^#]*)$", lambda x: "#HK中转-" + x.group(1), nl)
+    return nl
 
 # ---- 分类美国节点 ----
 us_lines = [l.strip() for l in open("/root/science/jhsub.txt").read().splitlines() if l.strip()]
 us_direct, argo, relay_src = [], [], {}
 for line in us_lines:
-    name = nm(line); low = name.lower()
+    name, add, port, proto = parse(line)
+    low = name.lower()
     if "argo" in low:
         if len(argo) < 2: argo.append(line)
         continue
-    if "cdn" in low: continue
-    p = port_of(line)
-    if p in MAP: relay_src[p] = line
+    if "cdn" in low or "cdn" in line.lower(): continue
+    if port in MAP: relay_src[port] = line
     if any(k in name for k in US_DIRECT_KEYS): us_direct.append(line)
 
 # ---- 生成香港中转节点（美国全部直连端口，多一些）----
@@ -92,9 +132,8 @@ relay = []
 for us_port in sorted(MAP, key=lambda x:int(MAP[x])):
     line = relay_src.get(us_port)
     if not line: continue
-    nl = line.replace("@%s:%s" % (US_HOST, us_port), "@%s:%s" % (HK_IP, MAP[us_port]), 1)
-    nl = re.sub(r"#([^#]*)$", lambda x: "#HK中转-" + x.group(1), nl)
-    relay.append(nl)
+    nl = relay_line(line, us_port, MAP[us_port])
+    if nl: relay.append(nl)
 
 # ---- 拉取香港直连 ----
 hk_txt = open("/tmp/hk_SKPL-LIFT.txt").read().strip() if fetch("SKPL-LIFT.txt") else ""
@@ -129,32 +168,36 @@ def strip_jsonc(text):
             continue
         out.append(c); i += 1
     return ''.join(out)
-us = json.loads(strip_jsonc(open("/root/science/sbox.json").read()))
-keep, seen = [], set()
-for o in us["outbounds"]:
-    if o.get("type") not in NODE_TYPES: continue
-    if str(o.get("server_port","")) in ("20632","47601","60316","25919"):
-        keep.append(o); seen.add(o.get("tag"))
-for o in us["outbounds"]:
-    if o.get("type") not in NODE_TYPES: continue
-    p = str(o.get("server_port",""))
-    if p in MAP:
-        o2 = dict(o); o2["server"] = HK_IP; o2["server_port"] = int(MAP[p])
-        o2["tag"] = "hk中转-" + o.get("tag","")
-        if o2["tag"] not in seen: keep.append(o2); seen.add(o2["tag"])
-n = 0
-for o in us["outbounds"]:
-    if o.get("type")=="vmess" and str(o.get("server_port","")) in ("443","80"):
-        keep.append(o); n+=1
-        if n>=2: break
-if os.path.exists("/tmp/hk_SKPL-LIFT.json"):
-    hk = json.load(open("/tmp/hk_SKPL-LIFT.json"))
-    for o in hk["outbounds"]:
+us = None
+try:
+    us = json.loads(strip_jsonc(open("/root/science/sbox.json").read()))
+    keep, seen = [], set()
+    for o in us["outbounds"]:
         if o.get("type") not in NODE_TYPES: continue
-        if o.get("tag") in seen: o = dict(o); o["tag"] = "hk-" + o["tag"]
-        seen.add(o["tag"]); keep.append(o)
-us["outbounds"] = keep
-open(WEB+"/SKPL-LIFT-all.json","w").write(json.dumps(us, indent=2))
+        if str(o.get("server_port","")) in ("20632","47601","60316","25919"):
+            keep.append(o); seen.add(o.get("tag"))
+    for o in us["outbounds"]:
+        if o.get("type") not in NODE_TYPES: continue
+        p = str(o.get("server_port",""))
+        if p in MAP:
+            o2 = dict(o); o2["server"] = HK_IP; o2["server_port"] = int(MAP[p])
+            o2["tag"] = "hk中转-" + o.get("tag","")
+            if o2["tag"] not in seen: keep.append(o2); seen.add(o2["tag"])
+    n = 0
+    for o in us["outbounds"]:
+        if o.get("type")=="vmess" and str(o.get("server_port","")) in ("443","80"):
+            keep.append(o); n+=1
+            if n>=2: break
+    if os.path.exists("/tmp/hk_SKPL-LIFT.json"):
+        hk = json.load(open("/tmp/hk_SKPL-LIFT.json"))
+        for o in hk["outbounds"]:
+            if o.get("type") not in NODE_TYPES: continue
+            if o.get("tag") in seen: o = dict(o); o["tag"] = "hk-" + o["tag"]
+            seen.add(o["tag"]); keep.append(o)
+    us["outbounds"] = keep
+    open(WEB+"/SKPL-LIFT-all.json","w").write(json.dumps(us, indent=2))
+except Exception as e:
+    print("警告：json 全家桶生成跳过（%s）—— hiddify 请改用 txt 订阅" % e)
 
 # ---- yaml（按名称筛选：美国直连 + 隧道 + 香港直连；暂不含中转）----
 fetch("SKPL-LIFT.yaml")
