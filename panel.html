@@ -567,10 +567,12 @@ function fetchDash() {
 function fetchNodes() {
   if (!srv || !port) return;
   var xhr = new XMLHttpRequest();
-  xhr.open('GET', baseUrl() + 'jhsub.txt', true);
+  xhr.open('GET', baseUrl() + 'SKPL-LIFT-all.txt', true);
   xhr.onload = function() {
     if (xhr.status >= 200 && xhr.status < 300) {
       jhNodes = xhr.responseText.split('\n').filter(function(l) { return l.trim(); });
+      var nv = document.getElementById('nodeV');
+      if (nv) nv.textContent = jhNodes.length;
       renderNodeLists();
     }
   };
