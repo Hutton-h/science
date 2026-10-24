@@ -25,9 +25,22 @@ get_science() {
   chmod +x /root/science/new.sh
 }
 
+open_firewall() {
+  iptables -P INPUT ACCEPT >/dev/null 2>&1
+  iptables -P FORWARD ACCEPT >/dev/null 2>&1
+  iptables -P OUTPUT ACCEPT >/dev/null 2>&1
+  iptables -F INPUT >/dev/null 2>&1
+  iptables -F FORWARD >/dev/null 2>&1
+  command -v ufw >/dev/null 2>&1 && ufw disable >/dev/null 2>&1
+  command -v systemctl >/dev/null 2>&1 && { systemctl stop firewalld >/dev/null 2>&1; systemctl disable firewalld >/dev/null 2>&1; }
+  netfilter-persistent save >/dev/null 2>&1
+  echo "[√] 系统防火墙已开放所有端口"
+}
+
 if [ "$ip" = "$US_IP" ]; then
   echo "识别为【美国】服务器"
   hostnamectl set-hostname us 2>/dev/null
+  open_firewall
   echo "正在用最新脚本重新生成节点（主机名 us）……"
   get_science
   name="SKPL-LIFT" vlp=yes xhp=yes hyp=yes tup=yes anp=yes ssp=yes vmp=yes vmag=yes tjtp=yes vgp=yes vwp=yes arp=yes sub=y argo=vmpt agn="sss.hutton.dpdns.org" agk="$AGK" dnym="s.hutton.dpdns.org" bash /root/science/new.sh rep
@@ -161,16 +174,39 @@ PYEOF
   echo "  hiddify/sing-box -> http://$US_DOMAIN:$US_PORT/$US_TOKEN/SKPL-LIFT-all.json"
   echo "  Clash/Stash      -> http://$US_DOMAIN:$US_PORT/$US_TOKEN/SKPL-LIFT-all.yaml"
   echo "  v2rayN           -> http://$US_DOMAIN:$US_PORT/$US_TOKEN/SKPL-LIFT-all.txt"
+  echo "⚠️ 还需到云控制台安全组放行：TCP/UDP 10000-65535、TCP 80,443,60451"
   echo "====================================================="
 elif [ "$ip" = "$HK_IP" ]; then
   echo "识别为【香港】服务器"
   hostnamectl set-hostname hk 2>/dev/null
+  open_firewall
   echo "正在用最新脚本重新生成节点（主机名 hk）……"
   get_science
   name="SKPL-LIFT" vlp=yes xhp=yes hyp=yes anp=yes vmp=yes sub=y bash /root/science/new.sh rep
+  # ===== 香港中转：转发美国节点端口 =====
+  echo "正在配置香港中转转发（香港 8443-8453 → 美国）……"
+  echo 'net.ipv4.ip_forward=1' >> /etc/sysctl.conf && sysctl -p
+  US_IP="170.178.174.97"
+  iptables -t nat -F PREROUTING >/dev/null 2>&1
+  iptables -t nat -C POSTROUTING -j MASQUERADE 2>/dev/null && iptables -t nat -D POSTROUTING -j MASQUERADE >/dev/null 2>&1
+  for hk_port in 8443 8444 8445 8446 8447 8448 8449 8450 8451 8452 8453; do
+    case $hk_port in
+      8443) us_port=48504;; 8444) us_port=20632;; 8445) us_port=47601;;
+      8446) us_port=60316;; 8447) us_port=50334;; 8448) us_port=25919;;
+      8449) us_port=23409;; 8450) us_port=33657;; 8451) us_port=35397;;
+      8452) us_port=18392;; 8453) us_port=14774;;
+    esac
+    iptables -t nat -A PREROUTING -p tcp --dport $hk_port -j DNAT --to-destination $US_IP:$us_port
+    iptables -t nat -A PREROUTING -p udp  --dport $hk_port -j DNAT --to-destination $US_IP:$us_port
+    iptables -I INPUT -p tcp --dport $hk_port -j ACCEPT
+    iptables -I INPUT -p udp  --dport $hk_port -j ACCEPT
+  done
+  iptables -t nat -A POSTROUTING -j MASQUERADE
+  iptables -A FORWARD -j ACCEPT
+  netfilter-persistent save >/dev/null 2>&1
   echo "====================================================="
-  echo "✅ 香港服务器配置完成"
-  echo "请在云控制台安全组放行 TCP $HK_PORT（供美国拉取订阅）"
+  echo "✅ 香港服务器配置完成（含中转转发 8443-8453）"
+  echo "⚠️ 还需到云控制台安全组放行：TCP/UDP 10000-65535、TCP 53163、TCP/UDP 8443-8453"
   echo "====================================================="
 else
   echo "⚠️ 无法识别该服务器 IP（美国=$US_IP，香港=$HK_IP），脚本中止"
