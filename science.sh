@@ -3428,9 +3428,9 @@ if [ -s "$HOME/science/panel.html" ]; then
     kill $(pgrep -f 'websbx' 2>/dev/null) 2>/dev/null
     sleep 1
     if command -v apk >/dev/null 2>&1; then
-      busybox-extras httpd -f -p "127.0.0.1:$subport" -h "$HOME/websbx" > /dev/null 2>&1 &
+      busybox-extras httpd -f -p "0.0.0.0:$subport" -h "$HOME/websbx" > /dev/null 2>&1 &
     else
-      busybox httpd -f -p "127.0.0.1:$subport" -h "$HOME/websbx" > /dev/null 2>&1 &
+      busybox httpd -f -p "0.0.0.0:$subport" -h "$HOME/websbx" > /dev/null 2>&1 &
     fi
     echo "订阅面板服务已重启"
     # 立即生成一次status.json
@@ -3998,23 +3998,23 @@ fi
 ln -sf $HOME/science/panel.html $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/index.html
 ln -sf $HOME/science/status.json $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/status.json
 if command -v apk >/dev/null 2>&1; then
-busybox-extras httpd -f -p "127.0.0.1:$(cat $HOME/science/subport.log 2>/dev/null)" -h $HOME/websbx > /dev/null 2>&1 &
+busybox-extras httpd -f -p "0.0.0.0:$(cat $HOME/science/subport.log 2>/dev/null)" -h $HOME/websbx > /dev/null 2>&1 &
 else
-busybox httpd -f -p "127.0.0.1:$(cat $HOME/science/subport.log 2>/dev/null)" -h $HOME/websbx > /dev/null 2>&1 &
+busybox httpd -f -p "0.0.0.0:$(cat $HOME/science/subport.log 2>/dev/null)" -h $HOME/websbx > /dev/null 2>&1 &
 fi
 sleep 5
 if command -v apk >/dev/null 2>&1; then
 cat > /etc/local.d/alpinesubsbx.start <<EOF
 #!/bin/bash
 sleep 10
-busybox-extras httpd -f -p 127.0.0.1:\$(cat $HOME/science/subport.log 2>/dev/null) -h $HOME/websbx > /dev/null 2>&1 &
+busybox-extras httpd -f -p 0.0.0.0:\$(cat $HOME/science/subport.log 2>/dev/null) -h $HOME/websbx > /dev/null 2>&1 &
 EOF
 chmod +x /etc/local.d/alpinesubsbx.start
 rc-update add local default >/dev/null 2>&1
 else
 crontab -l 2>/dev/null > /tmp/crontab.tmp
 sed -i '/websbx/d' /tmp/crontab.tmp
-echo '@reboot sleep 10 && /bin/bash -c "busybox httpd -f -p 127.0.0.1:$(cat $HOME/science/subport.log 2>/dev/null) -h $HOME/websbx > /dev/null 2>&1 &"' >> /tmp/crontab.tmp
+echo '@reboot sleep 10 && /bin/bash -c "busybox httpd -f -p 0.0.0.0:$(cat $HOME/science/subport.log 2>/dev/null) -h $HOME/websbx > /dev/null 2>&1 &"' >> /tmp/crontab.tmp
 crontab /tmp/crontab.tmp >/dev/null 2>&1
 rm /tmp/crontab.tmp
 fi
