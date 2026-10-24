@@ -1030,43 +1030,6 @@ echo "$port_hy2" > "$HOME/science/port_hy2"
 fi
 port_hy2=$(cat "$HOME/science/port_hy2")
 echo "Hysteria2端口：$port_hy2"
-if [ -e "$HOME/science/xr.json" ]; then
-cat >> "$HOME/science/xr.json" <<EOF
-    {
-      "tag": "hy2-xr",
-      "protocol": "hysteria",
-      "port": ${port_hy2},
-      "settings": {
-        "version": 2,
-        "clients": [
-          {
-            "auth": "${uuid}"
-          }
-        ]
-      },
-      "streamSettings": {
-        "network": "hysteria",
-        "security": "tls",
-        "tlsSettings": {
-		  "alpn": [
-             "h3"
-            ],
-          "certificates": [
-            {
-              "certificateFile": "$certificateHTA",
-              "keyFile": "$keyHTA"
-            }
-          ]
-        }
-      },
-	   "sniffing": {
-       "enabled": true,
-       "destOverride": ["http", "tls", "quic"],
-       "metadataOnly": false
-       }
-    },
-EOF
-else
 cat >> "$HOME/science/sb.json" <<EOF
     {
         "type": "hysteria2",
@@ -1089,7 +1052,6 @@ cat >> "$HOME/science/sb.json" <<EOF
         }
     },
 EOF
-fi
 else
 hyp=hyptargo
 fi
