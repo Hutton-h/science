@@ -122,6 +122,11 @@ fi
 v4v6(){
 v4=$( (command -v curl >/dev/null 2>&1 && curl -s4m5 -k "$v46url" 2>/dev/null) || (command -v curl >/dev/null 2>&1 && curl -s4m5 -k https://api.ipify.org 2>/dev/null) || (command -v curl >/dev/null 2>&1 && curl -s4m5 -k https://ip.sb 2>/dev/null) || (command -v wget >/dev/null 2>&1 && timeout 3 wget -4 --tries=2 -qO- "$v46url" 2>/dev/null) )
 v6=$( (command -v curl >/dev/null 2>&1 && curl -s6m5 -k "$v46url" 2>/dev/null) || (command -v curl >/dev/null 2>&1 && curl -s6m5 -k https://ifconfig.co 2>/dev/null) || (command -v wget >/dev/null 2>&1 && timeout 3 wget -6 --tries=2 -qO- "$v46url" 2>/dev/null) )
+# IP检测失败时兜底：优先已保存的 server_ip.log，其次本机网卡 IP（hostname -I）
+[ -z "$v4" ] && [ -s "$HOME/science/server_ip.log" ] && v4=$(head -1 "$HOME/science/server_ip.log")
+[ -z "$v4" ] && v4=$(hostname -I 2>/dev/null | awk '{print $1}')
+[ -z "$v6" ] && [ -s "$HOME/science/server_ip.log" ] && grep -q ':' "$HOME/science/server_ip.log" && v6=$(grep ':' "$HOME/science/server_ip.log" | head -1)
+[ -z "$v6" ] && v6=$(hostname -I 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i ~ /:/) print $i}' | head -1)
 v4dq=$( (command -v curl >/dev/null 2>&1 && curl -s4m5 -k https://ip.fm | sed -n 's/.*Location: //p' 2>/dev/null) || (command -v wget >/dev/null 2>&1 && timeout 3 wget -4 --tries=2 -qO- https://ip.fm | grep '<span class="has-text-grey-light">Location:' | tail -n1 | sed -E 's/.*>Location: <\/span>([^<]+)<.*/\1/' 2>/dev/null) )
 v6dq=$( (command -v curl >/dev/null 2>&1 && curl -s6m5 -k https://ip.fm | sed -n 's/.*Location: //p' 2>/dev/null) || (command -v wget >/dev/null 2>&1 && timeout 3 wget -6 --tries=2 -qO- https://ip.fm | grep '<span class="has-text-grey-light">Location:' | tail -n1 | sed -E 's/.*>Location: <\/span>([^<]+)<.*/\1/' 2>/dev/null) )
 }
