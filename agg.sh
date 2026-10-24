@@ -116,16 +116,25 @@ def relay_line(line, us_port, hk_port):
 
 # ---- 分类美国节点 ----
 us_lines = [l.strip() for l in open("/root/science/jhsub.txt").read().splitlines() if l.strip()]
-us_direct, argo, relay_src = [], [], {}
+us_direct, argo_all, relay_src = [], [], {}
 for line in us_lines:
     name, add, port, proto = parse(line)
     low = name.lower()
     if "argo" in low:
-        if len(argo) < 2: argo.append(line)
+        argo_all.append(line)
         continue
     if "cdn" in low or "cdn" in line.lower(): continue
     if port in MAP: relay_src[port] = line
     if any(k in name for k in US_DIRECT_KEYS): us_direct.append(line)
+# 隧道只留 2 个（优先 443 和 80）
+argo = []
+for l in argo_all:
+    nl = parse(l)[0].lower()
+    if len(argo) < 2 and ("443" in nl or "80" in nl):
+        argo.append(l)
+for l in argo_all:
+    if len(argo) >= 2: break
+    if l not in argo: argo.append(l)
 
 # ---- 生成香港中转节点（美国全部直连端口，多一些）----
 relay = []
