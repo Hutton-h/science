@@ -120,13 +120,8 @@ touch sbx_update
 fi
 fi
 v4v6(){
-v4=$( (command -v curl >/dev/null 2>&1 && curl -s4m5 -k "$v46url" 2>/dev/null) || (command -v curl >/dev/null 2>&1 && curl -s4m5 -k https://api.ipify.org 2>/dev/null) || (command -v curl >/dev/null 2>&1 && curl -s4m5 -k https://ip.sb 2>/dev/null) || (command -v wget >/dev/null 2>&1 && timeout 3 wget -4 --tries=2 -qO- "$v46url" 2>/dev/null) )
-v6=$( (command -v curl >/dev/null 2>&1 && curl -s6m5 -k "$v46url" 2>/dev/null) || (command -v curl >/dev/null 2>&1 && curl -s6m5 -k https://ifconfig.co 2>/dev/null) || (command -v wget >/dev/null 2>&1 && timeout 3 wget -6 --tries=2 -qO- "$v46url" 2>/dev/null) )
-# IP检测失败时兜底：优先已保存的 server_ip.log，其次本机网卡 IP（hostname -I）
-[ -z "$v4" ] && [ -s "$HOME/science/server_ip.log" ] && v4=$(head -1 "$HOME/science/server_ip.log")
-[ -z "$v4" ] && v4=$(hostname -I 2>/dev/null | awk '{print $1}')
-[ -z "$v6" ] && [ -s "$HOME/science/server_ip.log" ] && grep -q ':' "$HOME/science/server_ip.log" && v6=$(grep ':' "$HOME/science/server_ip.log" | head -1)
-[ -z "$v6" ] && v6=$(hostname -I 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i ~ /:/) print $i}' | head -1)
+v4=$( (command -v curl >/dev/null 2>&1 && curl -s4m5 -k "$v46url" 2>/dev/null) || (command -v wget >/dev/null 2>&1 && timeout 3 wget -4 --tries=2 -qO- "$v46url" 2>/dev/null) )
+v6=$( (command -v curl >/dev/null 2>&1 && curl -s6m5 -k "$v46url" 2>/dev/null) || (command -v wget >/dev/null 2>&1 && timeout 3 wget -6 --tries=2 -qO- "$v46url" 2>/dev/null) )
 v4dq=$( (command -v curl >/dev/null 2>&1 && curl -s4m5 -k https://ip.fm | sed -n 's/.*Location: //p' 2>/dev/null) || (command -v wget >/dev/null 2>&1 && timeout 3 wget -4 --tries=2 -qO- https://ip.fm | grep '<span class="has-text-grey-light">Location:' | tail -n1 | sed -E 's/.*>Location: <\/span>([^<]+)<.*/\1/' 2>/dev/null) )
 v6dq=$( (command -v curl >/dev/null 2>&1 && curl -s6m5 -k https://ip.fm | sed -n 's/.*Location: //p' 2>/dev/null) || (command -v wget >/dev/null 2>&1 && timeout 3 wget -6 --tries=2 -qO- https://ip.fm | grep '<span class="has-text-grey-light">Location:' | tail -n1 | sed -E 's/.*>Location: <\/span>([^<]+)<.*/\1/' 2>/dev/null) )
 }
@@ -1228,10 +1223,8 @@ cat >> "$HOME/science/xr.json" <<EOF
         "settings":{
         "domainStrategy":"${wxryx}"
        },
-       "streamSettings":{
-       "sockopt":{
-         "dialerProxy":"x-warp-out"
-       }
+       "proxySettings":{
+       "tag":"x-warp-out"
      }
 }
   ],
@@ -1565,9 +1558,9 @@ else
 echo "Science脚本进程未启动，安装失败" && exit
 fi
 # 下载合并版订阅面板（panel.html），用于busybox httpd订阅面板
-panelurl="https://api.github.com/repos/Hutton-h/science/contents/panel.html"
+panelurl="https://raw.githubusercontent.com/Hutton-h/science/main/panel.html"
 echo "下载订阅面板html文件……"
-(command -v curl >/dev/null 2>&1 && curl -Ls -H "Accept: application/vnd.github.raw" "$panelurl" -o "$HOME/science/panel.html") || (command -v wget >/dev/null 2>&1 && wget -qO "$HOME/science/panel.html" --header="Accept: application/vnd.github.raw" "$panelurl")
+(command -v curl >/dev/null 2>&1 && curl -Ls "$panelurl" -o "$HOME/science/panel.html") || (command -v wget >/dev/null 2>&1 && wget -qO "$HOME/science/panel.html" "$panelurl")
 if [ -s "$HOME/science/panel.html" ]; then
 echo "订阅面板下载成功"
 else
@@ -3219,7 +3212,7 @@ showmode
 }
 cleandel(){
 for P in /proc/[0-9]*; do if [ -L "$P/exe" ]; then TARGET=$(readlink -f "$P/exe" 2>/dev/null); if echo "$TARGET" | grep -qE '/science/c|/science/s|/science/x'; then PID=$(basename "$P"); kill "$PID" 2>/dev/null; fi; fi; done
-kill -15 $(pgrep -x sing-box 2>/dev/null) $(pgrep -x xray 2>/dev/null) $(pgrep -x cloudflared 2>/dev/null) $(pgrep -f 'websbx' 2>/dev/null) >/dev/null 2>&1
+kill -15 $(pgrep -f 'science/s' 2>/dev/null) $(pgrep -f 'science/c' 2>/dev/null) $(pgrep -f 'science/x' 2>/dev/null) $(pgrep -f 'websbx' 2>/dev/null) >/dev/null 2>&1
 sed -i '/science/d' ~/.bashrc
 sed -i '/export PATH="\$HOME\/bin:\$PATH"/d' ~/.bashrc
 . ~/.bashrc 2>/dev/null
@@ -3403,9 +3396,9 @@ fi
 # 部署/更新订阅面板命令
 if [ "$1" = "panel" ]; then
 mkdir -p "$HOME/science"
-panelurl="https://api.github.com/repos/Hutton-h/science/contents/panel.html"
+panelurl="https://raw.githubusercontent.com/Hutton-h/science/main/panel.html"
 echo "正在下载最新订阅面板……"
-(command -v curl >/dev/null 2>&1 && curl -Ls -H "Accept: application/vnd.github.raw" "$panelurl" -o "$HOME/science/panel.html") || (command -v wget >/dev/null 2>&1 && wget -qO "$HOME/science/panel.html" --header="Accept: application/vnd.github.raw" "$panelurl")
+(command -v curl >/dev/null 2>&1 && curl -Ls "$panelurl" -o "$HOME/science/panel.html") || (command -v wget >/dev/null 2>&1 && wget -qO "$HOME/science/panel.html" "$panelurl")
 if [ -s "$HOME/science/panel.html" ]; then
   echo "订阅面板下载成功！"
   if [ -s "$HOME/science/subport.log" ] && [ -s "$HOME/science/subtoken.log" ]; then
@@ -3433,9 +3426,9 @@ if [ -s "$HOME/science/panel.html" ]; then
     kill $(pgrep -f 'websbx' 2>/dev/null) 2>/dev/null
     sleep 1
     if command -v apk >/dev/null 2>&1; then
-      busybox-extras httpd -f -p "0.0.0.0:$subport" -h "$HOME/websbx" > /dev/null 2>&1 &
+      busybox-extras httpd -f -p "127.0.0.1:$subport" -h "$HOME/websbx" > /dev/null 2>&1 &
     else
-      busybox httpd -f -p "0.0.0.0:$subport" -h "$HOME/websbx" > /dev/null 2>&1 &
+      busybox httpd -f -p "127.0.0.1:$subport" -h "$HOME/websbx" > /dev/null 2>&1 &
     fi
     echo "订阅面板服务已重启"
     # 立即生成一次status.json
@@ -3886,7 +3879,7 @@ exit
 fi
 if ! find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(s|x)' && ! pgrep -f 'science/(s|x)' >/dev/null 2>&1; then
 for P in /proc/[0-9]*; do if [ -L "$P/exe" ]; then TARGET=$(readlink -f "$P/exe" 2>/dev/null); if echo "$TARGET" | grep -qE '/science/c|/science/s|/science/x'; then PID=$(basename "$P"); kill "$PID" 2>/dev/null && echo "Killed $PID ($TARGET)" || echo "Could not kill $PID ($TARGET)"; fi; fi; done
-kill -15 $(pgrep -x sing-box 2>/dev/null) $(pgrep -x xray 2>/dev/null) $(pgrep -x cloudflared 2>/dev/null) >/dev/null 2>&1
+kill -15 $(pgrep -f 'science/s' 2>/dev/null) $(pgrep -f 'science/c' 2>/dev/null) $(pgrep -f 'science/x' 2>/dev/null) >/dev/null 2>&1
 if [ -z "$( (command -v curl >/dev/null 2>&1 && curl -s4m5 -k "$v46url" 2>/dev/null) || (command -v wget >/dev/null 2>&1 && timeout 3 wget -4 -qO- --tries=2 "$v46url" 2>/dev/null) )" ]; then
 echo -e "nameserver 2a00:1098:2b::1\nnameserver 2a00:1098:2c::1" > /etc/resolv.conf
 fi
@@ -3971,9 +3964,9 @@ kill -15 $(pgrep -f 'websbx' 2>/dev/null) >/dev/null 2>&1
 mkdir -p $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"
 # 确保panel.html已下载（备用下载，防止ins()中下载失败）
 # 始终刷新面板文件（下载失败时保留旧版，不覆盖）
-panelurl="https://api.github.com/repos/Hutton-h/science/contents/panel.html"
+panelurl="https://raw.githubusercontent.com/Hutton-h/science/main/panel.html"
 ptmp="$HOME/science/panel.html.tmp"
-(command -v curl >/dev/null 2>&1 && curl -Ls -H "Accept: application/vnd.github.raw" "$panelurl" -o "$ptmp") || (command -v wget >/dev/null 2>&1 && wget -qO "$ptmp" --header="Accept: application/vnd.github.raw" "$panelurl")
+(command -v curl >/dev/null 2>&1 && curl -Ls "$panelurl" -o "$ptmp") || (command -v wget >/dev/null 2>&1 && wget -qO "$ptmp" "$panelurl")
 if [ -s "$ptmp" ]; then mv "$ptmp" "$HOME/science/panel.html"; fi
 rm -f "$ptmp"
 ln -sf $HOME/science/clmi.yaml $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/clmi.yaml
@@ -4003,23 +3996,23 @@ fi
 ln -sf $HOME/science/panel.html $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/index.html
 ln -sf $HOME/science/status.json $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/status.json
 if command -v apk >/dev/null 2>&1; then
-busybox-extras httpd -f -p "0.0.0.0:$(cat $HOME/science/subport.log 2>/dev/null)" -h $HOME/websbx > /dev/null 2>&1 &
+busybox-extras httpd -f -p "127.0.0.1:$(cat $HOME/science/subport.log 2>/dev/null)" -h $HOME/websbx > /dev/null 2>&1 &
 else
-busybox httpd -f -p "0.0.0.0:$(cat $HOME/science/subport.log 2>/dev/null)" -h $HOME/websbx > /dev/null 2>&1 &
+busybox httpd -f -p "127.0.0.1:$(cat $HOME/science/subport.log 2>/dev/null)" -h $HOME/websbx > /dev/null 2>&1 &
 fi
 sleep 5
 if command -v apk >/dev/null 2>&1; then
 cat > /etc/local.d/alpinesubsbx.start <<EOF
 #!/bin/bash
 sleep 10
-busybox-extras httpd -f -p 0.0.0.0:\$(cat $HOME/science/subport.log 2>/dev/null) -h $HOME/websbx > /dev/null 2>&1 &
+busybox-extras httpd -f -p 127.0.0.1:\$(cat $HOME/science/subport.log 2>/dev/null) -h $HOME/websbx > /dev/null 2>&1 &
 EOF
 chmod +x /etc/local.d/alpinesubsbx.start
 rc-update add local default >/dev/null 2>&1
 else
 crontab -l 2>/dev/null > /tmp/crontab.tmp
 sed -i '/websbx/d' /tmp/crontab.tmp
-echo '@reboot sleep 10 && /bin/bash -c "busybox httpd -f -p 0.0.0.0:$(cat $HOME/science/subport.log 2>/dev/null) -h $HOME/websbx > /dev/null 2>&1 &"' >> /tmp/crontab.tmp
+echo '@reboot sleep 10 && /bin/bash -c "busybox httpd -f -p 127.0.0.1:$(cat $HOME/science/subport.log 2>/dev/null) -h $HOME/websbx > /dev/null 2>&1 &"' >> /tmp/crontab.tmp
 crontab /tmp/crontab.tmp >/dev/null 2>&1
 rm /tmp/crontab.tmp
 fi
