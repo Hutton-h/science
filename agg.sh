@@ -21,8 +21,8 @@ ip=$(curl -s4m5 -k https://icanhazip.com 2>/dev/null)
 echo "本机公网IP：$ip"
 
 get_science() {
-  curl -sL -H "Accept: application/vnd.github.raw" "$GH_URL" -o /root/science/science.sh
-  chmod +x /root/science/science.sh
+  curl -sL -H "Accept: application/vnd.github.raw" "$GH_URL" -o /root/science/new.sh
+  chmod +x /root/science/new.sh
 }
 
 if [ "$ip" = "$US_IP" ]; then
@@ -30,7 +30,7 @@ if [ "$ip" = "$US_IP" ]; then
   hostnamectl set-hostname us 2>/dev/null
   echo "正在用最新脚本重新生成节点（主机名 us）……"
   get_science
-  name="SKPL-LIFT" vlp=yes xhp=yes hyp=yes tup=yes anp=yes ssp=yes vmp=yes vmag=yes tjtp=yes vgp=yes vwp=yes arp=yes sub=y argo=vmpt agn="sss.hutton.dpdns.org" agk="$AGK" dnym="s.hutton.dpdns.org" bash /root/science/science.sh rep
+  name="SKPL-LIFT" vlp=yes xhp=yes hyp=yes tup=yes anp=yes ssp=yes vmp=yes vmag=yes tjtp=yes vgp=yes vwp=yes arp=yes sub=y argo=vmpt agn="sss.hutton.dpdns.org" agk="$AGK" dnym="s.hutton.dpdns.org" bash /root/science/new.sh rep
 
   cat > /root/science/aggregate.py <<'PYEOF'
 #!/usr/bin/env python3
@@ -83,7 +83,7 @@ elif [ "$ip" = "$HK_IP" ]; then
   hostnamectl set-hostname hk 2>/dev/null
   echo "正在用最新脚本重新生成节点（主机名 hk）……"
   get_science
-  name="SKPL-LIFT" vlp=yes xhp=yes hyp=yes anp=yes vmp=yes sub=y bash /root/science/science.sh rep
+  name="SKPL-LIFT" vlp=yes xhp=yes hyp=yes anp=yes vmp=yes sub=y bash /root/science/new.sh rep
   echo "====================================================="
   echo "✅ 香港服务器配置完成"
   echo "请在云控制台安全组放行 TCP $HK_PORT（供美国拉取订阅）"
