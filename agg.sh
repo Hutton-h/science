@@ -102,33 +102,33 @@ hk_lines = [l.strip() for l in hk_txt.splitlines() if l.strip()] if hk_txt else 
 open(WEB+"/SKPL-LIFT-all.txt","w").write("\n".join(us_direct + relay + argo + hk_lines) + "\n")
 
 # ---- json ----
-if fetch("SKPL-LIFT.json"):
-    us = json.load(open("/root/science/sbox.json"))
-    keep, seen = [], set()
-    for o in us["outbounds"]:
+fetch("SKPL-LIFT.json")
+us = json.load(open("/root/science/sbox.json"))
+keep, seen = [], set()
+for o in us["outbounds"]:
+    if o.get("type") not in NODE_TYPES: continue
+    if str(o.get("server_port","")) in ("20632","47601","60316","25919"):
+        keep.append(o); seen.add(o.get("tag"))
+for o in us["outbounds"]:
+    if o.get("type") not in NODE_TYPES: continue
+    p = str(o.get("server_port",""))
+    if p in MAP:
+        o2 = dict(o); o2["server"] = HK_IP; o2["server_port"] = int(MAP[p])
+        o2["tag"] = "hk中转-" + o.get("tag","")
+        if o2["tag"] not in seen: keep.append(o2); seen.add(o2["tag"])
+n = 0
+for o in us["outbounds"]:
+    if o.get("type")=="vmess" and str(o.get("server_port","")) in ("443","80"):
+        keep.append(o); n+=1
+        if n>=2: break
+if os.path.exists("/tmp/hk_SKPL-LIFT.json"):
+    hk = json.load(open("/tmp/hk_SKPL-LIFT.json"))
+    for o in hk["outbounds"]:
         if o.get("type") not in NODE_TYPES: continue
-        if str(o.get("server_port","")) in ("20632","47601","60316","25919"):
-            keep.append(o); seen.add(o.get("tag"))
-    for o in us["outbounds"]:
-        if o.get("type") not in NODE_TYPES: continue
-        p = str(o.get("server_port",""))
-        if p in MAP:
-            o2 = dict(o); o2["server"] = HK_IP; o2["server_port"] = int(MAP[p])
-            o2["tag"] = "hk中转-" + o.get("tag","")
-            if o2["tag"] not in seen: keep.append(o2); seen.add(o2["tag"])
-    n = 0
-    for o in us["outbounds"]:
-        if o.get("type")=="vmess" and str(o.get("server_port","")) in ("443","80"):
-            keep.append(o); n+=1
-            if n>=2: break
-    if os.path.exists("/tmp/hk_SKPL-LIFT.json"):
-        hk = json.load(open("/tmp/hk_SKPL-LIFT.json"))
-        for o in hk["outbounds"]:
-            if o.get("type") not in NODE_TYPES: continue
-            if o.get("tag") in seen: o = dict(o); o["tag"] = "hk-" + o["tag"]
-            seen.add(o["tag"]); keep.append(o)
-    us["outbounds"] = keep
-    open(WEB+"/SKPL-LIFT-all.json","w").write(json.dumps(us, indent=2))
+        if o.get("tag") in seen: o = dict(o); o["tag"] = "hk-" + o["tag"]
+        seen.add(o["tag"]); keep.append(o)
+us["outbounds"] = keep
+open(WEB+"/SKPL-LIFT-all.json","w").write(json.dumps(us, indent=2))
 
 # ---- yaml（按名称筛选：美国直连 + 隧道 + 香港直连；暂不含中转）----
 if fetch("SKPL-LIFT.yaml"):
