@@ -34,69 +34,125 @@ if [ "$ip" = "$US_IP" ]; then
 
   cat > /root/science/aggregate.py <<'PYEOF'
 #!/usr/bin/env python3
-import json, re, subprocess, os
+import json, re, subprocess, os, base64
 US_TOKEN = "94d31555-6a48-4b87-b241-6c78c94fc1ce"
 HK_TOKEN = "d5b2e4ef-e81a-4cdc-a24d-7fa77c7c9516"
 HK_BASE  = "http://38.76.210.194:53163/" + HK_TOKEN
 WEB      = "/root/websbx/" + US_TOKEN
+US_HOST  = "s.hutton.dpdns.org"
+HK_IP    = "38.76.210.194"
 NODE_TYPES = {"vless","vmess","trojan","hysteria2","tuic","anytls","shadowsocks","socks","wireguard"}
+# 中转端口映射：美国端口 -> 香港转发端口
+MAP = {"48504":"8443","20632":"8444","47601":"8445","60316":"8446","50334":"8447","25919":"8448","23409":"8449","33657":"8450","35397":"8451","18392":"8452","14774":"8453"}
+# 美国直连择优保留（按名称关键词）
+US_DIRECT_KEYS = ["vl-reality-vision-us","hy2-us","anytls-us","vm-ws-us"]
+
 def fetch(name):
     subprocess.run(["curl","-s","--max-time","10", HK_BASE+"/"+name, "-o","/tmp/hk_"+name], check=False)
     return os.path.isfile("/tmp/hk_"+name) and os.path.getsize("/tmp/hk_"+name) > 0
-us_txt = open("/root/science/jhsub.txt").read().strip()
-hk_txt = open("/tmp/hk_SKPL-LIFT.txt").read().strip() if fetch("SKPL-LIFT.txt") else ""
-open(WEB+"/SKPL-LIFT-all.txt","w").write(us_txt + "\n" + hk_txt + "\n")
-# ===== 中转节点：复制美国节点，地址改香港IP、端口改转发口 =====
-import base64
-HK_IP = "38.76.210.194"
-US_HOST = "s.hutton.dpdns.org"
-MAP = {"48504":"8443","20632":"8444","47601":"8445","60316":"8446","50334":"8447","25919":"8448","23409":"8449","33657":"8450","35397":"8451","18392":"8452","14774":"8453"}
-relay_lines = []
-for line in us_txt.splitlines():
-    line = line.strip()
+
+def nm(line):
+    m = re.search(r"#([^#]*)$", line)
+    return m.group(1) if m else ""
+
+def port_of(line):
+    m = re.search(r"@[^:]+:(\d+)", line)
+    return m.group(1) if m else ""
+
+# ---- 分类美国节点 ----
+us_lines = [l.strip() for l in open("/root/science/jhsub.txt").read().splitlines() if l.strip()]
+us_direct, argo, relay_src = [], [], {}
+for line in us_lines:
+    name = nm(line); low = name.lower()
+    if "argo" in low:
+        if len(argo) < 2: argo.append(line)
+        continue
+    if "cdn" in low: continue
+    p = port_of(line)
+    if p in MAP: relay_src[p] = line
+    if any(k in name for k in US_DIRECT_KEYS): us_direct.append(line)
+
+# ---- 生成香港中转节点（美国全部直连端口，多一些）----
+relay = []
+for us_port in sorted(MAP, key=lambda x:int(MAP[x])):
+    line = relay_src.get(us_port)
     if not line: continue
-    m = re.search(r"@%s:(\d+)" % re.escape(US_HOST), line)
-    if m and m.group(1) in MAP:
-        nl = line.replace("@%s:%s" % (US_HOST, m.group(1)), "@%s:%s" % (HK_IP, MAP[m.group(1)]), 1)
-        nl = re.sub(r"#([^#]*)$", lambda x: "#HK中转-" + x.group(1), nl)
-        relay_lines.append(nl)
-    elif line.startswith("vmess://"):
-        try:
-            b64 = line[8:].strip()
-            obj = json.loads(base64.b64decode(b64 + "="*((4-len(b64)%4)%4)))
-            if obj.get("add") == US_HOST and str(obj.get("port")) in MAP:
-                obj["add"] = HK_IP
-                obj["port"] = int(MAP[str(obj["port"])])
-                obj["ps"] = "HK中转-" + obj.get("ps","")
-                relay_lines.append("vmess://" + base64.b64encode(json.dumps(obj).encode()).decode())
-        except Exception:
-            pass
-if relay_lines:
-    with open(WEB+"/SKPL-LIFT-all.txt","a") as f:
-        f.write("\n" + "\n".join(relay_lines) + "\n")
+    nl = line.replace("@%s:%s" % (US_HOST, us_port), "@%s:%s" % (HK_IP, MAP[us_port]), 1)
+    nl = re.sub(r"#([^#]*)$", lambda x: "#HK中转-" + x.group(1), nl)
+    relay.append(nl)
+
+# ---- 拉取香港直连 ----
+hk_txt = open("/tmp/hk_SKPL-LIFT.txt").read().strip() if fetch("SKPL-LIFT.txt") else ""
+hk_lines = [l.strip() for l in hk_txt.splitlines() if l.strip()] if hk_txt else []
+
+# ---- txt ----
+open(WEB+"/SKPL-LIFT-all.txt","w").write("\n".join(us_direct + relay + argo + hk_lines) + "\n")
+
+# ---- json ----
 if fetch("SKPL-LIFT.json"):
     us = json.load(open("/root/science/sbox.json"))
-    hk = json.load(open("/tmp/hk_SKPL-LIFT.json"))
-    tags = {o.get("tag") for o in us["outbounds"]}
-    for o in hk["outbounds"]:
+    keep, seen = [], set()
+    for o in us["outbounds"]:
         if o.get("type") not in NODE_TYPES: continue
-        if o.get("tag") in tags:
-            o = dict(o); o["tag"] = "hk-" + o["tag"]
-        tags.add(o["tag"]); us["outbounds"].append(o)
+        if str(o.get("server_port","")) in ("20632","47601","60316","25919"):
+            keep.append(o); seen.add(o.get("tag"))
+    for o in us["outbounds"]:
+        if o.get("type") not in NODE_TYPES: continue
+        p = str(o.get("server_port",""))
+        if p in MAP:
+            o2 = dict(o); o2["server"] = HK_IP; o2["server_port"] = int(MAP[p])
+            o2["tag"] = "hk中转-" + o.get("tag","")
+            if o2["tag"] not in seen: keep.append(o2); seen.add(o2["tag"])
+    n = 0
+    for o in us["outbounds"]:
+        if o.get("type")=="vmess" and str(o.get("server_port","")) in ("443","80"):
+            keep.append(o); n+=1
+            if n>=2: break
+    if os.path.exists("/tmp/hk_SKPL-LIFT.json"):
+        hk = json.load(open("/tmp/hk_SKPL-LIFT.json"))
+        for o in hk["outbounds"]:
+            if o.get("type") not in NODE_TYPES: continue
+            if o.get("tag") in seen: o = dict(o); o["tag"] = "hk-" + o["tag"]
+            seen.add(o["tag"]); keep.append(o)
+    us["outbounds"] = keep
     open(WEB+"/SKPL-LIFT-all.json","w").write(json.dumps(us, indent=2))
+
+# ---- yaml（按名称筛选：美国直连 + 隧道 + 香港直连；暂不含中转）----
 if fetch("SKPL-LIFT.yaml"):
     usy = open("/root/science/clmi.yaml").read()
     hky = open("/tmp/hk_SKPL-LIFT.yaml").read()
-    m = re.search(r"proxies:\n(.*?)\nproxy-groups:", hky, re.S)
+    sel_names = set()
+    m = re.search(r"proxies:\n(.*?)\nproxy-groups:", usy, re.S)
     if m:
-        hk_def = m.group(1).rstrip("\n")
-        names  = re.findall(r"^\s*- name: (.+?)\s*$", hk_def, re.M)
-        usy = usy.replace("proxies:\n", "proxies:\n" + hk_def + "\n", 1)
-        if names:
-            blk = "".join("    - "+n+"\n" for n in names)
-            usy = usy.replace("  proxies:\n", "  proxies:\n" + blk)
-    open(WEB+"/SKPL-LIFT-all.yaml","w").write(usy)
-print("全家桶三格式已生成")
+        for ln in m.group(1).split("\n"):
+            mm = re.search(r"^\s*- name: (.+?)\s*$", ln)
+            if not mm: continue
+            n0 = mm.group(1); low = n0.lower()
+            if "cdn" in low: continue
+            if any(k in n0 for k in US_DIRECT_KEYS) or "argo" in low: sel_names.add(n0)
+    m2 = re.search(r"proxies:\n(.*?)\nproxy-groups:", hky, re.S)
+    if m2:
+        for ln in m2.group(1).split("\n"):
+            mm = re.search(r"^\s*- name: (.+?)\s*$", ln)
+            if mm and "cdn" not in mm.group(1).lower(): sel_names.add(mm.group(1))
+    m3 = re.search(r"proxies:\n(.*?)\nproxy-groups:", usy, re.S)
+    if m3:
+        keep_lines = []
+        for ln in m3.group(1).split("\n"):
+            mm = re.search(r"^\s*- name: (.+?)\s*$", ln)
+            if mm and mm.group(1) in sel_names: keep_lines.append(ln)
+        usy = usy.replace(m3.group(1), "\n".join(keep_lines) + "\n", 1)
+    def fix_groups(y):
+        for gm in re.finditer(r"- name: (.+?)\n(?:.*\n)*?  proxies:\n(    - .+\n)+", y):
+            block = gm.group(0)
+            members = re.findall(r"^    - (.+?)$", block, re.M)
+            keep = [x for x in members if x in sel_names or x in ("DIRECT","负载均衡","自动选择")]
+            newm = "".join("    - "+x+"\n" for x in keep)
+            y = y.replace(block, re.sub(r"(    - .+\n)+", newm, block), 1)
+        return y
+    open(WEB+"/SKPL-LIFT-all.yaml","w").write(fix_groups(usy))
+
+print("全家桶已筛选：美国直连 %d + 香港中转 %d + 隧道 %d + 香港直连 %d" % (len(us_direct), len(relay), len(argo), len(hk_lines)))
 PYEOF
   python3 /root/science/aggregate.py
   (crontab -l 2>/dev/null | grep -v 'aggregate.py' ; echo "*/10 * * * * python3 /root/science/aggregate.py >/dev/null 2>&1") | crontab - 2>/dev/null
