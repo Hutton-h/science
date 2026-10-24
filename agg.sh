@@ -126,8 +126,15 @@ for line in us_lines:
     if "cdn" in low or "cdn" in line.lower(): continue
     if port in MAP: relay_src[port] = line
     if any(k in name for k in US_DIRECT_KEYS): us_direct.append(line)
-# 隧道节点默认去掉（Argo 优选 IP 国内大多不通；如需要可手动加回）
+# 保留 2 个 Argo 隧道（防封兜底，优先 443/80）
 argo = []
+for l in argo_all:
+    nl = parse(l)[0].lower()
+    if len(argo) < 2 and ("443" in nl or "80" in nl):
+        argo.append(l)
+for l in argo_all:
+    if len(argo) >= 2: break
+    if l not in argo: argo.append(l)
 
 # ---- 生成香港中转节点（美国全部直连端口，多一些）----
 relay = []
