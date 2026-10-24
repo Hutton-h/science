@@ -18,6 +18,8 @@ AGK="eyJhIjoiYjE3ZmQ4NzczZWFhNWIxY2E2ZDNiZTYyYzJmZTE2NjMiLCJ0IjoiM2IzY2M4Y2YtOWZ
 mkdir -p /root/science
 ip=$(curl -s4m5 -k https://icanhazip.com 2>/dev/null)
 [ -z "$ip" ] && ip=$(curl -s4m5 -k https://api.ipify.org 2>/dev/null)
+[ -z "$ip" ] && [ -s /root/science/server_ip.log ] && ip=$(cat /root/science/server_ip.log)
+[ -z "$ip" ] && ip=$(hostname -I 2>/dev/null | awk '{print $1}')
 echo "本机公网IP：$ip"
 
 get_science() {
