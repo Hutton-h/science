@@ -569,11 +569,24 @@ function fetchNodes() {
   var xhr = new XMLHttpRequest();
   xhr.open('GET', baseUrl() + 'SKPL-LIFT-all.txt', true);
   xhr.onload = function() {
-    if (xhr.status >= 200 && xhr.status < 300) {
+    if (xhr.status >= 200 && xhr.status < 300 && xhr.responseText.trim()) {
       jhNodes = xhr.responseText.split('\n').filter(function(l) { return l.trim(); });
       var nv = document.getElementById('nodeV');
       if (nv) nv.textContent = jhNodes.length;
       renderNodeLists();
+    } else {
+      // 全家桶未生成时回退到本机 jhsub.txt，避免面板空白
+      var x2 = new XMLHttpRequest();
+      x2.open('GET', baseUrl() + subFile('jhsub.txt'), true);
+      x2.onload = function() {
+        if (x2.status >= 200 && x2.status < 300) {
+          jhNodes = x2.responseText.split('\n').filter(function(l) { return l.trim(); });
+          var nv = document.getElementById('nodeV');
+          if (nv) nv.textContent = jhNodes.length;
+          renderNodeLists();
+        }
+      };
+      x2.send();
     }
   };
   xhr.onerror = function() {};
