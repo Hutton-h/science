@@ -103,7 +103,31 @@ open(WEB+"/SKPL-LIFT-all.txt","w").write("\n".join(us_direct + relay + argo + hk
 
 # ---- json ----
 fetch("SKPL-LIFT.json")
-us = json.load(open("/root/science/sbox.json"))
+def strip_jsonc(text):
+    out = []
+    i, n = 0, len(text)
+    in_str = False
+    while i < n:
+        c = text[i]
+        if in_str:
+            out.append(c)
+            if c == '\\' and i+1 < n:
+                out.append(text[i+1]); i += 2; continue
+            if c == '"': in_str = False
+            i += 1; continue
+        if c == '"':
+            in_str = True; out.append(c); i += 1; continue
+        if c == '/' and i+1 < n and text[i+1] == '/':
+            j = text.find('\n', i)
+            i = n if j == -1 else j
+            out.append('\n'); continue
+        if c == '/' and i+1 < n and text[i+1] == '*':
+            j = text.find('*/', i+2)
+            i = n if j == -1 else j+2
+            continue
+        out.append(c); i += 1
+    return ''.join(out)
+us = json.loads(strip_jsonc(open("/root/science/sbox.json").read()))
 keep, seen = [], set()
 for o in us["outbounds"]:
     if o.get("type") not in NODE_TYPES: continue
@@ -131,39 +155,39 @@ us["outbounds"] = keep
 open(WEB+"/SKPL-LIFT-all.json","w").write(json.dumps(us, indent=2))
 
 # ---- yaml（按名称筛选：美国直连 + 隧道 + 香港直连；暂不含中转）----
-if fetch("SKPL-LIFT.yaml"):
-    usy = open("/root/science/clmi.yaml").read()
-    hky = open("/tmp/hk_SKPL-LIFT.yaml").read()
-    sel_names = set()
-    m = re.search(r"proxies:\n(.*?)\nproxy-groups:", usy, re.S)
-    if m:
-        for ln in m.group(1).split("\n"):
-            mm = re.search(r"^\s*- name: (.+?)\s*$", ln)
-            if not mm: continue
-            n0 = mm.group(1); low = n0.lower()
-            if "cdn" in low: continue
-            if any(k in n0 for k in US_DIRECT_KEYS) or "argo" in low: sel_names.add(n0)
-    m2 = re.search(r"proxies:\n(.*?)\nproxy-groups:", hky, re.S)
-    if m2:
-        for ln in m2.group(1).split("\n"):
-            mm = re.search(r"^\s*- name: (.+?)\s*$", ln)
-            if mm and "cdn" not in mm.group(1).lower(): sel_names.add(mm.group(1))
-    m3 = re.search(r"proxies:\n(.*?)\nproxy-groups:", usy, re.S)
-    if m3:
-        keep_lines = []
-        for ln in m3.group(1).split("\n"):
-            mm = re.search(r"^\s*- name: (.+?)\s*$", ln)
-            if mm and mm.group(1) in sel_names: keep_lines.append(ln)
-        usy = usy.replace(m3.group(1), "\n".join(keep_lines) + "\n", 1)
-    def fix_groups(y):
-        for gm in re.finditer(r"- name: (.+?)\n(?:.*\n)*?  proxies:\n(    - .+\n)+", y):
-            block = gm.group(0)
-            members = re.findall(r"^    - (.+?)$", block, re.M)
-            keep = [x for x in members if x in sel_names or x in ("DIRECT","负载均衡","自动选择")]
-            newm = "".join("    - "+x+"\n" for x in keep)
-            y = y.replace(block, re.sub(r"(    - .+\n)+", newm, block), 1)
-        return y
-    open(WEB+"/SKPL-LIFT-all.yaml","w").write(fix_groups(usy))
+fetch("SKPL-LIFT.yaml")
+usy = open("/root/science/clmi.yaml").read()
+hky = open("/tmp/hk_SKPL-LIFT.yaml").read() if os.path.exists("/tmp/hk_SKPL-LIFT.yaml") else ""
+sel_names = set()
+m = re.search(r"proxies:\n(.*?)\nproxy-groups:", usy, re.S)
+if m:
+    for ln in m.group(1).split("\n"):
+        mm = re.search(r"^\s*- name: (.+?)\s*$", ln)
+        if not mm: continue
+        n0 = mm.group(1); low = n0.lower()
+        if "cdn" in low: continue
+        if any(k in n0 for k in US_DIRECT_KEYS) or "argo" in low: sel_names.add(n0)
+m2 = re.search(r"proxies:\n(.*?)\nproxy-groups:", hky, re.S)
+if m2:
+    for ln in m2.group(1).split("\n"):
+        mm = re.search(r"^\s*- name: (.+?)\s*$", ln)
+        if mm and "cdn" not in mm.group(1).lower(): sel_names.add(mm.group(1))
+m3 = re.search(r"proxies:\n(.*?)\nproxy-groups:", usy, re.S)
+if m3:
+    keep_lines = []
+    for ln in m3.group(1).split("\n"):
+        mm = re.search(r"^\s*- name: (.+?)\s*$", ln)
+        if mm and mm.group(1) in sel_names: keep_lines.append(ln)
+    usy = usy.replace(m3.group(1), "\n".join(keep_lines) + "\n", 1)
+def fix_groups(y):
+    for gm in re.finditer(r"- name: (.+?)\n(?:.*\n)*?  proxies:\n(    - .+\n)+", y):
+        block = gm.group(0)
+        members = re.findall(r"^    - (.+?)$", block, re.M)
+        keep = [x for x in members if x in sel_names or x in ("DIRECT","负载均衡","自动选择")]
+        newm = "".join("    - "+x+"\n" for x in keep)
+        y = y.replace(block, re.sub(r"(    - .+\n)+", newm, block), 1)
+    return y
+open(WEB+"/SKPL-LIFT-all.yaml","w").write(fix_groups(usy))
 
 print("全家桶已筛选：美国直连 %d + 香港中转 %d + 隧道 %d + 香港直连 %d" % (len(us_direct), len(relay), len(argo), len(hk_lines)))
 PYEOF
