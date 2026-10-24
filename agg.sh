@@ -39,6 +39,39 @@ open_firewall() {
   echo "[√] 系统防火墙已开放所有端口"
 }
 
+# 生成香港中转端口发现脚本（解析美国 jhsub.txt -> "香港端口 美国端口"）
+cat > /root/science/discover_relay.py <<'PYEOF'
+import sys, base64, re, json
+HK_PLAN = [("8443","vl-xhttp-reality-enc"),("8444","vl-reality-vision"),("8445","hy2"),
+           ("8446","anytls"),("8447","trojan"),("8448","vm-ws"),("8449","shadowsocks"),
+           ("8450","vl-grpc"),("8451","vl-ws-enc"),("8452","tuic"),("8453","any-reality")]
+def b64d(s):
+    s = s.strip()
+    return base64.b64decode(s + "="*((4-len(s)%4)%4)).decode("utf-8","ignore")
+port_of = {}
+for line in open(sys.argv[1], encoding="utf-8", errors="ignore"):
+    low = line.lower(); nm = ""
+    if low.startswith("vmess://"):
+        try:
+            obj = json.loads(b64d(line[8:])); nm = obj.get("ps",""); port = str(obj.get("port",""))
+        except: continue
+    elif low.startswith("ss://"):
+        try:
+            raw = b64d(line[5:].split("#")[0]); hp = raw.split("@")[1]; port = hp.rsplit(":",1)[1]
+            nm = line.split("#")[-1]
+        except: continue
+    else:
+        m = re.search(r"#([^#]*)$", line); nm = m.group(1) if m else ""
+        m2 = re.search(r"@[^:]+:(\d+)", line); port = m2.group(1) if m2 else ""
+    if not port or not nm: continue
+    for hk, kw in HK_PLAN:
+        if kw in nm.lower():
+            port_of.setdefault(kw, port)
+for hk, kw in HK_PLAN:
+    if kw in port_of:
+        print("%s %s" % (hk, port_of[kw]))
+PYEOF
+
 if [ "$ip" = "$US_IP" ]; then
   echo "识别为【美国】服务器"
   hostnamectl set-hostname us 2>/dev/null
@@ -57,10 +90,12 @@ WEB      = "/root/websbx/" + US_TOKEN
 US_HOST  = "s.hutton.dpdns.org"
 HK_IP    = "38.76.210.194"
 NODE_TYPES = {"vless","vmess","trojan","hysteria2","tuic","anytls","shadowsocks","socks","wireguard"}
-# 中转端口映射：美国端口 -> 香港转发端口
-MAP = {"48504":"8443","20632":"8444","47601":"8445","60316":"8446","50334":"8447","25919":"8448","23409":"8449","33657":"8450","35397":"8451","18392":"8452","14774":"8453"}
-# 美国直连择优保留（按名称关键词）
-US_DIRECT_KEYS = ["vl-reality-vision-us","hy2-us","anytls-us","vm-ws-us","vl-xhttp-reality-enc-us"]
+# 香港转发端口 -> 美国协议关键词；美国实际端口每次从 jhsub.txt 自动发现（不再写死）
+HK_PLAN = [("8443","vl-xhttp-reality-enc"),("8444","vl-reality-vision"),("8445","hy2"),
+           ("8446","anytls"),("8447","trojan"),("8448","vm-ws"),("8449","shadowsocks"),
+           ("8450","vl-grpc"),("8451","vl-ws-enc"),("8452","tuic"),("8453","any-reality")]
+# 美国直连择优保留（按协议关键词，不依赖 -us 主机名后缀）
+US_DIRECT_KEYS = ["vl-reality-vision","hy2","anytls","vm-ws","vl-xhttp-reality-enc"]
 
 def fetch(name):
     subprocess.run(["curl","-s","--max-time","10", HK_BASE+"/"+name, "-o","/tmp/hk_"+name], check=False)
@@ -83,7 +118,9 @@ def parse(line):
             if "@" in raw:
                 hp = raw.split("@")[1]
                 host, port = hp.rsplit(":",1)
-                return ("", host, port, "ss")
+                m = re.search(r"#([^#]*)$", line)
+                name = m.group(1) if m else ""
+                return (name, host, port, "ss")
         except: pass
         return ("","","","ss")
     m = re.search(r"#([^#]*)$", line)
@@ -114,8 +151,17 @@ def relay_line(line, us_port, hk_port):
     nl = re.sub(r"#([^#]*)$", lambda x: "#HK中转-" + x.group(1), nl)
     return nl
 
-# ---- 分类美国节点 ----
+# ---- 从美国 jhsub.txt 自动发现各协议实际端口 ----
 us_lines = [l.strip() for l in open("/root/science/jhsub.txt").read().splitlines() if l.strip()]
+port_of = {}  # 协议关键词 -> 美国端口
+for line in us_lines:
+    name, add, port, proto = parse(line)
+    if not port: continue
+    for hk, kw in HK_PLAN:
+        if kw in name.lower():
+            port_of[kw] = port
+            break
+# ---- 分类美国节点 ----
 us_direct, argo_all, relay_src = [], [], {}
 for line in us_lines:
     name, add, port, proto = parse(line)
@@ -124,17 +170,19 @@ for line in us_lines:
         argo_all.append(line)
         continue
     if "cdn" in low or "cdn" in line.lower(): continue
-    if port in MAP: relay_src[port] = line
-    if any(k in name for k in US_DIRECT_KEYS): us_direct.append(line)
+    if port and port in port_of.values(): relay_src[port] = line
+    if any(k in name for k in US_DIRECT_KEYS):
+        if line not in us_direct: us_direct.append(line)
 # 全家桶不含 Argo 隧道（优选域名不适合订阅；保底用 science 美国本地订阅）
 argo = []
 
 # ---- 生成香港中转节点（美国全部直连端口，多一些）----
+us_port2hk = {port_of[kw]: hk for hk, kw in HK_PLAN if port_of.get(kw)}
 relay = []
-for us_port in sorted(MAP, key=lambda x:int(MAP[x])):
+for us_port in sorted(us_port2hk, key=lambda x: int(us_port2hk[x])):
     line = relay_src.get(us_port)
     if not line: continue
-    nl = relay_line(line, us_port, MAP[us_port])
+    nl = relay_line(line, us_port, us_port2hk[us_port])
     if nl: relay.append(nl)
 
 # ---- 拉取香港直连 ----
@@ -174,15 +222,16 @@ us = None
 try:
     us = json.loads(strip_jsonc(open("/root/science/sbox.json").read()))
     keep, seen = [], set()
+    direct_ports = {port_of[k] for k in US_DIRECT_KEYS if port_of.get(k)}
     for o in us["outbounds"]:
         if o.get("type") not in NODE_TYPES: continue
-        if str(o.get("server_port","")) in ("20632","47601","60316","25919"):
+        if str(o.get("server_port","")) in direct_ports:
             keep.append(o); seen.add(o.get("tag"))
     for o in us["outbounds"]:
         if o.get("type") not in NODE_TYPES: continue
         p = str(o.get("server_port",""))
-        if p in MAP:
-            o2 = dict(o); o2["server"] = HK_IP; o2["server_port"] = int(MAP[p])
+        if p in us_port2hk:
+            o2 = dict(o); o2["server"] = HK_IP; o2["server_port"] = int(us_port2hk[p])
             o2["tag"] = "hk中转-" + o.get("tag","")
             if o2["tag"] not in seen: keep.append(o2); seen.add(o2["tag"])
     n = 0
@@ -260,18 +309,36 @@ elif [ "$ip" = "$HK_IP" ]; then
   US_IP="170.178.174.97"
   iptables -t nat -F PREROUTING >/dev/null 2>&1
   iptables -t nat -C POSTROUTING -j MASQUERADE 2>/dev/null && iptables -t nat -D POSTROUTING -j MASQUERADE >/dev/null 2>&1
-  for hk_port in 8443 8444 8445 8446 8447 8448 8449 8450 8451 8452 8453; do
-    case $hk_port in
-      8443) us_port=48504;; 8444) us_port=20632;; 8445) us_port=47601;;
-      8446) us_port=60316;; 8447) us_port=50334;; 8448) us_port=25919;;
-      8449) us_port=23409;; 8450) us_port=33657;; 8451) us_port=35397;;
-      8452) us_port=18392;; 8453) us_port=14774;;
-    esac
-    iptables -t nat -A PREROUTING -p tcp --dport $hk_port -j DNAT --to-destination $US_IP:$us_port
-    iptables -t nat -A PREROUTING -p udp  --dport $hk_port -j DNAT --to-destination $US_IP:$us_port
-    iptables -I INPUT -p tcp --dport $hk_port -j ACCEPT
-    iptables -I INPUT -p udp  --dport $hk_port -j ACCEPT
-  done
+  # 拉取美国 jhsub.txt 自动发现美国各协议端口（拉取/解析失败则用内置映射兜底）
+  curl -s --max-time 15 "http://$US_DOMAIN:$US_PORT/$US_TOKEN/jhsub.txt" -o /tmp/us_jhsub.txt
+  n=0
+  if [ -s /tmp/us_jhsub.txt ]; then
+    while read -r hk_port us_port; do
+      [ -z "$hk_port" ] && continue
+      echo "  中转 $hk_port → 美国 $us_port"
+      iptables -t nat -A PREROUTING -p tcp --dport $hk_port -j DNAT --to-destination $US_IP:$us_port
+      iptables -t nat -A PREROUTING -p udp  --dport $hk_port -j DNAT --to-destination $US_IP:$us_port
+      iptables -I INPUT -p tcp --dport $hk_port -j ACCEPT
+      iptables -I INPUT -p udp  --dport $hk_port -j ACCEPT
+      n=$((n+1))
+    done < <(python3 /root/science/discover_relay.py /tmp/us_jhsub.txt)
+  fi
+  # 兜底：自动发现失败时使用内置端口映射
+  if [ "$n" = "0" ]; then
+    echo "  ⚠️ 自动发现失败，使用内置端口映射兜底"
+    for hk_port in 8443 8444 8445 8446 8447 8448 8449 8450 8451 8452 8453; do
+      case $hk_port in
+        8443) us_port=48504;; 8444) us_port=20632;; 8445) us_port=47601;;
+        8446) us_port=60316;; 8447) us_port=50334;; 8448) us_port=25919;;
+        8449) us_port=23409;; 8450) us_port=33657;; 8451) us_port=35397;;
+        8452) us_port=18392;; 8453) us_port=14774;;
+      esac
+      iptables -t nat -A PREROUTING -p tcp --dport $hk_port -j DNAT --to-destination $US_IP:$us_port
+      iptables -t nat -A PREROUTING -p udp  --dport $hk_port -j DNAT --to-destination $US_IP:$us_port
+      iptables -I INPUT -p tcp --dport $hk_port -j ACCEPT
+      iptables -I INPUT -p udp  --dport $hk_port -j ACCEPT
+    done
+  fi
   iptables -t nat -A POSTROUTING -j MASQUERADE
   iptables -A FORWARD -j ACCEPT
   netfilter-persistent save >/dev/null 2>&1
