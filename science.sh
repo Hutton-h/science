@@ -1560,9 +1560,9 @@ else
 echo "Science脚本进程未启动，安装失败" && exit
 fi
 # 下载合并版订阅面板（panel.html），用于busybox httpd订阅面板
-panelurl="https://raw.githubusercontent.com/Hutton-h/science/main/panel.html"
+panelurl="https://api.github.com/repos/Hutton-h/science/contents/panel.html"
 echo "下载订阅面板html文件……"
-(command -v curl >/dev/null 2>&1 && curl -Ls "$panelurl" -o "$HOME/science/panel.html") || (command -v wget >/dev/null 2>&1 && wget -qO "$HOME/science/panel.html" "$panelurl")
+(command -v curl >/dev/null 2>&1 && curl -Ls -H "Accept: application/vnd.github.raw" "$panelurl" -o "$HOME/science/panel.html") || (command -v wget >/dev/null 2>&1 && wget -qO "$HOME/science/panel.html" --header="Accept: application/vnd.github.raw" "$panelurl")
 if [ -s "$HOME/science/panel.html" ]; then
 echo "订阅面板下载成功"
 else
@@ -3398,9 +3398,9 @@ fi
 # 部署/更新订阅面板命令
 if [ "$1" = "panel" ]; then
 mkdir -p "$HOME/science"
-panelurl="https://raw.githubusercontent.com/Hutton-h/science/main/panel.html"
+panelurl="https://api.github.com/repos/Hutton-h/science/contents/panel.html"
 echo "正在下载最新订阅面板……"
-(command -v curl >/dev/null 2>&1 && curl -Ls "$panelurl" -o "$HOME/science/panel.html") || (command -v wget >/dev/null 2>&1 && wget -qO "$HOME/science/panel.html" "$panelurl")
+(command -v curl >/dev/null 2>&1 && curl -Ls -H "Accept: application/vnd.github.raw" "$panelurl" -o "$HOME/science/panel.html") || (command -v wget >/dev/null 2>&1 && wget -qO "$HOME/science/panel.html" --header="Accept: application/vnd.github.raw" "$panelurl")
 if [ -s "$HOME/science/panel.html" ]; then
   echo "订阅面板下载成功！"
   if [ -s "$HOME/science/subport.log" ] && [ -s "$HOME/science/subtoken.log" ]; then
@@ -3966,9 +3966,9 @@ kill -15 $(pgrep -f 'websbx' 2>/dev/null) >/dev/null 2>&1
 mkdir -p $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"
 # 确保panel.html已下载（备用下载，防止ins()中下载失败）
 # 始终刷新面板文件（下载失败时保留旧版，不覆盖）
-panelurl="https://raw.githubusercontent.com/Hutton-h/science/main/panel.html"
+panelurl="https://api.github.com/repos/Hutton-h/science/contents/panel.html"
 ptmp="$HOME/science/panel.html.tmp"
-(command -v curl >/dev/null 2>&1 && curl -Ls "$panelurl" -o "$ptmp") || (command -v wget >/dev/null 2>&1 && wget -qO "$ptmp" "$panelurl")
+(command -v curl >/dev/null 2>&1 && curl -Ls -H "Accept: application/vnd.github.raw" "$panelurl" -o "$ptmp") || (command -v wget >/dev/null 2>&1 && wget -qO "$ptmp" --header="Accept: application/vnd.github.raw" "$panelurl")
 if [ -s "$ptmp" ]; then mv "$ptmp" "$HOME/science/panel.html"; fi
 rm -f "$ptmp"
 ln -sf $HOME/science/clmi.yaml $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/clmi.yaml
