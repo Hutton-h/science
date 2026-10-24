@@ -46,6 +46,34 @@ def fetch(name):
 us_txt = open("/root/science/jhsub.txt").read().strip()
 hk_txt = open("/tmp/hk_SKPL-LIFT.txt").read().strip() if fetch("SKPL-LIFT.txt") else ""
 open(WEB+"/SKPL-LIFT-all.txt","w").write(us_txt + "\n" + hk_txt + "\n")
+# ===== 中转节点：复制美国节点，地址改香港IP、端口改转发口 =====
+import base64
+HK_IP = "38.76.210.194"
+US_HOST = "s.hutton.dpdns.org"
+MAP = {"48504":"8443","20632":"8444","47601":"8445","60316":"8446","50334":"8447","25919":"8448","23409":"8449","33657":"8450","35397":"8451","18392":"8452","14774":"8453"}
+relay_lines = []
+for line in us_txt.splitlines():
+    line = line.strip()
+    if not line: continue
+    m = re.search(r"@%s:(\d+)" % re.escape(US_HOST), line)
+    if m and m.group(1) in MAP:
+        nl = line.replace("@%s:%s" % (US_HOST, m.group(1)), "@%s:%s" % (HK_IP, MAP[m.group(1)]), 1)
+        nl = re.sub(r"#([^#]*)$", lambda x: "#HK中转-" + x.group(1), nl)
+        relay_lines.append(nl)
+    elif line.startswith("vmess://"):
+        try:
+            b64 = line[8:].strip()
+            obj = json.loads(base64.b64decode(b64 + "="*((4-len(b64)%4)%4)))
+            if obj.get("add") == US_HOST and str(obj.get("port")) in MAP:
+                obj["add"] = HK_IP
+                obj["port"] = int(MAP[str(obj["port"])])
+                obj["ps"] = "HK中转-" + obj.get("ps","")
+                relay_lines.append("vmess://" + base64.b64encode(json.dumps(obj).encode()).decode())
+        except Exception:
+            pass
+if relay_lines:
+    with open(WEB+"/SKPL-LIFT-all.txt","a") as f:
+        f.write("\n" + "\n".join(relay_lines) + "\n")
 if fetch("SKPL-LIFT.json"):
     us = json.load(open("/root/science/sbox.json"))
     hk = json.load(open("/tmp/hk_SKPL-LIFT.json"))
