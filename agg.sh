@@ -706,10 +706,22 @@ def role_of(line):
     return "us_direct"
 
 
-def select_nodes(family, allowed):
+def is_reality(line):
+    # VLESS/AnyTLS 带 security=reality 的节点：sing-box 核心（Hiddify 默认）不兼容新版 Xray Reality，需剔除。
+    if not line.lower().startswith(("vless://", "anytls://")):
+        return False
+    return qget(query(line), "security").lower() == "reality"
+
+
+def is_argo(line):
+    return "argo" in parse(line)["name"].lower()
+
+
+def select_nodes(family, allowed, hide_reality_argo=False):
     # 不再按角色分配或限制数量；仅按客户端可解析的协议过滤，并保持 family 顺序。
     return [line for line in family
-            if parse(line)["proto"] in allowed and not is_enc(line)]
+            if parse(line)["proto"] in allowed and not is_enc(line)
+            and not (hide_reality_argo and (is_reality(line) or is_argo(line)))]
 
 
 def node_id(line):
@@ -807,7 +819,7 @@ def main():
     ]
     clients, conversion_errors = [], sing_errors + clash_errors
     for title, slug, ext, allowed in definitions:
-        selected = select_nodes(family, allowed)
+        selected = select_nodes(family, allowed, hide_reality_argo=(slug == "hiddify"))
         if not selected:
             raise RuntimeError(title + " 没有兼容节点")
         filename = "%s-%s.%s" % (BRAND,slug,ext)
