@@ -461,7 +461,12 @@ if [ "$ip" = "$US_IP" ]; then
   name="SKPL-LIFT" vlp=yes xhp=yes hyp=yes tup=yes anp=yes ssp=yes vmp=yes vmag=yes tjtp=yes vgp=yes vwp=yes arp=yes sub=y argo=vmpt agn="sss.hutton.dpdns.org" agk="$AGK" dnym="$US_DOMAIN" bash /root/science/new.sh rep || fail "美国节点重装失败"
   US_TOKEN="${US_TOKEN:-$(cat /root/science/subtoken.log 2>/dev/null)}"
   [ -n "$US_TOKEN" ] || fail "未找到美国订阅 Token"
-  HK_TOKEN="${HK_TOKEN:-$(cat /root/science/hk_token.log 2>/dev/null)}"
+  if [ -z "$HK_TOKEN" ] && [ -s /root/science/hk_token.log ]; then
+    HK_TOKEN=$(head -1 /root/science/hk_token.log)
+  fi
+  if [ -z "$HK_TOKEN" ] && [ -s /root/science/aggregate.py ]; then
+    HK_TOKEN=$(sed -n 's/^HK_TOKEN[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' /root/science/aggregate.py | head -1)
+  fi
   [ -n "$HK_TOKEN" ] || fail "请通过 HK_TOKEN 指定香港订阅 Token（读取香港 /root/science/subtoken.log）"
   echo "$HK_TOKEN" > /root/science/hk_token.log
   chmod 600 /root/science/hk_token.log
