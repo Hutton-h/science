@@ -270,7 +270,7 @@ def to_singbox(line, used):
         o["password"] = u_user(line)
         o["tls"] = {"enabled":True,"server_name":qget(q,"sni"),"insecure":insecure}
         if qget(q,"type") == "ws":
-            o["transport"] = {"type":"ws","path":qget(q,"path"),"headers":{"Host":qget(q,"host")}}
+            o["transport"] = {"type":"ws","path":qget(q,"path").lstrip("/"),"headers":{"Host":qget(q,"host")}}
         elif qget(q,"type") == "grpc":
             o["transport"] = {"type":"grpc","service_name":qget(q,"serviceName")}
     elif proto == "ss":
