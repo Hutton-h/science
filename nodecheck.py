@@ -30,13 +30,13 @@ PRIMARY_URL = "https://speed.cloudflare.com/__down?bytes=1000000"
 FALLBACK_URL = "https://www.gstatic.com/generate_204"
 ROLE_ORDER = ("hk_relay", "hk_direct", "us_direct", "us_argo")
 DEFAULT_ROLES = {
-    "us": ("hk_direct", "us_argo"),
-    "hk": ("hk_relay", "us_direct", "us_argo"),
+    "us": ("hk_relay", "hk_direct", "us_argo"),
+    "hk": ("us_direct", "us_argo"),
 }
 RESULT_FIELDS = (
     "id", "name", "proto", "server", "port", "role", "status",
     "http_code", "latency_ms", "speed_Bps", "curl_exit", "core",
-    "error", "checked_at", "vantage",
+    "core_detail", "error", "checked_at", "vantage",
 )
 SHARE_SCHEMES = "vless|vmess|trojan|ss|hysteria2|hy2|tuic|anytls"
 UUID_RE = re.compile(
@@ -48,6 +48,17 @@ QUERY_SECRET_RE = re.compile(
     r"(?i)(\b(?:token|password|passwd|pwd|uuid|secret|auth|key)=)[^&#\s]+"
 )
 LONG_TOKEN_RE = re.compile(r"(?<![A-Za-z0-9])[A-Za-z0-9_-]{32,}(?![A-Za-z0-9])")
+SECRET_FIELD_RE = re.compile(
+    r"(?i)(?<![A-Za-z0-9_])([\"']?(?:password|passwd|pwd|token|secret|auth|key|uuid|id|publickey|privatekey|shortid)[\"']?\s*[:=]\s*)"
+    r"(\"[^\"]*\"|'[^']*'|[^,\s}\]]+)"
+)
+CORE_ERROR_RE = re.compile(
+    r"(?i)(?:\berrors?\b|\bfail(?:ed|ure)?\b|\bfatal\b|\bpanic\b|"
+    r"reality|\btls\b|handshake|\budp\b|timeout|deadline exceeded|"
+    r"connection refused|network unreachable|no route to host|permission denied|"
+    r"operation not permitted|invalid config|unknown field|json:|unauthorized|"
+    r"authentication|no such file|not found)"
+)
 
 
 class ProbeError(Exception):
@@ -60,14 +71,16 @@ def utc_now():
     ).replace("+00:00", "Z")
 
 
-def redact(value, limit=240):
+def redact(value, limit=240, redact_long_tokens=True):
     text = str(value or "")
     text = "".join(ch if ch >= " " and ch != "\x7f" else " " for ch in text)
     text = LINK_RE.sub("<redacted-link>", text)
     text = USERINFO_RE.sub(r"\1<redacted>@", text)
     text = UUID_RE.sub("<redacted-uuid>", text)
     text = QUERY_SECRET_RE.sub(r"\1<redacted>", text)
-    text = LONG_TOKEN_RE.sub("<redacted-token>", text)
+    text = SECRET_FIELD_RE.sub(r"\1<redacted>", text)
+    if redact_long_tokens:
+        text = LONG_TOKEN_RE.sub("<redacted-token>", text)
     return text[:limit]
 
 
@@ -135,13 +148,18 @@ def parse_roles(value, vantage):
 
 def public_result(result):
     cleaned = {}
+    metadata = {
+        "name", "proto", "server", "role", "status", "core",
+        "checked_at", "vantage",
+    }
     for key in RESULT_FIELDS:
         value = result.get(key)
-        if key in {
-            "name", "proto", "server", "role", "status", "core",
-            "error", "checked_at", "vantage",
-        }:
+        if key == "core_detail":
+            value = redact(value, 600)
+        elif key == "error":
             value = redact(value)
+        elif key in metadata:
+            value = redact(value, redact_long_tokens=False)
         cleaned[key] = value
     return cleaned
 
@@ -151,9 +169,9 @@ def base_result(node, vantage):
     port = parsed.get("port", "")
     return {
         "id": node["id"],
-        "name": redact(parsed.get("name", ""), 160),
-        "proto": redact(parsed.get("proto", ""), 40),
-        "server": redact(parsed.get("server", ""), 253),
+        "name": redact(parsed.get("name", ""), 160, redact_long_tokens=False),
+        "proto": redact(parsed.get("proto", ""), 40, redact_long_tokens=False),
+        "server": redact(parsed.get("server", ""), 253, redact_long_tokens=False),
         "port": int(port) if str(port).isdigit() else None,
         "role": node["role"],
         "status": "failed",
@@ -162,6 +180,7 @@ def base_result(node, vantage):
         "speed_Bps": None,
         "curl_exit": None,
         "core": None,
+        "core_detail": "",
         "error": "not_run",
         "checked_at": utc_now(),
         "vantage": vantage,
@@ -283,14 +302,77 @@ def vless_xray_outbound(line):
     }
 
 
+def vmess_xray_outbound(line):
+    obj = relaylib.vmess_obj(line)
+    if not obj.get("id") or not obj.get("add"):
+        raise ProbeError("invalid_vmess_link")
+    if not str(obj.get("port", "")).isdigit():
+        raise ProbeError("invalid_vmess_port")
+    try:
+        alter_id = int(obj.get("aid", 0) or 0)
+    except (TypeError, ValueError):
+        raise ProbeError("invalid_vmess_aid")
+    network = str(obj.get("net") or "tcp").lower()
+    if network not in ("ws", "grpc", "httpupgrade", "tcp", "raw"):
+        raise ProbeError("unsupported_xray_transport")
+    values = {
+        "path": [str(obj.get("path") or "")],
+        "host": [str(obj.get("host") or "")],
+        "headerType": [str(obj.get("type") or "none")],
+        "serviceName": [str(obj.get("path") or "")],
+        "authority": [str(obj.get("host") or "")],
+    }
+    transport_key, transport = xray_transport(network, values)
+    security = "tls" if str(obj.get("tls", "")).lower() == "tls" else "none"
+    stream = {
+        "network": network,
+        "security": security,
+        transport_key: transport,
+    }
+    if security == "tls":
+        tls = {
+            "serverName": str(obj.get("sni") or obj.get("host") or ""),
+        }
+        fingerprint = obj.get("fp")
+        if fingerprint:
+            tls["fingerprint"] = str(fingerprint)
+        alpn_value = obj.get("alpn") or []
+        if not isinstance(alpn_value, list):
+            alpn_value = str(alpn_value).split(",")
+        alpn = [str(item).strip() for item in alpn_value if str(item).strip()]
+        if alpn:
+            tls["alpn"] = alpn
+        stream["tlsSettings"] = tls
+    return {
+        "tag": "proxy",
+        "protocol": "vmess",
+        "settings": {
+            "vnext": [{
+                "address": obj["add"],
+                "port": int(obj["port"]),
+                "users": [{
+                    "id": str(obj["id"]),
+                    "alterId": alter_id,
+                    "security": str(obj.get("scy") or "auto"),
+                }],
+            }]
+        },
+        "streamSettings": stream,
+    }
+
+
 def core_for(line):
-    return "xray" if relaylib.is_enc(line) else "sing-box"
+    proto = str(relaylib.parse(line).get("proto", "")).lower()
+    return "xray" if proto in ("vless", "vmess") else "sing-box"
 
 
 def make_config(line, local_port):
     core = core_for(line)
     if core == "xray":
-        outbound = vless_xray_outbound(line)
+        if relaylib.parse(line).get("proto") == "vmess":
+            outbound = vmess_xray_outbound(line)
+        else:
+            outbound = vless_xray_outbound(line)
         return core, {
             "log": {"loglevel": "warning"},
             "inbounds": [{
@@ -400,6 +482,19 @@ def core_log_category(path):
     return ""
 
 
+def core_log_detail(path):
+    try:
+        with open(path, "rb") as handle:
+            handle.seek(0, os.SEEK_END)
+            size = handle.tell()
+            handle.seek(max(0, size - 65536), os.SEEK_SET)
+            text = handle.read(65536).decode("utf-8", "ignore")
+    except OSError:
+        return ""
+    lines = [line.strip() for line in text.splitlines() if CORE_ERROR_RE.search(line)]
+    return redact(" | ".join(lines[-3:]), 600)
+
+
 def wait_for_port(process, port, log_path, timeout=8):
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
@@ -436,12 +531,17 @@ def run_curl(port, url, max_time):
         "--silent",
         "--show-error",
         "--output", os.devnull,
-        "--proxy", "http://127.0.0.1:%d" % port,
+    ]
+    if port is None:
+        command.extend(["--noproxy", "*"])
+    else:
+        command.extend(["--proxy", "http://127.0.0.1:%d" % port])
+    command.extend([
         "--connect-timeout", "8",
         "--max-time", str(max_time),
         "--write-out", "%{http_code}|%{time_total}|%{speed_download}",
         url,
-    ]
+    ])
     try:
         completed = subprocess.run(
             command,
@@ -549,6 +649,8 @@ def check_node(node, vantage, run_id):
                     untrack_process(process)
                 if log_handle is not None:
                     log_handle.close()
+                if result["status"] == "failed":
+                    result["core_detail"] = core_log_detail(log_path)
     except ProbeError as exc:
         result["error"] = str(exc)
     except Exception as exc:
@@ -710,6 +812,10 @@ def main(argv=None):
     started = time.monotonic()
     install_signal_handlers()
     try:
+        try:
+            baseline = run_curl(None, PRIMARY_URL, 30)
+        except Exception:
+            baseline = empty_curl_result(None)
         results = run_nodes(selected, args.vantage, run_id, args.workers)
     except KeyboardInterrupt:
         stop_all_processes()
@@ -736,6 +842,7 @@ def main(argv=None):
             "run_id": run_id,
             "vantage": args.vantage,
             "roles": list(roles),
+            "baseline": baseline,
             "status": status,
             "discovered": len(nodes),
             "total": len(results),
