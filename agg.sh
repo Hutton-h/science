@@ -270,7 +270,7 @@ def to_singbox(line, used):
         o["password"] = u_user(line)
         o["tls"] = {"enabled":True,"server_name":qget(q,"sni"),"insecure":insecure}
         if qget(q,"type") == "ws":
-            o["transport"] = {"type":"ws","path":qget(q,"path"),"headers":{"Host":qget(q,"host")}}
+            o["transport"] = {"type":"ws","path":qget(q,"path").lstrip("/"),"headers":{"Host":qget(q,"host")}}
         elif qget(q,"type") == "grpc":
             o["transport"] = {"type":"grpc","service_name":qget(q,"serviceName")}
     elif proto == "ss":
@@ -351,7 +351,7 @@ def to_clash(line, used):
         elif obj.get("net") == "grpc":
             o["network"] = "grpc"; o["grpc-opts"] = {"grpc-service-name":obj.get("path","")}
         elif obj.get("net") == "httpupgrade":
-            o["network"] = "httpupgrade"; o["httpupgrade-opts"] = {"path":obj.get("path",""),"host":obj.get("host","")}
+            o["network"] = "httpupgrade"; o["httpupgrade-opts"] = {"path":obj.get("path",""),"headers":{"Host":obj.get("host","")}}
     elif proto == "trojan":
         o["password"] = u_user(line); o["sni"] = qget(q,"sni")
         if qget(q,"type") == "ws":
