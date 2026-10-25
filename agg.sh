@@ -829,7 +829,7 @@ def main():
     }
     atomic_write(BRAND+"-manifest.json",json.dumps(manifest,ensure_ascii=False,indent=2)+"\n")
     publish_atomic()
-    print("聚合完成：中转 %d，香港直连 %d，美国直连 %d；状态 %s" %
+    print("聚合完成：中转 %d，香港直连 %d，美国直连 %d，Argo备用 %d；状态 %s" %
           (len(relay),len(hk_direct),len(us_direct),len(us_argo),manifest["status"]))
 
 def restore_last_good():
