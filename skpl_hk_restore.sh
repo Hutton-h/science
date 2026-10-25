@@ -108,9 +108,10 @@ if (n1,n2)!=(1,1): raise SystemExit("hk_relay.sh 中 US_IP/US_BASE 结构异常"
 pathlib.Path(sys.argv[2]).write_text(src)
 PY
 bash -n "$WORK/hk_relay.new"
-chmod 700 "$WORK/hk_relay.new"
-cp "$SCI/hk_relay.sh" "$WORK/hk_relay.before"
-mv -f "$WORK/hk_relay.new" "$SCI/hk_relay.sh"
+relay_tmp=$(mktemp "$SCI/.hk_relay.XXXXXX")
+cp "$WORK/hk_relay.new" "$relay_tmp"
+chmod 700 "$relay_tmp"
+mv -f "$relay_tmp" "$SCI/hk_relay.sh"
 "$SCI/hk_relay.sh" || fail "中转刷新脚本失败，详见 $SCI/hk_relay.log"
 
 iptables -t nat -S PREROUTING > "$WORK/prerouting.txt"
