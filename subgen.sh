@@ -1,5 +1,5 @@
 #!/bin/bash
-# 本机订阅分发：按客户端协议筛选，每个客户端最多 12 个节点，并生成 manifest。
+# 本机订阅分发：按客户端可解析的协议过滤，不再限制数量，并生成 manifest。
 export LANG=C
 command -v python3 >/dev/null 2>&1 || { echo "[subgen] 需要 python3"; exit 1; }
 python3 - "$HOME" <<'PYEOF'
@@ -58,7 +58,7 @@ clients_def = [
 ]
 clients = []
 for title, slug, allowed in clients_def:
-    selected = [x for x in lines if parse(x)["proto"] in allowed][:12]
+    selected = [x for x in lines if parse(x)["proto"] in allowed]
     if not selected:
         continue
     text = base64.b64encode(("\n".join(selected)+"\n").encode()).decode() + "\n"

@@ -5,7 +5,7 @@ export LANG=en_US.UTF-8
 
 GH_URL="${GH_URL:-https://api.github.com/repos/Hutton-h/science/contents/science.sh}"
 PANEL_GH_URL="${PANEL_GH_URL:-https://api.github.com/repos/Hutton-h/science/contents/panel.html?ref=main}"
-PANEL_SHA256="82c07354ff707ff2509ea9264adae7e7f17758a3f6b7cdb1c596973272918e11"
+PANEL_SHA256="1F7AFC11CABDBDDA68ADDEDFD12C879443E9391D2E5CCCAE4580D1A3CF935E38"
 PANEL_ONLY="${PANEL_ONLY:-0}"
 US_IP="${US_IP:-170.178.174.97}"
 HK_IP="${HK_IP:-38.76.210.194}"
@@ -550,7 +550,6 @@ CACHE = pathlib.Path("/root/science/aggregate_cache")
 STAGE = WEB / ".aggregate_stage"
 HK_BASE = "__HK_BASE__"
 BRAND = "SKPL-LIFT"
-MAX_NODE = 12
 # 香港云侧 UDP 已实测不可用；仅在统一发布层过滤，原始节点与服务配置保留。
 UNAVAILABLE_PROTOS = {"hysteria2", "hy2", "tuic"}
 WEB.mkdir(parents=True, exist_ok=True)
@@ -708,23 +707,9 @@ def role_of(line):
 
 
 def select_nodes(family, allowed):
-    groups = {k:[] for k in ("hk_relay","hk_direct","us_direct","us_argo")}
-    for line in family:
-        if parse(line)["proto"] in allowed and not is_enc(line):
-            groups[role_of(line)].append(line)
-    argo = groups["us_argo"][:2]
-    usd = groups["us_direct"][:2]
-    hkd = groups["hk_direct"][:2]
-    relay_count = max(0, MAX_NODE - len(argo) - len(usd) - len(hkd))
-    selected = groups["hk_relay"][:relay_count] + hkd + usd + argo
-    used = set(selected)
-    for role in ("hk_relay","hk_direct","us_direct","us_argo"):
-        for line in groups[role]:
-            if line not in used and len(selected) < MAX_NODE:
-                selected.append(line)
-                used.add(line)
-    selected.sort(key=family.index)
-    return selected
+    # 不再按角色分配或限制数量；仅按客户端可解析的协议过滤，并保持 family 顺序。
+    return [line for line in family
+            if parse(line)["proto"] in allowed and not is_enc(line)]
 
 
 def node_id(line):
@@ -845,8 +830,6 @@ def main():
         atomic_write(filename,content)
         conversion_errors.extend(errs)
         clients.append({"name":title,"file":filename,"nodes":count,"format":fmt})
-        if count > MAX_NODE:
-            raise RuntimeError(title + " 超过 12 个节点")
 
     errors = list(conversion_errors)
     sources = {"hk_relay":relay_source,"hk_direct":hk_source,"us_direct":usd_source,"us_argo":argo_source}
