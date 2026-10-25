@@ -551,6 +551,8 @@ STAGE = WEB / ".aggregate_stage"
 HK_BASE = "__HK_BASE__"
 BRAND = "SKPL-LIFT"
 MAX_NODE = 12
+# 香港云侧 UDP 已实测不可用；仅在统一发布层过滤，原始节点与服务配置保留。
+UNAVAILABLE_PROTOS = {"hysteria2", "hy2", "tuic"}
 WEB.mkdir(parents=True, exist_ok=True)
 GOOD.mkdir(parents=True, exist_ok=True)
 CACHE.mkdir(parents=True, exist_ok=True)
@@ -752,7 +754,7 @@ def publish_atomic():
 
 def main():
     raw_us = [x.strip() for x in open("/root/science/jhsub.txt",encoding="utf-8",errors="ignore").read().splitlines() if x.strip()]
-    us_lines = [x for x in raw_us if valid(x)]
+    us_lines = [x for x in raw_us if valid(x) and parse(x)["proto"] not in UNAVAILABLE_PROTOS]
     if not us_lines and not raw_us:
         raise RuntimeError("美国 jhsub.txt 为空")
 
@@ -770,7 +772,9 @@ def main():
         return out
 
     relay_raw, relay_source = fetch_hk_nodes("relay.txt", "relay.txt", required=True)
-    relay = dedup(relay_raw)
+    relay = dedup(x for x in relay_raw if parse(x)["proto"] not in UNAVAILABLE_PROTOS)
+    if not relay:
+        raise RuntimeError("香港中转在过滤不可用 UDP 节点后为空")
     relay_source["nodes"] = len(relay)
     hk_manifest = fetch_relay_manifest()
     relay_source["stale"] = relay_source["stale"] or bool(hk_manifest.get("stale"))
@@ -778,10 +782,10 @@ def main():
     relay_source["errors"].extend(hk_manifest.get("errors", []))
     if hk_manifest.get("status") in ("degraded","error"):
         relay_source["status"] = "degraded" if relay_source["stale"] or relay_source["errors"] else hk_manifest.get("status")
-    relay_source["mapping"] = hk_manifest.get("mapping", [])
+    relay_source["mapping"] = [x for x in hk_manifest.get("mapping", []) if x.get("protocol") not in UNAVAILABLE_PROTOS]
 
     hk_direct_raw, hk_source = fetch_hk_nodes("SKPL-LIFT.txt", "hk_direct.txt", required=False)
-    hk_direct = dedup(hk_direct_raw)
+    hk_direct = dedup(x for x in hk_direct_raw if parse(x)["proto"] not in UNAVAILABLE_PROTOS)
     hk_source["nodes"] = len(hk_direct)
     us_argo_raw, argo_source = select_us_argo(raw_us)
     us_argo = dedup(us_argo_raw)
