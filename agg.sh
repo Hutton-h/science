@@ -270,7 +270,7 @@ def to_singbox(line, used):
         o["password"] = u_user(line)
         o["tls"] = {"enabled":True,"server_name":qget(q,"sni"),"insecure":insecure}
         if qget(q,"type") == "ws":
-            o["transport"] = {"type":"ws","path":qget(q,"path").lstrip("/"),"headers":{"Host":qget(q,"host")}}
+            o["transport"] = {"type":"ws","path":qget(q,"path"),"headers":{"Host":qget(q,"host")}}
         elif qget(q,"type") == "grpc":
             o["transport"] = {"type":"grpc","service_name":qget(q,"serviceName")}
     elif proto == "ss":
@@ -349,15 +349,15 @@ def to_clash(line, used):
         if obj.get("net") == "ws":
             o["network"] = "ws"; o["ws-opts"] = {"path":obj.get("path",""),"headers":{"Host":obj.get("host","")}}
         elif obj.get("net") == "grpc":
-            o["network"] = "grpc"; o["grpc-opts"] = {"grpc-service-name":obj.get("path","")}
+            o["network"] = "grpc"; o["grpc-opts"] = {"path":obj.get("path","")}
         elif obj.get("net") == "httpupgrade":
-            o["network"] = "httpupgrade"; o["httpupgrade-opts"] = {"path":obj.get("path",""),"headers":{"Host":obj.get("host","")}}
+            o["network"] = "httpupgrade"; o["httpupgrade-opts"] = {"path":obj.get("path",""),"host":obj.get("host","")}
     elif proto == "trojan":
         o["password"] = u_user(line); o["sni"] = qget(q,"sni")
         if qget(q,"type") == "ws":
             o["network"] = "ws"; o["ws-opts"] = {"path":qget(q,"path"),"headers":{"Host":qget(q,"host")}}
         elif qget(q,"type") == "grpc":
-            o["network"] = "grpc"; o["grpc-opts"] = {"grpc-service-name":qget(q,"serviceName")}
+            o["network"] = "grpc"; o["grpc-opts"] = {"path":qget(q,"path"),"headers":{"Host":qget(q,"host")}}
     elif proto == "ss":
         method, password, host, port, qs, name = ss_parts(line)
         o["cipher"] = method; o["password"] = password
@@ -463,11 +463,11 @@ if [ "${NODECHECK:-0}" = "1" ]; then
   if [ "$ip" = "$US_IP" ]; then role=us; else role=hk; fi
   nodecheck_tmp=$(mktemp /root/science/.nodecheck.XXXXXX) || fail "无法创建拨测临时文件"
   curl -fsSL --max-time 60 -H "Accept: application/vnd.github.raw" "https://api.github.com/repos/Hutton-h/science/contents/nodecheck.py?ref=main" -o "$nodecheck_tmp" || { rm -f "$nodecheck_tmp"; fail "nodecheck.py 下载失败"; }
-  printf '%s  %s\n' 'fa4ee6377894ab10d659b40a5261f7e5574fb33dcdc0b4391c60997421901c2b' "$nodecheck_tmp" | sha256sum -c - >/dev/null || { rm -f "$nodecheck_tmp"; fail "nodecheck.py 摘要与已审核版本不一致"; }
+  printf '%s  %s\n' '7293a31ef6310bce84f04c1de68a30cf3b478523143fde38acc202b326c58961' "$nodecheck_tmp" | sha256sum -c - >/dev/null || { rm -f "$nodecheck_tmp"; fail "nodecheck.py 摘要与已审核版本不一致"; }
   python3 -m py_compile "$nodecheck_tmp" || { rm -f "$nodecheck_tmp"; fail "nodecheck.py Python 语法检查失败"; }
   chmod 700 "$nodecheck_tmp"
   mv -f "$nodecheck_tmp" /root/science/nodecheck.py || fail "nodecheck.py 安装失败"
-  python3 /root/science/nodecheck.py --vantage "$role" --subscription https://s.hutton.dpdns.org/SKPL-LIFT-all.txt --output "/root/science/nodecheck-$role.json" || fail "节点拨测执行失败"
+  python3 /root/science/nodecheck.py --vantage "$role" --run-id "${RUN_ID:-pre-fix}" --subscription https://s.hutton.dpdns.org/SKPL-LIFT-all.txt --output "/root/science/nodecheck-$role.json" || fail "节点拨测执行失败"
   exit 0
 fi
 
