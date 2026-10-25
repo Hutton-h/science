@@ -3679,20 +3679,6 @@ server {
         proxy_pass http://127.0.0.1:${subport};
         proxy_set_header Host \$host;
     }
-    location ~ ^/(?:[^/]+/)?status\.json$ {
-        auth_basic "Science Panel";
-        auth_basic_user_file /etc/nginx/conf.d/.htpasswd_science;
-        rewrite ^/(.*)$ /${subtoken}/\$1 break;
-        proxy_pass http://127.0.0.1:${subport};
-        proxy_set_header Host \$host;
-    }
-    location ~ ^/(?:[^/]+/)?status\.json$ {
-        auth_basic "Science Panel";
-        auth_basic_user_file /etc/nginx/conf.d/.htpasswd_science;
-        rewrite ^/(.*)$ /${subtoken}/\$1 break;
-        proxy_pass http://127.0.0.1:${subport};
-        proxy_set_header Host \$host;
-    }
     location ~ \.(yaml|json|txt)$ {
         auth_basic off;
         rewrite ^/(.*)$ /${subtoken}/\$1 break;
@@ -3759,6 +3745,13 @@ server {
     server_name $dnym_now;
     ssl_certificate /etc/nginx/certs/${dnym_now}_cert.pem;
     ssl_certificate_key /etc/nginx/certs/${dnym_now}_key.pem;
+    location ~ ^/(?:[^/]+/)?status\.json$ {
+        auth_basic "Science Panel";
+        auth_basic_user_file /etc/nginx/conf.d/.htpasswd_science;
+        rewrite ^/(.*)$ /${subtoken}/\$1 break;
+        proxy_pass http://127.0.0.1:${subport};
+        proxy_set_header Host \$host;
+    }
     location ~ \.(yaml|json|txt)$ {
         auth_basic off;
         rewrite ^/(.*)$ /${subtoken}/\$1 break;
@@ -3813,6 +3806,13 @@ server {
     server_name $dnym_now;
     ssl_certificate /etc/nginx/certs/${dnym_now}_cert.pem;
     ssl_certificate_key /etc/nginx/certs/${dnym_now}_key.pem;
+    location ~ ^/(?:[^/]+/)?status\.json$ {
+        auth_basic "Science Panel";
+        auth_basic_user_file /etc/nginx/conf.d/.htpasswd_science;
+        rewrite ^/(.*)$ /${subtoken}/\$1 break;
+        proxy_pass http://127.0.0.1:${subport};
+        proxy_set_header Host \$host;
+    }
     location ~ \.(yaml|json|txt)$ {
         auth_basic off;
         rewrite ^/(.*)$ /${subtoken}/\$1 break;

@@ -475,9 +475,13 @@ if [ "$ip" = "$US_IP" ]; then
   if [ -z "$HK_TOKEN" ] && [ -s /root/science/aggregate.py ]; then
     HK_TOKEN=$(sed -n 's/^HK_TOKEN[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' /root/science/aggregate.py | head -1)
   fi
-  [ -n "$HK_TOKEN" ] || fail "请通过 HK_TOKEN 指定香港订阅 Token（读取香港 /root/science/subtoken.log）"
-  echo "$HK_TOKEN" > /root/science/hk_token.log
-  chmod 600 /root/science/hk_token.log
+  if [ -n "$HK_TOKEN" ]; then
+    echo "$HK_TOKEN" > /root/science/hk_token.log
+    chmod 600 /root/science/hk_token.log
+  fi
+  if [ -z "$HK_BASE" ] && [ -z "$HK_TOKEN" ]; then
+    fail "未设置 HK_BASE；旧版 HTTP 模式才需要 HK_TOKEN，新部署请使用 HK_BASE=https://香港域名"
+  fi
   if [ -z "$HK_BASE" ] && [ "${ALLOW_INSECURE_HTTP:-0}" = "1" ]; then
     HK_BASE="http://$HK_IP:$HK_PORT/$HK_TOKEN"
     echo "警告：本次使用明文 HTTP 拉取香港订阅，请尽快改为有效 HTTPS 地址"
