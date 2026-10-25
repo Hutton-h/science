@@ -349,15 +349,15 @@ def to_clash(line, used):
         if obj.get("net") == "ws":
             o["network"] = "ws"; o["ws-opts"] = {"path":obj.get("path",""),"headers":{"Host":obj.get("host","")}}
         elif obj.get("net") == "grpc":
-            o["network"] = "grpc"; o["grpc-opts"] = {"path":obj.get("path","")}
+            o["network"] = "grpc"; o["grpc-opts"] = {"grpc-service-name":obj.get("path","")}
         elif obj.get("net") == "httpupgrade":
-            o["network"] = "httpupgrade"; o["httpupgrade-opts"] = {"path":obj.get("path",""),"host":obj.get("host","")}
+            o["network"] = "httpupgrade"; o["httpupgrade-opts"] = {"path":obj.get("path",""),"headers":{"Host":obj.get("host","")}}
     elif proto == "trojan":
         o["password"] = u_user(line); o["sni"] = qget(q,"sni")
         if qget(q,"type") == "ws":
             o["network"] = "ws"; o["ws-opts"] = {"path":qget(q,"path"),"headers":{"Host":qget(q,"host")}}
         elif qget(q,"type") == "grpc":
-            o["network"] = "grpc"; o["grpc-opts"] = {"path":qget(q,"path"),"headers":{"Host":qget(q,"host")}}
+            o["network"] = "grpc"; o["grpc-opts"] = {"grpc-service-name":qget(q,"serviceName")}
     elif proto == "ss":
         method, password, host, port, qs, name = ss_parts(line)
         o["cipher"] = method; o["password"] = password
@@ -829,7 +829,7 @@ def main():
     }
     atomic_write(BRAND+"-manifest.json",json.dumps(manifest,ensure_ascii=False,indent=2)+"\n")
     publish_atomic()
-    print("聚合完成：中转 %d，香港直连 %d，美国直连 %d，Argo备用 %d；状态 %s" %
+    print("聚合完成：中转 %d，香港直连 %d，美国直连 %d；状态 %s" %
           (len(relay),len(hk_direct),len(us_direct),len(us_argo),manifest["status"]))
 
 def restore_last_good():
