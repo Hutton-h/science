@@ -6,13 +6,15 @@
 <title>SKPL-LIFT 订阅中心</title>
 <style>
 :root{--bg:#0f1115;--card:#171a21;--card2:#1d212b;--line:#2a2f3a;--txt:#e6e9ef;--sub:#9aa3b2;--acc:#4f8cff;--ok:#2ecc71;--warn:#f5b942;--err:#ff5a5a;--r:14px}
-*{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--txt);font-family:"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;line-height:1.5;padding-bottom:50px}.wrap{max-width:980px;margin:auto;padding:24px 16px}header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px}h1{font-size:22px}h1 small{display:block;font-size:12px;color:var(--sub);font-weight:400;margin-top:3px}.status{font-size:13px;padding:6px 14px;border-radius:20px;background:var(--card2);border:1px solid var(--line)}.status.ok{color:var(--ok)}.status.err{color:var(--err)}.status.loading{color:var(--sub)}.cards,.clients{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}.cards{margin-bottom:24px}.num,.card,.nodes,.msg{background:var(--card);border:1px solid var(--line);border-radius:var(--r)}.num{padding:16px}.num .v{font-size:30px;font-weight:700}.num .k{font-size:13px;color:var(--sub)}.acc .v{color:var(--acc)}.okc .v{color:var(--ok)}.warnc .v{color:var(--warn)}h2{font-size:16px;margin:25px 0 12px}h2 .hint{font-size:12px;color:var(--sub);font-weight:400}.clients{grid-template-columns:repeat(auto-fit,minmax(275px,1fr))}.card{padding:16px;display:flex;flex-direction:column;gap:10px}.top{display:flex;justify-content:space-between;align-items:center;gap:8px}.nm{font-size:16px;font-weight:600}.badge,.tag{font-size:11px;padding:3px 9px;border-radius:11px;background:var(--card2);color:var(--sub);white-space:nowrap}.file{font-size:12px;color:var(--sub);font-family:Consolas,monospace;word-break:break-all}.btns{display:flex;gap:8px;flex-wrap:wrap}.btn{flex:1;text-align:center;padding:9px 4px;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:var(--txt);font-size:13px;cursor:pointer;text-decoration:none}.btn:hover{border-color:var(--acc);color:#fff}.btn.primary{background:var(--acc);border-color:var(--acc);color:#fff}.nodes{overflow:hidden}.node{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}.node:last-child{border:none}.ico{width:38px;height:38px;border-radius:10px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--acc);flex:none}.main{flex:1;min-width:0}.name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meta{font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tag.relay{background:#4f8cff26;color:#7fb0ff}.tag.hk_direct{background:#2ecc7124;color:#58d68d}.tag.us_direct{background:#f5b94224;color:#f7c948}.msg{padding:14px 16px;font-size:13px}.msg.err{color:var(--err)}.msg.empty{color:var(--sub)}.hidden{display:none}.modal{position:fixed;inset:0;background:#0009;display:none;align-items:center;justify-content:center;z-index:50;padding:16px}.modal.show{display:flex}.mbox{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;max-width:430px;width:100%;text-align:center;overflow:auto}.mbox h3{font-size:16px}.mbox .sub{font-size:12px;color:var(--sub);margin:6px 0 14px;word-break:break-all}.mbox canvas{display:block;margin:auto;max-width:100%;height:auto}.mbox .btns{margin-top:14px}footer{margin-top:28px;text-align:center;font-size:12px;color:var(--sub)}
+*{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--txt);font-family:"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;line-height:1.5;padding-bottom:50px}.wrap{max-width:980px;margin:auto;padding:24px 16px}header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px}h1{font-size:22px}h1 small{display:block;font-size:12px;color:var(--sub);font-weight:400;margin-top:3px}.status{font-size:13px;padding:6px 14px;border-radius:20px;background:var(--card2);border:1px solid var(--line)}.status.ok{color:var(--ok)}.status.warn{color:var(--warn)}.status.err{color:var(--err)}.status.loading{color:var(--sub)}
+.health{margin-bottom:12px;font-size:12px;color:var(--sub)}.health .bad{color:var(--warn)}.cards,.clients{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}.cards{margin-bottom:24px}.num,.card,.nodes,.msg{background:var(--card);border:1px solid var(--line);border-radius:var(--r)}.num{padding:16px}.num .v{font-size:30px;font-weight:700}.num .k{font-size:13px;color:var(--sub)}.acc .v{color:var(--acc)}.okc .v{color:var(--ok)}.warnc .v{color:var(--warn)}h2{font-size:16px;margin:25px 0 12px}h2 .hint{font-size:12px;color:var(--sub);font-weight:400}.clients{grid-template-columns:repeat(auto-fit,minmax(275px,1fr))}.card{padding:16px;display:flex;flex-direction:column;gap:10px}.top{display:flex;justify-content:space-between;align-items:center;gap:8px}.nm{font-size:16px;font-weight:600}.badge,.tag{font-size:11px;padding:3px 9px;border-radius:11px;background:var(--card2);color:var(--sub);white-space:nowrap}.file{font-size:12px;color:var(--sub);font-family:Consolas,monospace;word-break:break-all}.btns{display:flex;gap:8px;flex-wrap:wrap}.btn{flex:1;text-align:center;padding:9px 4px;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:var(--txt);font-size:13px;cursor:pointer;text-decoration:none}.btn:hover{border-color:var(--acc);color:#fff}.btn.primary{background:var(--acc);border-color:var(--acc);color:#fff}.nodes{overflow:hidden}.node{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}.node:last-child{border:none}.ico{width:38px;height:38px;border-radius:10px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--acc);flex:none}.main{flex:1;min-width:0}.name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meta{font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tag.hk_relay{background:#4f8cff26;color:#7fb0ff}.tag.hk_direct{background:#2ecc7124;color:#58d68d}.tag.us_direct{background:#f5b94224;color:#f7c948}.tag.us_argo{background:#b07cff26;color:#c7a5ff}.msg{padding:14px 16px;font-size:13px}.msg.err{color:var(--err)}.msg.empty{color:var(--sub)}.hidden{display:none}.modal{position:fixed;inset:0;background:#0009;display:none;align-items:center;justify-content:center;z-index:50;padding:16px}.modal.show{display:flex}.mbox{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;max-width:430px;width:100%;text-align:center;overflow:auto}.mbox h3{font-size:16px}.mbox .sub{font-size:12px;color:var(--sub);margin:6px 0 14px;word-break:break-all}.mbox canvas{display:block;margin:auto;max-width:100%;height:auto}.mbox .btns{margin-top:14px}footer{margin-top:28px;text-align:center;font-size:12px;color:var(--sub)}
 </style>
 </head>
 <body>
 <div class="wrap">
 <header><h1>SKPL-LIFT 订阅中心<small>香港中转 · 香港直连 · 美国直连</small></h1><div class="status loading" id="status">正在加载…</div></header>
 <section class="cards" id="overview"></section>
+<div class="msg health" id="health"></div>
 <div id="errors"></div>
 <h2>客户端订阅 <span class="hint">按客户端协议筛选，每个最多 12 个节点</span></h2>
 <section class="clients" id="clients"></section>
@@ -30,10 +32,11 @@ const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>
 const MANIFEST=location.origin+"/SKPL-LIFT-manifest.json";
 let manifest=null,loading=false,qrText="";
 const icons={vless:"VL",vmess:"VM",trojan:"TR",ss:"SS",hysteria2:"H2",tuic:"TU",anytls:"AT"};
-const roles={hk_relay:"香港中转",hk_direct:"香港直连",us_direct:"美国直连"};
+const roles={hk_relay:"香港中转",hk_direct:"香港直连",us_direct:"美国直连",us_argo:"美国隧道备用"};
+const sourceLabels={hk_relay:"香港中转",hk_direct:"香港直连",us_direct:"美国直连",us_argo:"美国隧道"};
 function clientUrl(c){return location.origin+"/"+c.file.split("/").map(encodeURIComponent).join("/")+"?t="+Date.now();}
 function clearData(){
-  manifest=null;$("overview").innerHTML="";$("clients").innerHTML="";$("nodeList").innerHTML="";$("nodeList").classList.add("hidden");$("nodeMsg").classList.remove("hidden");
+  manifest=null;$("overview").innerHTML="";$("clients").innerHTML="";$("health").innerHTML="";$("nodeList").innerHTML="";$("nodeList").classList.add("hidden");$("nodeMsg").classList.remove("hidden");
 }
 function renderError(message){
   clearData();$("status").className="status err";$("status").textContent="加载失败";
@@ -42,7 +45,14 @@ function renderError(message){
 }
 function renderOverview(){
   const c=manifest.counts||{};
-  $("overview").innerHTML=[["全家桶候选",c.total||0,"acc"],["香港中转",c.hk_relay||0,"okc"],["香港直连",c.hk_direct||0,""],["美国直连",c.us_direct||0,"warnc"]].map(x=>'<div class="num '+x[2]+'"><div class="v">'+x[1]+'</div><div class="k">'+x[0]+'</div></div>').join("");
+  $("overview").innerHTML=[["全家桶候选",c.total||0,"acc"],["香港中转",c.hk_relay||0,"okc"],["香港直连",c.hk_direct||0,""],["美国直连",c.us_direct||0,"warnc"],["美国隧道备用",c.us_argo||0,""]].map(x=>'<div class="num '+x[2]+'"><div class="v">'+x[1]+'</div><div class="k">'+x[0]+'</div></div>').join("");
+}
+function renderHealth(){
+  const sources=manifest.sources||{};
+  $("health").innerHTML=Object.keys(sourceLabels).filter(k=>sources[k]).map(k=>{
+    const s=sources[k],bad=s.stale||s.status!=="ok";
+    return '<span class="'+(bad?'bad':'')+'">'+sourceLabels[k]+' '+s.nodes+' 个'+(s.stale?'（上次成功）':s.status==='degraded'?'（降级）':'')+'</span>';
+  }).join(' · ');
 }
 function renderClients(){
   const clients=manifest.clients||[];
@@ -76,9 +86,12 @@ async function loadAll(){
   if(loading)return;loading=true;$("status").className="status loading";$("status").textContent="正在刷新…";
   try{
     const r=await fetch(MANIFEST+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw new Error("manifest HTTP "+r.status);
-    const data=await r.json();if(!data||data.status!=="ok")throw new Error((data.errors||["服务器未提供有效订阅"]).join("；"));
-    manifest=data;$("errors").innerHTML="";renderOverview();renderClients();renderNodes();
-    $("status").className="status ok";$("status").textContent="已更新 "+(manifest.generated_at||"");
+    const data=await r.json();if(!data||data.status==="error")throw new Error((data.errors||["服务器未提供有效订阅"]).join("；"));
+    manifest=data;renderOverview();renderHealth();renderClients();renderNodes();
+    const warnings=manifest.errors||[];
+    $("errors").innerHTML=warnings.length?'<div class="msg err">'+(manifest.stale?'使用上次成功版本 · ':'')+esc(warnings.join('；'))+'</div>':'';
+    $("status").className=manifest.status==='degraded'?'status warn':'status ok';
+    $("status").textContent=(manifest.status==='degraded'?'降级更新 ':'已更新 ')+(manifest.last_success||manifest.updated_at||manifest.generated_at||"");
   }catch(e){renderError(e.message||"无法加载订阅");}finally{loading=false;}
 }
 loadAll();setInterval(loadAll,60000);
