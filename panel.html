@@ -71,7 +71,7 @@ function renderFamily(){
   const f=familyFormat();
   if(!f||!f.file){$("familySubscription").innerHTML='<div class="msg err">manifest 中没有全体 Base64 总订阅。</div>';return;}
   const count=f.nodes??0;
-  $("familySubscription").innerHTML='<div class="card"><div class="top"><div class="nm">全体节点总订阅</div><div class="badge">'+esc(count)+' 个节点</div></div><div class="file">标准 Base64 · '+esc(f.file)+'</div><div class="desc">包含全部 '+esc(count)+' 个全协议候选节点，不应用单客户端 12 节点上限。客户端需自行支持订阅中的相应协议。</div><div class="btns"><button class="btn primary" onclick="downloadFamily()">下载</button><button class="btn" onclick="copyFamily()">复制订阅地址</button><button class="btn" onclick="showFamilyQr()">二维码</button></div></div>';
+  $("familySubscription").innerHTML='<div class="card"><div class="top"><div class="nm">全体节点总订阅</div><div class="badge">'+esc(count)+' 个节点</div></div><div class="file">标准 Base64 · '+esc(f.file)+'</div><div class="desc">包含全部 '+esc(count)+' 个全协议候选节点。客户端需自行支持订阅中的相应协议。</div><div class="btns"><button class="btn primary" onclick="downloadFamily()">下载</button><button class="btn" onclick="copyFamily()">复制订阅地址</button><button class="btn" onclick="showFamilyQr()">二维码</button></div></div>';
 }
 function renderPrivateStatus(){
   const el=$("privateMsg");
