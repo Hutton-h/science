@@ -5,7 +5,7 @@ export LANG=en_US.UTF-8
 
 GH_URL="${GH_URL:-https://api.github.com/repos/Hutton-h/science/contents/science.sh}"
 PANEL_GH_URL="${PANEL_GH_URL:-https://api.github.com/repos/Hutton-h/science/contents/panel.html?ref=main}"
-PANEL_SHA256="2D13CA525389A58C9031071C54BA38CA1D8DC326C078A310A708851E1A2AA0BC"
+PANEL_SHA256="2d13ca525389a58c9031071c54ba38ca1d8dc326c078a310a708851e1a2aa0bc"
 PANEL_ONLY="${PANEL_ONLY:-0}"
 US_IP="${US_IP:-170.178.174.97}"
 HK_IP="${HK_IP:-38.76.210.194}"
