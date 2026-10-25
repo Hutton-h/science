@@ -11,21 +11,28 @@ trap cleanup_on_exit INT TERM
 
 # 生成不冲突的随机端口：避免与其他已生成端口重复、与系统已监听端口冲突、落入 hyjpt 跳跃段
 gen_port() {
-    local p i range_lo range_hi
-    for i in 1 2 3 4 5 6 7 8 9 10; do
+    local p i v existing range_lo range_hi file
+    for i in $(seq 1 50); do
         p=$(shuf -i 10000-65535 -n 1)
-        # 与其他协议端口文件冲突
-        if grep -h . "$HOME/science/port_"* 2>/dev/null | grep -qx "$p"; then continue; fi
-        # 与系统已监听端口冲突
-        if command -v ss >/dev/null 2>&1 && ss -Hlntu 2>/dev/null | grep -Eq ":$p " 2>/dev/null; then continue; fi
-        # 避免落入 hyjpt 跳跃段（UDP 协议端口会被 DNAT 劫持）
+        for file in "$HOME/science/port_"* "$HOME/science/subport.log"; do
+            [ -f "$file" ] || continue
+            grep -qx "$p" "$file" 2>/dev/null && continue 2
+        done
+        for v in ${!port_@}; do
+            existing=${!v}
+            [ -n "$existing" ] && [ "$existing" = "$p" ] && continue 2
+        done
+        [ -n "$subpt" ] && [ "$subpt" = "$p" ] && continue
+        [ -n "$subport" ] && [ "$subport" = "$p" ] && continue
+        if command -v ss >/dev/null 2>&1 && ss -Hlntu 2>/dev/null | grep -Eq ":$p "; then continue; fi
         if [ -n "$hyjpt" ]; then
             range_lo=${hyjpt%%:*}; range_hi=${hyjpt##*:}
-            if [ "$range_lo" -le "$p" ] 2>/dev/null && [ "$p" -le "$range_hi" ] 2>/dev/null; then continue; fi
+            if echo "$range_lo$range_hi" | grep -Eq '^[0-9]+$' && [ "$range_lo" -le "$p" ] && [ "$p" -le "$range_hi" ]; then continue; fi
         fi
         echo "$p"; return 0
     done
-    echo "$p"
+    echo "无法分配不冲突的随机端口" >&2
+    return 1
 }
 
 [ -z "${vlpt+x}" ] || vlp=yes
@@ -51,12 +58,12 @@ gen_port() {
 [ -z "${vmhupt+x}" ] || vmhup=yes
 # 一键全协议预设：all=y 自动开启全部协议+Hysteria2端口跳跃+SOCKS5+订阅（Argo需额外指定agn和agk）
 [ -z "${all+x}" ] || { vlp=yes; vmp=yes; vmag=yes; vwp=yes; hyp=yes; hyjpt="10000:20000"; tup=yes; xhp=yes; vxp=yes; anp=yes; arp=yes; ssp=yes; sop=yes; tjp=yes; tjgp=yes; tjtp=yes; xup=yes; xcp=yes; vgp=yes; vhup=yes; vmgp=yes; vmhup=yes; sub=y; vmag=yes; }
-if find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(s|x)' || pgrep -f 'science/(s|x)' >/dev/null 2>&1; then
+if find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(sing-box|xray)' || pgrep -f 'science/(sing-box|xray)' >/dev/null 2>&1; then
 if [ "$1" = "rep" ]; then
 [ "$xcp" = yes ] || [ "$xup" = yes ] || [ "$tjp" = yes ] || [ "$tjgp" = yes ] || [ "$tjtp" = yes ] || [ "$vgp" = yes ] || [ "$vhup" = yes ] || [ "$vmgp" = yes ] || [ "$vmhup" = yes ] || [ "$vwp" = yes ] || [ "$sop" = yes ] || [ "$vxp" = yes ] || [ "$ssp" = yes ] || [ "$vlp" = yes ] || [ "$vmp" = yes ] || [ "$hyp" = yes ] || [ "$tup" = yes ] || [ "$xhp" = yes ] || [ "$anp" = yes ] || [ "$arp" = yes ] || { echo "提示：rep重置协议时，请在脚本前至少设置一个协议变量哦，再见！💣"; exit; }
 fi
 else
-[ "$1" = "del" ] || [ "$1" = "panel" ] || [ "$1" = "statusgen" ] || [ "$1" = "list" ] || [ "$xcp" = yes ] || [ "$xup" = yes ] || [ "$tjp" = yes ] || [ "$tjgp" = yes ] || [ "$tjtp" = yes ] || [ "$vgp" = yes ] || [ "$vhup" = yes ] || [ "$vmgp" = yes ] || [ "$vmhup" = yes ] || [ "$vwp" = yes ] || [ "$sop" = yes ] || [ "$vxp" = yes ] || [ "$ssp" = yes ] || [ "$vlp" = yes ] || [ "$vmp" = yes ] || [ "$hyp" = yes ] || [ "$tup" = yes ] || [ "$xhp" = yes ] || [ "$anp" = yes ] || [ "$arp" = yes ] || { echo "提示：未安装science脚本，请在脚本前至少设置一个协议变量哦，再见！💣"; exit; }
+[ "$1" = "del" ] || [ "$1" = "panel" ] || [ "$1" = "statusgen" ] || [ "$1" = "list" ] || [ "$1" = "res" ] || [ "$1" = "upx" ] || [ "$1" = "ups" ] || [ "$1" = "nginx" ] || [ "$xcp" = yes ] || [ "$xup" = yes ] || [ "$tjp" = yes ] || [ "$tjgp" = yes ] || [ "$tjtp" = yes ] || [ "$vgp" = yes ] || [ "$vhup" = yes ] || [ "$vmgp" = yes ] || [ "$vmhup" = yes ] || [ "$vwp" = yes ] || [ "$sop" = yes ] || [ "$vxp" = yes ] || [ "$ssp" = yes ] || [ "$vlp" = yes ] || [ "$vmp" = yes ] || [ "$hyp" = yes ] || [ "$tup" = yes ] || [ "$xhp" = yes ] || [ "$anp" = yes ] || [ "$arp" = yes ] || { echo "提示：未安装science脚本，请在脚本前至少设置一个协议变量哦，再见！💣"; exit; }
 fi
 export uuid=${uuid:-''}
 export port_vl_re=${vlpt:-''}
@@ -91,7 +98,7 @@ export oap=${oap:-''}
 export dnym=${dnym:-''}
 [ -z "$dnym" ] && [ -s "$HOME/science/dnym.log" ] && dnym=$(head -1 "$HOME/science/dnym.log")
 v46url="https://icanhazip.com"
-scienceurl="https://raw.githubusercontent.com/Hutton-h/science/main/science.sh"
+scienceurl="https://api.github.com/repos/Hutton-h/science/contents/science.sh"
 showmode(){
 echo "Science脚本一键SSH命令生器在线网址：https://Hutton-h.github.io/science/"
 echo "主脚本：bash <(curl -Ls https://raw.githubusercontent.com/Hutton-h/science/main/science.sh) 或 bash <(wget -qO- https://raw.githubusercontent.com/Hutton-h/science/main/science.sh)"
@@ -130,11 +137,11 @@ mkdir -p "$HOME/science"
 if [ ! -f sbx_update ]; then
 echo "执行必要的脚本依赖中，请稍等10秒……"
 if command -v apk >/dev/null 2>&1; then
-apk update >/dev/null 2>&1 && apk add --no-cache bash busybox-extras gcompat libc6-compat iptables openssl >/dev/null 2>&1
+apk update >/dev/null 2>&1 && apk add --no-cache bash busybox-extras gcompat libc6-compat iptables openssl python3 >/dev/null 2>&1
 elif command -v apt >/dev/null 2>&1; then
 export DEBIAN_FRONTEND=noninteractive
 printf 'iptables-persistent iptables-persistent/autosave_v4 boolean true\niptables-persistent iptables-persistent/autosave_v6 boolean true\n' | debconf-set-selections
-apt update >/dev/null 2>&1 && apt install -y busybox coreutils util-linux iptables iptables-persistent cron openssl unzip tar >/dev/null 2>&1
+apt update >/dev/null 2>&1 && apt install -y busybox coreutils util-linux iptables iptables-persistent cron openssl unzip tar python3 >/dev/null 2>&1
 fi
 touch sbx_update
 fi
@@ -223,15 +230,16 @@ amd64) xray_zip="Xray-linux-64.zip" ;;
 arm64) xray_zip="Xray-linux-arm64-v8a.zip" ;;
 esac
 url="https://github.com/XTLS/Xray-core/releases/latest/download/$xray_zip"
-tmpdir=$(mktemp -d)
+tmpdir=$(mktemp -d) || return 1
 echo "正在从官方源下载Xray内核..."
-(command -v curl >/dev/null 2>&1 && curl -Lo "$tmpdir/xray.zip" -# --retry 2 "$url") || \
-(command -v wget>/dev/null 2>&1 && timeout 5 wget -O "$tmpdir/xray.zip" --tries=2 "$url") || \
+(command -v curl >/dev/null 2>&1 && curl -fLo "$tmpdir/xray.zip" -# --retry 2 "$url") || \
+(command -v wget>/dev/null 2>&1 && timeout 30 wget -O "$tmpdir/xray.zip" --tries=2 "$url") || \
 { echo "Xray下载失败，请检查网络"; rm -rf "$tmpdir"; return 1; }
-unzip -o "$tmpdir/xray.zip" xray -d "$HOME/science/" >/dev/null 2>&1
+unzip -o "$tmpdir/xray.zip" xray -d "$HOME/science/" >/dev/null 2>&1 || { echo "Xray 压缩包无效"; rm -rf "$tmpdir"; return 1; }
 rm -rf "$tmpdir"
-chmod +x "$HOME/science/xray"
+chmod +x "$HOME/science/xray" || { echo "Xray 赋权失败"; return 1; }
 sbcore=$("$HOME/science/xray" version 2>/dev/null | awk '/^Xray/{print $2}')
+[ -n "$sbcore" ] || { echo "Xray 新版本无法执行"; return 1; }
 echo "已安装Xray正式版内核：$sbcore"
 }
 upsingbox(){
@@ -247,14 +255,16 @@ sb_file="sing-box-${sb_verno}-linux-$sb_arch.tar.gz"
 url="https://github.com/SagerNet/sing-box/releases/download/$sb_ver/$sb_file"
 tmpdir=$(mktemp -d)
 echo "正在从官方源下载Sing-box内核 v$sb_verno..."
-(command -v curl >/dev/null 2>&1 && curl -Lo "$tmpdir/sing-box.tar.gz" -# --retry 2 "$url") || \
-(command -v wget>/dev/null 2>&1 && timeout 5 wget -O "$tmpdir/sing-box.tar.gz" --tries=2 "$url") || \
-{ echo "Sing-box下载失败，尝试备用版本..."; sb_ver="v1.13.14"; sb_verno="1.13.14"; sb_file="sing-box-${sb_verno}-linux-$sb_arch.tar.gz"; url="https://github.com/SagerNet/sing-box/releases/download/$sb_ver/$sb_file"; (curl -Lo "$tmpdir/sing-box.tar.gz" --retry 2 "$url" || wget -O "$tmpdir/sing-box.tar.gz" --tries=2 "$url") || { echo "Sing-box下载失败"; rm -rf "$tmpdir"; return 1; }; }
-tar xzf "$tmpdir/sing-box.tar.gz" -C "$tmpdir" >/dev/null 2>&1
-find "$tmpdir" -name "sing-box" -type f -exec cp {} "$HOME/science/sing-box" \; 2>/dev/null
+(command -v curl >/dev/null 2>&1 && curl -fLo "$tmpdir/sing-box.tar.gz" -# --retry 2 "$url") || \
+(command -v wget>/dev/null 2>&1 && timeout 30 wget -O "$tmpdir/sing-box.tar.gz" --tries=2 "$url") || \
+{ echo "Sing-box下载失败，尝试备用版本..."; sb_ver="v1.13.14"; sb_verno="1.13.14"; sb_file="sing-box-${sb_verno}-linux-$sb_arch.tar.gz"; url="https://github.com/SagerNet/sing-box/releases/download/$sb_ver/$sb_file"; (curl -fLo "$tmpdir/sing-box.tar.gz" --retry 2 "$url" || wget -O "$tmpdir/sing-box.tar.gz" --tries=2 "$url") || { echo "Sing-box下载失败"; rm -rf "$tmpdir"; return 1; }; }
+tar xzf "$tmpdir/sing-box.tar.gz" -C "$tmpdir" >/dev/null 2>&1 || { echo "Sing-box 压缩包无效"; rm -rf "$tmpdir"; return 1; }
+sb_bin=$(find "$tmpdir" -name "sing-box" -type f | head -1)
+[ -n "$sb_bin" ] && cp "$sb_bin" "$HOME/science/sing-box" || { echo "压缩包中未找到 sing-box"; rm -rf "$tmpdir"; return 1; }
 rm -rf "$tmpdir"
-chmod +x "$HOME/science/sing-box"
+chmod +x "$HOME/science/sing-box" || { echo "Sing-box 赋权失败"; return 1; }
 sbcore=$("$HOME/science/sing-box" version 2>/dev/null | awk '/version/{print $NF}')
+[ -n "$sbcore" ] || { echo "Sing-box 新版本无法执行"; return 1; }
 echo "已安装Sing-box正式版内核：$sbcore"
 }
 insuuid(){
@@ -276,7 +286,7 @@ echo
 echo "=========启用xray内核========="
 mkdir -p "$HOME/science/xrk"
 if [ ! -e "$HOME/science/xray" ]; then
-upxray
+upxray || exit 1
 fi
 cat > "$HOME/science/xr.json" <<EOF
 {
@@ -320,7 +330,7 @@ fi
 if [ -n "$xhp" ]; then
 xhp=xhpt
 if [ -z "$port_xh" ] && [ ! -e "$HOME/science/port_xh" ]; then
-port_xh=$(gen_port)
+port_xh=$(gen_port) || exit 1
 echo "$port_xh" > "$HOME/science/port_xh"
 elif [ -n "$port_xh" ]; then
 echo "$port_xh" > "$HOME/science/port_xh"
@@ -373,7 +383,7 @@ fi
 if [ -n "$vxp" ]; then
 vxp=vxpt
 if [ -z "$port_vx" ] && [ ! -e "$HOME/science/port_vx" ]; then
-port_vx=$(gen_port)
+port_vx=$(gen_port) || exit 1
 echo "$port_vx" > "$HOME/science/port_vx"
 elif [ -n "$port_vx" ]; then
 echo "$port_vx" > "$HOME/science/port_vx"
@@ -420,7 +430,7 @@ fi
 if [ -n "$xup" ]; then
 xup=xupt
 if [ -z "$port_xu" ] && [ ! -e "$HOME/science/port_xu" ]; then
-port_xu=$(gen_port)
+port_xu=$(gen_port) || exit 1
 echo "$port_xu" > "$HOME/science/port_xu"
 elif [ -n "$port_xu" ]; then
 echo "$port_xu" > "$HOME/science/port_xu"
@@ -474,7 +484,7 @@ fi
 if [ -n "$xcp" ]; then
 xcp=xcpt
 if [ -z "$port_xc" ] && [ ! -e "$HOME/science/port_xc" ]; then
-port_xc=$(gen_port)
+port_xc=$(gen_port) || exit 1
 echo "$port_xc" > "$HOME/science/port_xc"
 elif [ -n "$port_xc" ]; then
 echo "$port_xc" > "$HOME/science/port_xc"
@@ -528,7 +538,7 @@ fi
 if [ -n "$vwp" ]; then
 vwp=vwpt
 if [ -z "$port_vw" ] && [ ! -e "$HOME/science/port_vw" ]; then
-port_vw=$(gen_port)
+port_vw=$(gen_port) || exit 1
 echo "$port_vw" > "$HOME/science/port_vw"
 elif [ -n "$port_vw" ]; then
 echo "$port_vw" > "$HOME/science/port_vw"
@@ -573,7 +583,7 @@ fi
 if [ -n "$vlp" ]; then
 vlp=vlpt
 if [ -z "$port_vl_re" ] && [ ! -e "$HOME/science/port_vl_re" ]; then
-port_vl_re=$(gen_port)
+port_vl_re=$(gen_port) || exit 1
 echo "$port_vl_re" > "$HOME/science/port_vl_re"
 elif [ -n "$port_vl_re" ]; then
 echo "$port_vl_re" > "$HOME/science/port_vl_re"
@@ -621,7 +631,7 @@ fi
 if [ -n "$vgp" ]; then
 vgp=vgpt
 if [ -z "$port_vg" ] && [ ! -e "$HOME/science/port_vg" ]; then
-port_vg=$(gen_port)
+port_vg=$(gen_port) || exit 1
 echo "$port_vg" > "$HOME/science/port_vg"
 elif [ -n "$port_vg" ]; then
 echo "$port_vg" > "$HOME/science/port_vg"
@@ -672,7 +682,7 @@ fi
 if [ -n "$vhup" ]; then
 vhup=vhupt
 if [ -z "$port_vhu" ] && [ ! -e "$HOME/science/port_vhu" ]; then
-port_vhu=$(gen_port)
+port_vhu=$(gen_port) || exit 1
 echo "$port_vhu" > "$HOME/science/port_vhu"
 elif [ -n "$port_vhu" ]; then
 echo "$port_vhu" > "$HOME/science/port_vhu"
@@ -706,7 +716,7 @@ fi
 if [ -n "$vmgp" ]; then
 vmgp=vmgpt
 if [ -z "$port_vmg" ] && [ ! -e "$HOME/science/port_vmg" ]; then
-port_vmg=$(gen_port)
+port_vmg=$(gen_port) || exit 1
 echo "$port_vmg" > "$HOME/science/port_vmg"
 elif [ -n "$port_vmg" ]; then
 echo "$port_vmg" > "$HOME/science/port_vmg"
@@ -740,7 +750,7 @@ fi
 if [ -n "$vmhup" ]; then
 vmhup=vmhupt
 if [ -z "$port_vmhu" ] && [ ! -e "$HOME/science/port_vmhu" ]; then
-port_vmhu=$(gen_port)
+port_vmhu=$(gen_port) || exit 1
 echo "$port_vmhu" > "$HOME/science/port_vmhu"
 elif [ -n "$port_vmhu" ]; then
 echo "$port_vmhu" > "$HOME/science/port_vmhu"
@@ -776,7 +786,7 @@ installsb(){
 echo
 echo "=========启用Sing-box内核========="
 if [ ! -e "$HOME/science/sing-box" ]; then
-upsingbox
+upsingbox || exit 1
 fi
 cat > "$HOME/science/sb.json" <<EOF
 {
@@ -791,7 +801,7 @@ insuuid
 if [ -n "$tjp" ]; then
 tjp=tjpt
 if [ -z "$port_tj" ] && [ ! -e "$HOME/science/port_tj" ]; then
-port_tj=$(gen_port)
+port_tj=$(gen_port) || exit 1
 echo "$port_tj" > "$HOME/science/port_tj"
 elif [ -n "$port_tj" ]; then
 echo "$port_tj" > "$HOME/science/port_tj"
@@ -826,7 +836,7 @@ fi
 if [ -n "$tjgp" ]; then
 tjgp=tjgpt
 if [ -z "$port_tjg" ] && [ ! -e "$HOME/science/port_tjg" ]; then
-port_tjg=$(gen_port)
+port_tjg=$(gen_port) || exit 1
 echo "$port_tjg" > "$HOME/science/port_tjg"
 elif [ -n "$port_tjg" ]; then
 echo "$port_tjg" > "$HOME/science/port_tjg"
@@ -861,7 +871,7 @@ fi
 if [ -n "$tjtp" ]; then
 tjtp=tjtpt
 if [ -z "$port_tjt" ] && [ ! -e "$HOME/science/port_tjt" ]; then
-port_tjt=$(gen_port)
+port_tjt=$(gen_port) || exit 1
 echo "$port_tjt" > "$HOME/science/port_tjt"
 elif [ -n "$port_tjt" ]; then
 echo "$port_tjt" > "$HOME/science/port_tjt"
@@ -892,7 +902,7 @@ fi
 if [ -n "$tup" ]; then
 tup=tupt
 if [ -z "$port_tu" ] && [ ! -e "$HOME/science/port_tu" ]; then
-port_tu=$(gen_port)
+port_tu=$(gen_port) || exit 1
 echo "$port_tu" > "$HOME/science/port_tu"
 elif [ -n "$port_tu" ]; then
 echo "$port_tu" > "$HOME/science/port_tu"
@@ -928,7 +938,7 @@ fi
 if [ -n "$anp" ]; then
 anp=anpt
 if [ -z "$port_an" ] && [ ! -e "$HOME/science/port_an" ]; then
-port_an=$(gen_port)
+port_an=$(gen_port) || exit 1
 echo "$port_an" > "$HOME/science/port_an"
 elif [ -n "$port_an" ]; then
 echo "$port_an" > "$HOME/science/port_an"
@@ -978,7 +988,7 @@ private_key_s=$(cat "$HOME/science/sbk/private_key")
 public_key_s=$(cat "$HOME/science/sbk/public_key")
 short_id_s=$(cat "$HOME/science/sbk/short_id")
 if [ -z "$port_ar" ] && [ ! -e "$HOME/science/port_ar" ]; then
-port_ar=$(gen_port)
+port_ar=$(gen_port) || exit 1
 echo "$port_ar" > "$HOME/science/port_ar"
 elif [ -n "$port_ar" ]; then
 echo "$port_ar" > "$HOME/science/port_ar"
@@ -1022,7 +1032,7 @@ sskey=$("$HOME/science/sing-box" generate rand 16 --base64)
 echo "$sskey" > "$HOME/science/sskey"
 fi
 if [ -z "$port_ss" ] && [ ! -e "$HOME/science/port_ss" ]; then
-port_ss=$(gen_port)
+port_ss=$(gen_port) || exit 1
 echo "$port_ss" > "$HOME/science/port_ss"
 elif [ -n "$port_ss" ]; then
 echo "$port_ss" > "$HOME/science/port_ss"
@@ -1048,7 +1058,7 @@ xrsbhy2(){
 if [ -n "$hyp" ]; then
 hyp=hypt
 if [ -z "$port_hy2" ] && [ ! -e "$HOME/science/port_hy2" ]; then
-port_hy2=$(gen_port)
+port_hy2=$(gen_port) || exit 1
 echo "$port_hy2" > "$HOME/science/port_hy2"
 elif [ -n "$port_hy2" ]; then
 echo "$port_hy2" > "$HOME/science/port_hy2"
@@ -1085,7 +1095,7 @@ xrsbvm(){
 if [ -n "$vmp" ]; then
 vmp=vmpt
 if [ -z "$port_vm_ws" ] && [ ! -e "$HOME/science/port_vm_ws" ]; then
-port_vm_ws=$(gen_port)
+port_vm_ws=$(gen_port) || exit 1
 echo "$port_vm_ws" > "$HOME/science/port_vm_ws"
 elif [ -n "$port_vm_ws" ]; then
 echo "$port_vm_ws" > "$HOME/science/port_vm_ws"
@@ -1155,7 +1165,7 @@ xrsbso(){
 if [ -n "$sop" ]; then
 sop=sopt
 if [ -z "$port_so" ] && [ ! -e "$HOME/science/port_so" ]; then
-port_so=$(gen_port)
+port_so=$(gen_port) || exit 1
 echo "$port_so" > "$HOME/science/port_so"
 elif [ -n "$port_so" ]; then
 echo "$port_so" > "$HOME/science/port_so"
@@ -1536,7 +1546,7 @@ SCRIPT_PATH="$HOME/bin/science"
 mkdir -p "$HOME/bin"
 # 始终刷新已安装脚本（下载失败时保留旧版，不覆盖）
 sctmp="$HOME/science/science.sh.tmp"
-(command -v curl >/dev/null 2>&1 && curl -Ls "$scienceurl" -o "$sctmp") || (command -v wget >/dev/null 2>&1 && wget -qO "$sctmp" "$scienceurl")
+(command -v curl >/dev/null 2>&1 && curl -fLs -H "Accept: application/vnd.github.raw" "$scienceurl" -o "$sctmp") || (command -v wget >/dev/null 2>&1 && wget -qO "$sctmp" --header="Accept: application/vnd.github.raw" "$scienceurl")
 if [ -s "$sctmp" ]; then mv "$sctmp" "$HOME/science/science.sh"; fi
 rm -f "$sctmp"
 chmod +x "$HOME/science/science.sh"
@@ -1549,18 +1559,18 @@ grep -qxF 'source ~/.bashrc' ~/.bash_profile 2>/dev/null || echo 'source ~/.bash
 echo "快捷命令 science 已就绪 (重新登录SSH后生效，或执行 source ~/.bashrc)"
 
 # ====== 进程检测：仅当进程运行时才配置自启动恢复 ======
-if find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(s|x)' || pgrep -f 'science/(s|x)' >/dev/null 2>&1 ; then
+if find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(sing-box|xray)' || pgrep -f 'science/(sing-box|xray)' >/dev/null 2>&1 ; then
 if ! pidof systemd >/dev/null 2>&1 && ! command -v rc-service >/dev/null 2>&1; then
-echo "if ! find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(s|x)' && ! pgrep -f 'science/(s|x)' >/dev/null 2>&1; then echo '检测到系统可能中断过，或者变量格式错误？建议在SSH对话框输入 reboot 重启下服务器。现在自动执行Science脚本的节点恢复操作，请稍等……'; sleep 6; export alns=\"${alns}\" cfip=\"${cfip}\" hyjpt=\"${hyjpt}\" cdnym=\"${cdnym}\" name=\"${name}\" ippz=\"${ippz}\" argo=\"${argo}\" uuid=\"${uuid}\" $wap=\"${warp}\" $xhp=\"${port_xh}\" $xup=\"${port_xu}\" $vxp=\"${port_vx}\" $ssp=\"${port_ss}\" $sop=\"${port_so}\" $anp=\"${port_an}\" $arp=\"${port_ar}\" $vlp=\"${port_vl_re}\" $vwp=\"${port_vw}\" $vmp=\"${port_vm_ws}\" $hyp=\"${port_hy2}\" $tup=\"${port_tu}\" $xcp=\"${port_xc}\" $tjp=\"${port_tj}\" $tjgp=\"${port_tjg}\" $tjtp=\"${port_tjt}\" $vgp=\"${port_vg}\" $vhup=\"${port_vhu}\" $vmgp=\"${port_vmg}\" $vmhup=\"${port_vmhu}\" reym=\"${ym_vl_re}\" agn=\"${ARGO_DOMAIN}\" agk=\"${ARGO_AUTH}\"; bash "$HOME/bin/science"; fi" >> ~/.bashrc
+echo "if ! find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(sing-box|xray)' && ! pgrep -f 'science/(sing-box|xray)' >/dev/null 2>&1; then echo '检测到系统可能中断过，或者变量格式错误？建议在SSH对话框输入 reboot 重启下服务器。现在自动执行Science脚本的节点恢复操作，请稍等……'; sleep 6; export alns=\"${alns}\" cfip=\"${cfip}\" hyjpt=\"${hyjpt}\" cdnym=\"${cdnym}\" name=\"${name}\" ippz=\"${ippz}\" argo=\"${argo}\" uuid=\"${uuid}\" $wap=\"${warp}\" $xhp=\"${port_xh}\" $xup=\"${port_xu}\" $vxp=\"${port_vx}\" $ssp=\"${port_ss}\" $sop=\"${port_so}\" $anp=\"${port_an}\" $arp=\"${port_ar}\" $vlp=\"${port_vl_re}\" $vwp=\"${port_vw}\" $vmp=\"${port_vm_ws}\" $hyp=\"${port_hy2}\" $tup=\"${port_tu}\" $xcp=\"${port_xc}\" $tjp=\"${port_tj}\" $tjgp=\"${port_tjg}\" $tjtp=\"${port_tjt}\" $vgp=\"${port_vg}\" $vhup=\"${port_vhu}\" $vmgp=\"${port_vmg}\" $vmhup=\"${port_vmhu}\" reym=\"${ym_vl_re}\" agn=\"${ARGO_DOMAIN}\" agk=\"${ARGO_AUTH}\"; bash "$HOME/bin/science"; fi" >> ~/.bashrc
 fi
 crontab -l > /tmp/crontab.tmp 2>/dev/null
 if ! pidof systemd >/dev/null 2>&1 && ! command -v rc-service >/dev/null 2>&1; then
 sed -i '/science\/sing-box/d' /tmp/crontab.tmp
 sed -i '/science\/xray/d' /tmp/crontab.tmp
-if find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -q 'science/s' || pgrep -f 'science/s' >/dev/null 2>&1 ; then
+if find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -q 'science/sing-box' || pgrep -f 'science/sing-box' >/dev/null 2>&1 ; then
 echo '@reboot sleep 10 && /bin/sh -c "nohup $HOME/science/sing-box run -c $HOME/science/sb.json >/dev/null 2>&1 &"' >> /tmp/crontab.tmp
 fi
-if find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -q 'science/x' || pgrep -f 'science/x' >/dev/null 2>&1 ; then
+if find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -q 'science/xray' || pgrep -f 'science/xray' >/dev/null 2>&1 ; then
 echo '@reboot sleep 10 && /bin/sh -c "nohup $HOME/science/xray run -c $HOME/science/xr.json >/dev/null 2>&1 &"' >> /tmp/crontab.tmp
 fi
 fi
@@ -1617,17 +1627,17 @@ fi
 sciencestatus(){
 echo "=========当前三大内核运行状态========="
 procs=$(find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null)
-if echo "$procs" | grep -Eq 'science/s' || pgrep -f 'science/s' >/dev/null 2>&1; then
+if echo "$procs" | grep -Eq 'science/sing-box' || pgrep -f 'science/sing-box' >/dev/null 2>&1; then
 echo "Sing-box (版本V$("$HOME/science/sing-box" version 2>/dev/null | awk '/version/{print $NF}'))：运行中"
 else
 echo "Sing-box：未启用"
 fi
-if echo "$procs" | grep -Eq 'science/x' || pgrep -f 'science/x' >/dev/null 2>&1; then
+if echo "$procs" | grep -Eq 'science/xray' || pgrep -f 'science/xray' >/dev/null 2>&1; then
 echo "Xray (版本V$("$HOME/science/xray" version 2>/dev/null | awk '/^Xray/{print $2}'))：运行中"
 else
 echo "Xray：未启用"
 fi
-if echo "$procs" | grep -Eq 'science/c' || pgrep -f 'science/c' >/dev/null 2>&1; then
+if echo "$procs" | grep -Eq 'science/cloudflared' || pgrep -f 'science/cloudflared' >/dev/null 2>&1; then
 echo "Argo (版本V$("$HOME/science/cloudflared" version 2>/dev/null | awk '{print $3}'))：运行中"
 else
 echo "Argo：未启用"
@@ -2714,7 +2724,7 @@ cat <<EOF
   type: hysteria2                                      
   server: $add                              
   port: $port_hy2
-  ports: $cmhy2pt
+  ${cmhy2pt:+ports: $cmhy2pt}
   password: $uuid                          
   alpn:
     - h3
@@ -2990,16 +3000,17 @@ out=$($f)
 [ -n "$out" ] && printf "%s\n" "$out"
 fi
 }
-sbxy="$(get_func sbvlpt; get_func sbvgpt; get_func sbvhup; get_func sbvmgp; get_func sbvmhup; get_func sbsspt; get_func sbanpt; get_func sbarpt; get_func sbvmpt; get_func sbhypt; get_func sbtupt; get_func sbtjpt; get_func sbxhpt; get_func sbvxpt; get_func sbvmargopt)"
-clxy="$(get_func cludpxcpt; get_func clxcpt; get_func clvlpt; get_func clvgpt; get_func clvhup; get_func clvmgp; get_func clvmhup; get_func clsspt; get_func clanpt; get_func clvmpt; get_func clhypt; get_func cltupt; get_func cltjpt; get_func clxhpt; get_func clvxpt; get_func clvmargopt)"
-sbgz="$(get_func sbvlpt1; get_func sbvgpt1; get_func sbvhup1; get_func sbvmgp1; get_func sbvmhup1; get_func sbsspt1; get_func sbanpt1; get_func sbarpt1; get_func sbvmpt1; get_func sbhypt1; get_func sbtupt1; get_func sbtjpt1; get_func sbxhpt1; get_func sbvxpt1; get_func sbvmargopt1)"
-clgz="$({ get_func cludpxcpt1; get_func clxcpt1; get_func clvlpt1; get_func clvgpt1; get_func clvhup1; get_func clvmgp1; get_func clvmhup1; get_func clsspt1; get_func clanpt1; get_func clvmpt1; get_func clhypt1; get_func cltupt1; get_func cltjpt1; get_func clxhpt1; get_func clvxpt1; get_func clvmargopt1; } | sed '2,$s/^/    /')"
+sbxy="$(get_func sbvlpt; get_func sbvgpt; get_func sbvhup; get_func sbvmgp; get_func sbvmhup; get_func sbsspt; get_func sbanpt; get_func sbarpt; get_func sbvmpt; get_func sbhypt; get_func sbtupt; get_func sbtjpt; get_func sbsopt; get_func sbxhpt; get_func sbvxpt; get_func sbvmargopt)"
+clxy="$(get_func cludpxcpt; get_func clxcpt; get_func clvlpt; get_func clvgpt; get_func clvhup; get_func clvmgp; get_func clvmhup; get_func clsspt; get_func clanpt; get_func clvmpt; get_func clhypt; get_func cltupt; get_func cltjpt; get_func clsopt; get_func clxhpt; get_func clvxpt; get_func clvmargopt)"
+sbgz="$(get_func sbvlpt1; get_func sbvgpt1; get_func sbvhup1; get_func sbvmgp1; get_func sbvmhup1; get_func sbsspt1; get_func sbanpt1; get_func sbarpt1; get_func sbvmpt1; get_func sbhypt1; get_func sbtupt1; get_func sbtjpt1; get_func sbsopt1; get_func sbxhpt1; get_func sbvxpt1; get_func sbvmargopt1)"
+clgz="$({ get_func cludpxcpt1; get_func clxcpt1; get_func clvlpt1; get_func clvgpt1; get_func clvhup1; get_func clvmgp1; get_func clvmhup1; get_func clsspt1; get_func clanpt1; get_func clvmpt1; get_func clhypt1; get_func cltupt1; get_func cltjpt1; get_func clsopt1; get_func clxhpt1; get_func clvxpt1; get_func clvmargopt1; } | sed '2,$s/^/    /')"
 if [ -n "$sbgz" ]; then
 sbgz=$(printf "%s\n" "$sbgz" | sed '$ s/,$//')
 else
 # 兜底：至少保留一个合法 outbound，避免 JSON 尾逗号与空列表
 sbgz='"direct"'
 fi
+[ -z "$clgz" ] && clgz="- DIRECT"
 cat > $HOME/science/sbox.json <<EOF
 {
   "log": {
@@ -3259,6 +3270,7 @@ rules:
   - GEOIP,CN,DIRECT
   - MATCH,🌍选择代理节点
 EOF
+[ -z "$clxy" ] && sed -i 's/^proxies:$/proxies: []/' "$HOME/science/clmi.yaml"
 echo "---------------------------------------------------------"
 echo "$argoshow"
 echo
@@ -3297,6 +3309,29 @@ echo "========================================================="
 echo "相关快捷方式如下：(首次安装成功后需重连SSH，science快捷方式才可生效；如未生效，请使用主脚本)"
 showmode
 }
+clean_hy2_legacy(){
+# 清理旧版本没有日志时留下的 Science Hy2 规则，不触碰其他 DNAT 目标。
+[ -s "$HOME/science/port_hy2" ] || return 0
+local hyport tool line rule pf port
+hyport=$(cat "$HOME/science/port_hy2")
+for tool in iptables ip6tables; do
+  command -v "$tool" >/dev/null 2>&1 || continue
+  "$tool" -t nat -S PREROUTING 2>/dev/null | while read -r line; do
+    case "$line" in
+      *"DNAT --to-destination :$hyport"*)
+        rule=${line#-A PREROUTING }
+        [ "$rule" != "$line" ] && "$tool" -t nat -D PREROUTING $rule >/dev/null 2>&1
+        ;;
+    esac
+  done
+  for pf in "$HOME/science/port_"*; do
+    [ -f "$pf" ] || continue
+    port=$(cat "$pf" 2>/dev/null)
+    echo "$port" | grep -Eq '^[0-9]+$' || continue
+    "$tool" -t nat -D PREROUTING -p udp --dport "$port" -j ACCEPT >/dev/null 2>&1
+  done
+done
+}
 cleandel(){
 # 只清理 science 自己的进程（按 exe 路径，避免误杀同机其他代理）
 for P in /proc/[0-9]*; do if [ -L "$P/exe" ]; then TARGET=$(readlink -f "$P/exe" 2>/dev/null); if echo "$TARGET" | grep -qE '/science/c|/science/s|/science/x'; then PID=$(basename "$P"); kill "$PID" 2>/dev/null; fi; fi; done
@@ -3305,6 +3340,7 @@ if [ -s "$HOME/science/hy2jump.log" ]; then
   while read -r proto port target; do
     [ -z "$port" ] && continue
     if [ "$proto" = "accept" ]; then
+      [ "$port" = "udp" ] && port="$target"
       iptables -t nat -D PREROUTING -p udp --dport "$port" -j ACCEPT >/dev/null 2>&1
       ip6tables -t nat -D PREROUTING -p udp --dport "$port" -j ACCEPT >/dev/null 2>&1
     else
@@ -3314,6 +3350,7 @@ if [ -s "$HOME/science/hy2jump.log" ]; then
   done < "$HOME/science/hy2jump.log"
   rm -f "$HOME/science/hy2jump.log"
 fi
+clean_hy2_legacy
 sed -i '/science/d' ~/.bashrc
 sed -i '/export PATH="\$HOME\/bin:\$PATH"/d' ~/.bashrc
 . ~/.bashrc 2>/dev/null
@@ -3321,10 +3358,13 @@ crontab -l > /tmp/crontab.tmp 2>/dev/null
 sed -i '/science\/sing-box/d' /tmp/crontab.tmp
 sed -i '/science\/xray/d' /tmp/crontab.tmp
 sed -i '/science\/cloudflared/d' /tmp/crontab.tmp
-sed -i '/science\/science.sh/d' /tmp/crontab.tmp
 if [ "$1" = "full" ]; then
+  sed -i '/science\/science.sh/d' /tmp/crontab.tmp
   sed -i '/science\/statusgen/d' /tmp/crontab.tmp
   sed -i '/websbx/d' /tmp/crontab.tmp
+  kill -15 $(pgrep -f 'busybox.*httpd.*websbx' 2>/dev/null) >/dev/null 2>&1
+else
+  sed -i '/science\/science.sh/ { /statusgen/!d; }' /tmp/crontab.tmp
 fi
 crontab /tmp/crontab.tmp >/dev/null 2>&1
 rm /tmp/crontab.tmp
@@ -3340,7 +3380,8 @@ for svc in sing-box xray argo argo2 argo3 argo4 argo5; do
 rc-service "$svc" stop >/dev/null 2>&1
 rc-update del "$svc" default >/dev/null 2>&1
 done
-rm -rf /etc/init.d/{sing-box,xray,argo,argo2,argo3,argo4,argo5} /etc/local.d/alpinescience.start /etc/local.d/alpinesubsbx.start
+rm -rf /etc/init.d/{sing-box,xray,argo,argo2,argo3,argo4,argo5} /etc/local.d/alpinescience.start
+[ "$1" = "full" ] && rm -f /etc/local.d/alpinesubsbx.start
 fi
 }
 xrestart(){
@@ -3425,6 +3466,12 @@ echo "Science重置协议完成，开始更新相关协议变量……" && sleep
 echo
 elif [ "$1" = "list" ]; then
 cip
+if [ -s "$HOME/science/subtoken.log" ] && [ -s "$HOME/science/subgen.sh" ]; then
+  bash "$HOME/science/subgen.sh"
+fi
+if [ -s "$HOME/science/aggregate.py" ]; then
+  python3 "$HOME/science/aggregate.py" || echo "提示：全家桶聚合失败，请查看 /root/science/aggregate.log"
+fi
 exit
 elif [ "$1" = "upx" ]; then
 if upxray; then
@@ -3488,6 +3535,18 @@ if [ -s "$HOME/science/panel.html" ]; then
     ln -sf "$HOME/science/panel.html" "$HOME/websbx/$subtoken/index.html"
     ln -sf "$HOME/science/status.json" "$HOME/websbx/$subtoken/status.json"
     echo "面板已部署到订阅目录"
+    if [ -s "$HOME/science/subgen.sh" ]; then
+      bash "$HOME/science/subgen.sh" || { echo "本机订阅分发生成失败"; exit 1; }
+      bn=$(cat "$HOME/science/name" 2>/dev/null); bn=${bn%-}; bn=${bn:-jhsub}
+      for subf in hiddify v2rayn clash singbox all; do
+        ln -sf "$HOME/science/sub/${bn}-${subf}.txt" "$HOME/websbx/$subtoken/${subf}.txt"
+        ln -sf "$HOME/science/sub/${bn}-${subf}.txt" "$HOME/websbx/$subtoken/${bn}-${subf}.txt"
+      done
+      ln -sf "$HOME/science/sub/${bn}-manifest.json" "$HOME/websbx/$subtoken/${bn}-manifest.json"
+    fi
+    if [ -s "$HOME/science/aggregate.py" ]; then
+      python3 "$HOME/science/aggregate.py" || echo "提示：全家桶聚合失败，请查看 /root/science/aggregate.log"
+    fi
     subip=$(cat $HOME/science/server_ip.log 2>/dev/null)
     [ -z "$subip" ] && subip=$(hostname -I 2>/dev/null | awk '{print $1}')
     subport=$(cat $HOME/science/subport.log)
@@ -3613,6 +3672,27 @@ server {
     listen 80;
     listen [::]:80;
     server_name $dnym_now;
+    location ~ ^/(?:[^/]+/)?status\.json$ {
+        auth_basic "Science Panel";
+        auth_basic_user_file /etc/nginx/conf.d/.htpasswd_science;
+        rewrite ^/(.*)$ /${subtoken}/\$1 break;
+        proxy_pass http://127.0.0.1:${subport};
+        proxy_set_header Host \$host;
+    }
+    location ~ ^/(?:[^/]+/)?status\.json$ {
+        auth_basic "Science Panel";
+        auth_basic_user_file /etc/nginx/conf.d/.htpasswd_science;
+        rewrite ^/(.*)$ /${subtoken}/\$1 break;
+        proxy_pass http://127.0.0.1:${subport};
+        proxy_set_header Host \$host;
+    }
+    location ~ ^/(?:[^/]+/)?status\.json$ {
+        auth_basic "Science Panel";
+        auth_basic_user_file /etc/nginx/conf.d/.htpasswd_science;
+        rewrite ^/(.*)$ /${subtoken}/\$1 break;
+        proxy_pass http://127.0.0.1:${subport};
+        proxy_set_header Host \$host;
+    }
     location ~ \.(yaml|json|txt)$ {
         auth_basic off;
         rewrite ^/(.*)$ /${subtoken}/\$1 break;
@@ -3832,12 +3912,26 @@ server {
     ssl_certificate $NGX_CERT;
     ssl_certificate_key $NGX_KEY;
     root $NGX_ROOT;
+    location = / { return 302 /index.html; }
+    location = /index.html {
+        auth_basic "Science Panel";
+        auth_basic_user_file $NGX_HTPASSWD;
+        rewrite ^/(.*)$ /${subtoken}/\$1 break;
+        try_files \$uri =404;
+    }
+    location ~ ^/(?:[^/]+/)?status\.json$ {
+        auth_basic "Science Panel";
+        auth_basic_user_file $NGX_HTPASSWD;
+        rewrite ^/(.*)$ /${subtoken}/\$1 break;
+        try_files \$uri =404;
+    }
     location ~ ^/[^/]+/index\.html\$ {
         auth_basic "Science Panel";
         auth_basic_user_file $NGX_HTPASSWD;
     }
-    location ~ ^/[^/]+/.*\.((yaml|json|txt))$ {
+    location ~ \.(yaml|json|txt)$ {
         auth_basic off;
+        rewrite ^/(.*)$ /${subtoken}/\$1 break;
         try_files \$uri =404;
     }
     location / { try_files \$uri =404; }
@@ -3960,7 +4054,9 @@ cat > "$wsdir/status.json" <<EOF
 EOF
 exit
 fi
-if ! find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(s|x)' && ! pgrep -f 'science/(s|x)' >/dev/null 2>&1; then
+if [ "$1" = "res" ] || [ "$1" = "upx" ] || [ "$1" = "ups" ] || [ "$1" = "nginx" ] || [ "$1" = "panel" ] || [ "$1" = "statusgen" ] || [ "$1" = "list" ] || [ "$1" = "del" ]; then
+  :
+elif ! find /proc/*/exe -type l 2>/dev/null | grep -E '/proc/[0-9]+/exe' | xargs -r readlink 2>/dev/null | grep -Eq 'science/(sing-box|xray)' && ! pgrep -f 'science/(sing-box|xray)' >/dev/null 2>&1; then
 for P in /proc/[0-9]*; do if [ -L "$P/exe" ]; then TARGET=$(readlink -f "$P/exe" 2>/dev/null); if echo "$TARGET" | grep -qE '/science/c|/science/s|/science/x'; then PID=$(basename "$P"); kill "$PID" 2>/dev/null && echo "Killed $PID ($TARGET)" || echo "Could not kill $PID ($TARGET)"; fi; fi; done
 if [ -z "$( (command -v curl >/dev/null 2>&1 && curl -s4m5 -k "$v46url" 2>/dev/null) || (command -v wget >/dev/null 2>&1 && timeout 3 wget -4 -qO- --tries=2 "$v46url" 2>/dev/null) )" ]; then
 echo -e "nameserver 2a00:1098:2b::1\nnameserver 2a00:1098:2c::1" > /etc/resolv.conf
@@ -4029,16 +4125,22 @@ rm -rf $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"
 echo $subtoken > $HOME/science/subtoken.log
 }
 subportipsub(){
-if [ -z "$subpt" ]; then
-if [ -n "$(cat "$HOME/science/subport.log" 2>/dev/null)" ]; then
-subport=$(cat $HOME/science/subport.log)
+if [ -n "$subpt" ]; then
+  echo "$subpt" | grep -Eq '^[0-9]+$' || { echo "订阅端口必须是数字"; exit 1; }
+  [ "$subpt" -ge 1 ] && [ "$subpt" -le 65535 ] || { echo "订阅端口超出范围"; exit 1; }
+  if grep -h . "$HOME/science/port_"* 2>/dev/null | grep -qx "$subpt"; then
+    echo "订阅端口 $subpt 与协议端口冲突"; exit 1
+  fi
+  if [ "$(cat "$HOME/science/subport.log" 2>/dev/null)" != "$subpt" ] && command -v ss >/dev/null 2>&1 && ss -Hlntu 2>/dev/null | grep -Eq ":$subpt "; then
+    echo "订阅端口 $subpt 已被其他服务占用"; exit 1
+  fi
+  subport="$subpt"
+elif [ -n "$(cat "$HOME/science/subport.log" 2>/dev/null)" ]; then
+  subport=$(cat "$HOME/science/subport.log")
 else
-subport=$(gen_port)
+  subport=$(gen_port) || exit 1
 fi
-else
-subport="$subpt"
-fi
-echo $subport > $HOME/science/subport.log
+echo "$subport" > "$HOME/science/subport.log"
 }
 subtokenipsub && subportipsub
 echo "请稍后…………"
@@ -4100,6 +4202,7 @@ if [ -s "$HOME/science/hy2jump.log" ]; then
   while read -r proto port target; do
     [ -z "$port" ] && continue
     if [ "$proto" = "accept" ]; then
+      [ "$port" = "udp" ] && port="$target"
       iptables -t nat -D PREROUTING -p udp --dport "$port" -j ACCEPT >/dev/null 2>&1
       ip6tables -t nat -D PREROUTING -p udp --dport "$port" -j ACCEPT >/dev/null 2>&1
     else
@@ -4109,13 +4212,14 @@ if [ -s "$HOME/science/hy2jump.log" ]; then
   done < "$HOME/science/hy2jump.log"
   rm -f "$HOME/science/hy2jump.log"
 fi
+clean_hy2_legacy
 hyport=$(cat "$HOME/science/port_hy2")
 # 已用 UDP 端口（TUIC/SS/Hy2 主端口）先放行，避免被跳跃段 DNAT 劫持
 for p in "$port_tu" "$port_ss" "$port_hy2"; do
   [ -n "$p" ] || continue
   iptables -t nat -I PREROUTING -p udp --dport "$p" -j ACCEPT >/dev/null 2>&1
   ip6tables -t nat -I PREROUTING -p udp --dport "$p" -j ACCEPT >/dev/null 2>&1
-  echo "accept udp $p -" >> "$HOME/science/hy2jump.log"
+  echo "accept $p -" >> "$HOME/science/hy2jump.log"
 done
 for port in $hyjpt; do
 iptables -t nat -A PREROUTING -p udp --dport "$port" -j DNAT --to-destination :$hyport
@@ -4140,14 +4244,12 @@ if [ -n "$sub" ] && [ -n "$(cat $HOME/science/subtoken.log 2>/dev/null)" ]; then
   rm -f "$subgentmp"
   if [ -s "$HOME/science/subgen.sh" ]; then
     bash "$HOME/science/subgen.sh"
+    bn=$(cat "$HOME/science/name" 2>/dev/null); bn=${bn%-}; bn=${bn:-jhsub}
     for subf in hiddify v2rayn clash singbox all; do
-      ln -sf $HOME/science/sub/$subf.txt $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/$subf.txt 2>/dev/null
+      ln -sf "$HOME/science/sub/${bn}-${subf}.txt" "$HOME/websbx/$(cat $HOME/science/subtoken.log 2>/dev/null)/${subf}.txt"
+      ln -sf "$HOME/science/sub/${bn}-${subf}.txt" "$HOME/websbx/$(cat $HOME/science/subtoken.log 2>/dev/null)/${bn}-${subf}.txt"
     done
-    bn=$(cat "$HOME/science/name" 2>/dev/null); bn=${bn%-}
-    if [ -n "$bn" ]; then
-      ln -sf $HOME/science/sub/v2rayn.txt $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/${bn}-v2rayn.txt 2>/dev/null
-      ln -sf $HOME/science/sub/all.txt $HOME/websbx/"$(cat $HOME/science/subtoken.log 2>/dev/null)"/${bn}-all.txt 2>/dev/null
-    fi
+    ln -sf "$HOME/science/sub/${bn}-manifest.json" "$HOME/websbx/$(cat $HOME/science/subtoken.log 2>/dev/null)/${bn}-manifest.json"
   fi
 fi
 echo

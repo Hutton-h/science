@@ -1,71 +1,91 @@
 #!/bin/bash
-# =============================================================================
-# science 订阅分发层（独立脚本）
-# 从 jhsub.txt 按「客户端 × 协议白名单矩阵」分组，生成各客户端专属 base64 订阅。
-# 与主脚本 science.sh 解耦：由 science.sh 在节点生成（cip）之后调用，保证内容为最新。
-# 说明：base64 链接集是 hiddify / v2rayN / Clash / sing-box 通用的订阅导入格式。
-# =============================================================================
+# 本机订阅分发：按客户端协议筛选，每个客户端最多 12 个节点，并生成 manifest。
 export LANG=C
-SCI="$HOME/science"
-JH="$SCI/jhsub.txt"
-OUT="$SCI/sub"
-mkdir -p "$OUT"
-# 节点尚未生成或文件为空时，跳过本次生成（避免把上一轮旧节点当作新内容）
-if [ ! -s "$JH" ]; then
-  echo "[subgen] 未找到或空文件 $JH，跳过本次分组生成"
-  exit 0
-fi
-# 识别链接协议前缀
-proto() {
-  case "$1" in
-    vless://*)     echo vless;;
-    vmess://*)     echo vmess;;
-    trojan://*)    echo trojan;;
-    ss://*)        echo ss;;
-    hysteria2://*) echo hy2;;
-    tuic://*)      echo tuic;;
-    anytls://*)    echo anytls;;
-    *)             echo other;;
-  esac
+command -v python3 >/dev/null 2>&1 || { echo "[subgen] 需要 python3"; exit 1; }
+python3 - "$HOME" <<'PYEOF'
+import base64, json, os, pathlib, sys, time, urllib.parse
+
+home = sys.argv[1]
+sci = pathlib.Path(home) / "science"
+out = sci / "sub"
+out.mkdir(parents=True, exist_ok=True)
+source = sci / "jhsub.txt"
+if not source.exists() or source.stat().st_size == 0:
+    print("[subgen] jhsub.txt 不存在或为空，保留现有文件")
+    sys.exit(0)
+name_file = sci / "name"
+brand = name_file.read_text(encoding="utf-8", errors="ignore").strip().rstrip("-") if name_file.exists() else "jhsub"
+brand = brand or "jhsub"
+raw_lines = [x.strip() for x in source.read_text(encoding="utf-8", errors="ignore").splitlines() if x.strip()]
+
+
+def parse(line):
+    scheme = line.split("://",1)[0].lower() if "://" in line else ""
+    try:
+        if scheme == "vmess":
+            obj = json.loads(base64.urlsafe_b64decode(line[8:] + "="*((4-len(line[8:])%4)%4)))
+            return {"name":obj.get("ps",""),"proto":"vmess","server":obj.get("add",""),"port":int(obj.get("port",0))}
+        u = urllib.parse.urlsplit(line)
+        if scheme == "ss":
+            body = line[5:].split("#",1)[0]
+            if "@" not in body:
+                body = base64.urlsafe_b64decode(body + "="*((4-len(body)%4)%4)).decode("utf-8","ignore")
+            userinfo, hp = body.rsplit("@",1)
+            host, port = hp.rsplit(":",1)
+            return {"name":urllib.parse.unquote(u.fragment),"proto":"ss","server":host.strip("[]"),"port":int(port)}
+        return {"name":urllib.parse.unquote(u.fragment),"proto":scheme,"server":u.hostname or "","port":u.port or 0}
+    except Exception:
+        return {"name":"","proto":scheme,"server":"","port":0}
+
+
+def valid(line):
+    p = parse(line)
+    return bool(p["server"] and 1 <= p["port"] <= 65535 and "argo" not in p["name"].lower() and "cdn" not in p["name"].lower())
+
+
+def atomic(path, content):
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(content, encoding="utf-8")
+    os.replace(tmp, path)
+
+
+lines = [x for x in raw_lines if valid(x)]
+clients_def = [
+    ("Hiddify", "hiddify", {"vless","vmess","trojan","ss","hysteria2","tuic","anytls"}),
+    ("v2rayN", "v2rayn", {"vless","vmess","trojan"}),
+    ("Clash/Mihomo", "clash", {"vless","vmess","trojan","ss","hysteria2","tuic"}),
+    ("sing-box", "singbox", {"vless","vmess","trojan","ss","hysteria2","tuic","anytls"}),
+]
+clients = []
+for title, slug, allowed in clients_def:
+    selected = [x for x in lines if parse(x)["proto"] in allowed][:12]
+    if not selected:
+        continue
+    text = base64.b64encode(("\n".join(selected)+"\n").encode()).decode() + "\n"
+    filename = "%s-%s.txt" % (brand, slug)
+    atomic(out / filename, text)
+    clients.append({"name":title,"file":filename,"nodes":len(selected),"format":"Base64 订阅"})
+
+all_text = base64.b64encode(("\n".join(raw_lines)+"\n").encode()).decode() + "\n"
+atomic(out / (brand + "-all.txt"), all_text)
+nodes = []
+for line in lines:
+    p = parse(line)
+    p["role"] = "hk_direct" if p["name"].lower().endswith("-hk") else "us_direct"
+    nodes.append(p)
+manifest = {
+    "brand":brand,
+    "status":"ok" if lines else "error",
+    "generated_at":time.strftime("%Y-%m-%d %H:%M:%S"),
+    "errors":[] if lines else ["本机没有有效节点"],
+    "counts":{"us_direct":sum(n["role"] == "us_direct" for n in nodes),
+              "hk_relay":0,
+              "hk_direct":sum(n["role"] == "hk_direct" for n in nodes),
+              "total":len(nodes)},
+    "nodes":nodes,
+    "clients":clients,
+    "formats":{"local_backup_base64":{"file":brand+"-all.txt","nodes":len(raw_lines),"includes_argo":True}}
 }
-# 白名单矩阵（客户端 -> 支持的协议）
-# hiddify / sing-box：支持全部（含 SS-2022、Hy2、TUIC、AnyTLS）
-# v2rayN（Xray 内核）：仅 vless/vmess/trojan
-# Clash/Mihomo：vless/vmess/trojan/ss/hy2/tuic
-HIDDIFY="vless vmess trojan ss hy2 tuic anytls"
-V2RAYN="vless vmess trojan"
-CLASH="vless vmess trojan ss hy2 tuic"
-SINGBOX="vless vmess trojan ss hy2 tuic anytls"
-# base64 编码（兼容 GNU coreutils / busybox）
-b64() {
-  base64 -w0 "$1" 2>/dev/null || base64 "$1" | tr -d '\n'
-}
-gen() {
-  local name="$1" allow="$2" line p tmp n
-  tmp=$(mktemp)
-  n=0
-  while IFS= read -r line; do
-    [ -z "$line" ] && continue
-    p=$(proto "$line")
-    case " $allow " in
-      *" $p "*) printf '%s\n' "$line" >> "$tmp"; n=$((n+1)) ;;
-    esac
-  done < "$JH"
-  if [ "$n" -gt 0 ]; then
-    b64 "$tmp" > "$OUT/$name.txt"
-  else
-    : > "$OUT/$name.txt"
-  fi
-  rm -f "$tmp"
-  echo "[subgen] $name.txt 节点数：$n"
-}
-gen hiddify "$HIDDIFY"
-gen v2rayn  "$V2RAYN"
-gen clash   "$CLASH"
-gen singbox "$SINGBOX"
-# all.txt = 全部节点（原样 base64），并保留明文副本供面板展示
-total=$(grep -c '://' "$JH" 2>/dev/null || echo 0)
-b64 "$JH" > "$OUT/all.txt"
-cp "$JH" "$OUT/all_plain.txt"
-echo "[subgen] all.txt 节点数：$total"
-echo "[subgen] 完成，输出目录：$OUT"
+atomic(out / (brand + "-manifest.json"), json.dumps(manifest, ensure_ascii=False, indent=2)+"\n")
+print("[subgen] 本机节点：%d；客户端：%s" % (len(nodes), ", ".join("%s=%d" % (c["name"],c["nodes"]) for c in clients)))
+PYEOF
