@@ -818,8 +818,10 @@ def main():
         ("Shadowrocket","shadowrocket","txt",{"vless","vmess","trojan","ss","hysteria2","tuic"})
     ]
     clients, conversion_errors = [], sing_errors + clash_errors
+    # sing-box / Mihomo 与 Hiddify 同为 sing-box/utls 系核心：Reality 不兼容新版 Xray（上游 issue #4520），Argo 实测不通，统一剔除。
+    # v2rayN / Shadowrocket 为 Xray 系核心，Reality/Argo 全兼容，保留全部。
     for title, slug, ext, allowed in definitions:
-        selected = select_nodes(family, allowed, hide_reality_argo=(slug == "hiddify"))
+        selected = select_nodes(family, allowed, hide_reality_argo=(slug in ("hiddify", "singbox", "clash")))
         if not selected:
             raise RuntimeError(title + " 没有兼容节点")
         filename = "%s-%s.%s" % (BRAND,slug,ext)
