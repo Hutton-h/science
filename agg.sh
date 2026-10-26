@@ -783,7 +783,8 @@ def main():
     relay_source["mapping"] = [x for x in hk_manifest.get("mapping", []) if x.get("protocol") not in UNAVAILABLE_PROTOS]
 
     hk_direct_raw, hk_source = fetch_hk_nodes("SKPL-LIFT.txt", "hk_direct.txt", required=False)
-    hk_direct = dedup(x for x in hk_direct_raw if parse(x)["proto"] not in UNAVAILABLE_PROTOS)
+    # 香港直连 HY2 已实测可用（UDP 入方向正常），恢复直连 UDP；仅中转 UDP 因转发不通仍在 relay 处过滤。
+    hk_direct = dedup(x for x in hk_direct_raw)
     hk_source["nodes"] = len(hk_direct)
     us_argo_raw, argo_source = select_us_argo(raw_us)
     us_argo = dedup(us_argo_raw)
