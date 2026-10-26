@@ -827,7 +827,8 @@ def main():
         if not selected:
             raise RuntimeError(title + " 没有兼容节点")
         filename = "%s-%s.%s" % (BRAND,slug,ext)
-        if slug == "singbox":
+        # Hiddify 直接发 sing-box JSON（按内容识别，地址不变）：绕开 ray2sing 对 AnyTLS/HY2/TUIC 等链接的解析丢失，节点完整显示。
+        if slug in ("singbox", "hiddify"):
             cfg, count, errs = sing_config(selected)
             content = json.dumps(cfg,ensure_ascii=False,indent=2)+"\n"
             fmt = "sing-box JSON"

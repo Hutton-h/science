@@ -9,7 +9,7 @@ US_DOMAIN=s.hutton.dpdns.org
 HK_DOMAIN=h.hutton.dpdns.org
 ARGO_DOMAIN=sss.hutton.dpdns.org
 AGG_URL='https://api.github.com/repos/Hutton-h/science/contents/agg.sh?ref=main'
-AGG_SHA256=bb594d8aaf7979ea8e5d69a8a4c1b42b5df436aa4827ae0153b39af8e7d7dfca
+AGG_SHA256=df3e39cd03d0a6efb5e99fe2bf434e63e08a02a1ad70bde0b5442428fff98e24
 VERIFY_ONLY="${VERIFY_ONLY:-0}"
 ROLE=""
 DOMAIN=""
