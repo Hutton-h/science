@@ -121,7 +121,7 @@ import base64, json, re, urllib.parse
 HK_PLAN = [("8443","vl-xhttp-reality-enc"),("8444","vl-reality-vision"),("8445","hy2"),
            ("8446","anytls"),("8447","trojan"),("8448","vm-ws"),("8449","shadowsocks"),
            ("8450","vl-grpc"),("8451","vl-ws-enc"),("8452","tuic"),("8453","any-reality")]
-US_DIRECT_KEYS = ["vl-reality-vision","hy2","anytls","vm-ws","vl-xhttp-reality-enc"]
+US_DIRECT_KEYS = ["vl-reality-vision","hy2","anytls","vm-ws","vl-xhttp-reality-enc","tuic"]
 HK_IP = "38.76.210.194"
 
 
@@ -751,7 +751,8 @@ def publish_atomic():
 
 def main():
     raw_us = [x.strip() for x in open("/root/science/jhsub.txt",encoding="utf-8",errors="ignore").read().splitlines() if x.strip()]
-    us_lines = [x for x in raw_us if valid(x) and parse(x)["proto"] not in UNAVAILABLE_PROTOS]
+    # 美国 UDP 已实测可用且速度优于 TCP（HY2/TUIC），直连放行；香港云侧 UDP 仍在 relay/hk_direct 处过滤。
+    us_lines = [x for x in raw_us if valid(x)]
     if not us_lines and not raw_us:
         raise RuntimeError("美国 jhsub.txt 为空")
 
