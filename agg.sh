@@ -5,7 +5,7 @@ export LANG=en_US.UTF-8
 
 GH_URL="${GH_URL:-https://api.github.com/repos/Hutton-h/science/contents/science.sh}"
 PANEL_GH_URL="${PANEL_GH_URL:-https://api.github.com/repos/Hutton-h/science/contents/panel.html?ref=main}"
-PANEL_SHA256="2d13ca525389a58c9031071c54ba38ca1d8dc326c078a310a708851e1a2aa0bc"
+PANEL_SHA256="deb216ae56279795fc9156b9395481fffd54dd4d82ec091e70eb57ed7d6a8123"
 PANEL_ONLY="${PANEL_ONLY:-0}"
 US_IP="${US_IP:-170.178.174.97}"
 HK_IP="${HK_IP:-38.76.210.194}"
@@ -485,14 +485,91 @@ for hk, kw in HK_PLAN:
         print(hk, ports[kw])
 PYDISC
 
+NODECHECK_SHA256="7293a31ef6310bce84f04c1de68a30cf3b478523143fde38acc202b326c58961"
+fetch_nodecheck() {
+  local tmp
+  tmp=$(mktemp /root/science/.nodecheck.XXXXXX) || return 1
+  curl -fsSL --max-time 60 -H "Accept: application/vnd.github.raw" "https://api.github.com/repos/Hutton-h/science/contents/nodecheck.py?ref=main" -o "$tmp" || { rm -f "$tmp"; return 1; }
+  printf '%s  %s\n' "$NODECHECK_SHA256" "$tmp" | sha256sum -c - >/dev/null || { rm -f "$tmp"; return 1; }
+  python3 -m py_compile "$tmp" || { rm -f "$tmp"; return 1; }
+  chmod 700 "$tmp" && mv -f "$tmp" /root/science/nodecheck.py
+}
+
+# 面板节点状态：定时拨测后只发布白名单字段（id/状态/延迟/速度/时间），不含任何链接、UUID、密码。
+install_nodestatus() {
+  if ! fetch_nodecheck; then
+    echo "提示：nodecheck.py 获取或校验失败，面板暂不显示节点状态（不影响订阅）"
+    return 0
+  fi
+  cat > /root/science/nodestatus.py <<'PYSTAT'
+#!/usr/bin/env python3
+import json, os, pathlib, re, subprocess, sys
+WEB = pathlib.Path("/root/websbx/__US_TOKEN__")
+SUB = WEB / "SKPL-LIFT-all.txt"
+OUT = WEB / "SKPL-LIFT-nodestatus.json"
+RAW = pathlib.Path("/root/science/nodecheck-us.json")
+ID_RE = re.compile(r"^[0-9a-f]{16}$")
+STATUSES = {"ok", "fallback_ok", "failed"}
+
+
+def num(value):
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
+        return None
+    return int(value)
+
+
+def main():
+    if not SUB.is_file():
+        sys.exit("缺少全体订阅文件")
+    rc = subprocess.run([sys.executable, "/root/science/nodecheck.py", "--vantage", "us", "--roles", "all",
+                         "--run-id", "panel", "--subscription", str(SUB), "--output", str(RAW)],
+                        timeout=1400).returncode
+    if rc != 0:
+        sys.exit("拨测失败：%d" % rc)
+    data = json.loads(RAW.read_text(encoding="utf-8"))
+    nodes = {}
+    for node in data.get("nodes", []):
+        nid, status = node.get("id"), node.get("status")
+        if not isinstance(nid, str) or not ID_RE.match(nid) or status not in STATUSES:
+            continue
+        nodes[nid] = {"status": status, "latency_ms": num(node.get("latency_ms")),
+                      "speed_Bps": num(node.get("speed_Bps")),
+                      "checked_at": str(node.get("checked_at") or "")[:32]}
+    summary = data.get("summary", {})
+    payload = {"version": 1, "vantage": "us",
+               "finished_at": str(summary.get("finished_at") or "")[:32], "nodes": nodes}
+    tmp = OUT.with_name(OUT.name + ".tmp")
+    tmp.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
+    os.chmod(tmp, 0o644)
+    os.replace(tmp, OUT)
+    print("节点状态已发布：%d 个" % len(nodes))
+
+
+if __name__ == "__main__":
+    main()
+PYSTAT
+  sed -i "s|__US_TOKEN__|$US_TOKEN|g" /root/science/nodestatus.py
+  chmod 700 /root/science/nodestatus.py
+  if ! python3 -m py_compile /root/science/nodestatus.py; then
+    echo "提示：nodestatus.py 语法检查失败，跳过节点状态"
+    return 0
+  fi
+  cat > /root/science/nodestatus.sh <<'SHSTAT'
+#!/bin/bash
+exec 9>/root/science/nodestatus.lock
+flock -n 9 || exit 0
+cd /root/science || exit 1
+timeout 1500 python3 /root/science/nodestatus.py > /root/science/nodestatus.log 2>&1
+SHSTAT
+  chmod 700 /root/science/nodestatus.sh
+  (crontab -l 2>/dev/null | grep -v '/root/science/nodestatus.sh'; echo "*/30 * * * * /root/science/nodestatus.sh >/dev/null 2>&1 #science-nodestatus") | crontab - || { echo "提示：节点状态 cron 写入失败"; return 0; }
+  nohup /root/science/nodestatus.sh >/dev/null 2>&1 &
+  echo "节点状态拨测已启用：每 30 分钟一次，首轮已在后台开始（约数分钟）"
+}
+
 if [ "${NODECHECK:-0}" = "1" ]; then
   if [ "$ip" = "$US_IP" ]; then role=us; else role=hk; fi
-  nodecheck_tmp=$(mktemp /root/science/.nodecheck.XXXXXX) || fail "无法创建拨测临时文件"
-  curl -fsSL --max-time 60 -H "Accept: application/vnd.github.raw" "https://api.github.com/repos/Hutton-h/science/contents/nodecheck.py?ref=main" -o "$nodecheck_tmp" || { rm -f "$nodecheck_tmp"; fail "nodecheck.py 下载失败"; }
-  printf '%s  %s\n' '7293a31ef6310bce84f04c1de68a30cf3b478523143fde38acc202b326c58961' "$nodecheck_tmp" | sha256sum -c - >/dev/null || { rm -f "$nodecheck_tmp"; fail "nodecheck.py 摘要与已审核版本不一致"; }
-  python3 -m py_compile "$nodecheck_tmp" || { rm -f "$nodecheck_tmp"; fail "nodecheck.py Python 语法检查失败"; }
-  chmod 700 "$nodecheck_tmp"
-  mv -f "$nodecheck_tmp" /root/science/nodecheck.py || fail "nodecheck.py 安装失败"
+  fetch_nodecheck || fail "nodecheck.py 下载、摘要或语法校验失败"
   python3 /root/science/nodecheck.py --vantage "$role" --run-id "${RUN_ID:-pre-fix}" --subscription https://s.hutton.dpdns.org/SKPL-LIFT-all.txt --output "/root/science/nodecheck-$role.json" || fail "节点拨测执行失败"
   exit 0
 fi
@@ -922,6 +999,7 @@ PYAGG
       [ "$private_code" = 401 ] || fail "$private_path 未登录访问应返回 401，实际为 $private_code"
     done
   fi
+  install_nodestatus
   PUBLIC_BASE="${PUBLIC_BASE:-https://$US_DOMAIN}"
   echo "====================================================="
   if [ "$PANEL_ONLY" = "1" ]; then
