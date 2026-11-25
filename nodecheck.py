@@ -28,10 +28,9 @@ SINGBOX = "/root/science/sing-box"
 CURL = "curl"
 PRIMARY_URL = "https://speed.cloudflare.com/__down?bytes=1000000"
 FALLBACK_URL = "https://www.gstatic.com/generate_204"
-ROLE_ORDER = ("hk_relay", "hk_direct", "us_direct", "us_argo")
+ROLE_ORDER = ("us_direct", "us_argo")
 DEFAULT_ROLES = {
-    "us": ("hk_relay", "hk_direct", "us_argo"),
-    "hk": ("us_direct", "us_argo"),
+    "us": ("us_direct", "us_argo"),
 }
 RESULT_FIELDS = (
     "id", "name", "proto", "server", "port", "role", "status",
@@ -92,12 +91,8 @@ def clean_run_id(value):
 def role_of(line, parsed=None):
     p = parsed or relaylib.parse(line)
     name = p.get("name", "")
-    if "HK中转" in name:
-        return "hk_relay"
     if "argo" in name.lower():
         return "us_argo"
-    if p.get("server") == getattr(relaylib, "HK_IP", "38.76.210.194"):
-        return "hk_direct"
     return "us_direct"
 
 
@@ -693,9 +688,6 @@ def emit_result(result, run_id):
         point = "A"
     elif result["proto"].lower() in ("trojan", "hysteria2", "hy2"):
         point = "B"
-    elif result["role"] == "hk_relay":
-        point = "C"
-
     # #region debug-point A
     if point == "A":
         emit("A", "nodecheck.py:check_node", "[DEBUG] Argo 拨测结果", result, run_id)
@@ -704,11 +696,6 @@ def emit_result(result, run_id):
     # #region debug-point B
     if point == "B":
         emit("B", "nodecheck.py:check_node", "[DEBUG] Trojan/Hy2 拨测结果", result, run_id)
-    # #endregion
-
-    # #region debug-point C
-    if point == "C":
-        emit("C", "nodecheck.py:check_node", "[DEBUG] 香港中转拨测结果", result, run_id)
     # #endregion
 
     # #region debug-point D
@@ -791,7 +778,7 @@ def build_parser():
     parser.add_argument("--subscription", required=True, help="原始分享链接本地路径或 HTTPS URL")
     parser.add_argument("--output", required=True, help="脱敏 JSON 输出路径")
     parser.add_argument("--vantage", required=True, choices=("us", "hk"))
-    parser.add_argument("--roles", help="all 或逗号分隔的 hk_relay,hk_direct,us_direct,us_argo")
+    parser.add_argument("--roles", help="all 或逗号分隔的 us_direct,us_argo")
     parser.add_argument("--workers", type=positive_int, default=3)
     parser.add_argument("--run-id", default="pre-fix")
     return parser
